@@ -150,6 +150,12 @@ data {
   real<lower=0> rho_prior_alpha;
   real<lower=0> rho_prior_beta;
 
+  // Person-level generated quantities are O(N_person * K) PER DRAW. On the
+  // full roster that is 301,200 columns and ~9.6 GB of chain CSV for a model
+  // whose scientific content is ~20 parameters. Off by default; turn on for a
+  // short, thinned pass when class probabilities are actually needed.
+  int<lower=0, upper=1> emit_person_quantities;
+
   int<lower=1> grainsize;
 }
 
@@ -233,33 +239,36 @@ model {
 }
 
 generated quantities {
-  matrix[N_person, K] class_prob;
-  array[N_person] int<lower=1, upper=K> modal_class;
-  vector[N_person] log_lik;
-  vector[N_person] log_lik_heldout;
+  // Sized to zero unless requested, so the draws file stays small.
+  matrix[emit_person_quantities ? N_person : 0, K] class_prob;
+  array[emit_person_quantities ? N_person : 0] int<lower=1, upper=K> modal_class;
+  vector[emit_person_quantities ? N_person : 0] log_lik;
+  vector[emit_person_quantities ? N_person : 0] log_lik_heldout;
 
-  for (i in 1:N_person) {
-    real n_obs = fit_end[i] - fit_start[i] + 1;
-    real obs_weight = pow(n_obs, -person_weight_power);
-    vector[K] fitted_lp = person_class_loglik(
-        fit_start[i], fit_end[i], 1, K, C, P, y, X, cohort_id,
-        ar_mode, age_gap, log_weight, coef, sigma, rho,
-        cohort_effect, obs_weight);
-
-    log_lik[i] = log_sum_exp(fitted_lp);
-    class_prob[i] = softmax(fitted_lp)';
-    modal_class[i] = sort_indices_desc(fitted_lp)[1];
-
-    // Conditional predictive density of the held-out rows given the fitted
-    // rows, marginalising the latent class. Zero when no rows are held out.
-    if (hold_start[i] > 0) {
-      vector[K] hold_lp = person_class_loglik(
-          hold_start[i], hold_end[i], 0, K, C, P, y, X, cohort_id,
+  if (emit_person_quantities == 1) {
+    for (i in 1:N_person) {
+      real n_obs = fit_end[i] - fit_start[i] + 1;
+      real obs_weight = pow(n_obs, -person_weight_power);
+      vector[K] fitted_lp = person_class_loglik(
+          fit_start[i], fit_end[i], 1, K, C, P, y, X, cohort_id,
           ar_mode, age_gap, log_weight, coef, sigma, rho,
-          cohort_effect, 1.0);
-      log_lik_heldout[i] = log_sum_exp(fitted_lp + hold_lp) - log_lik[i];
-    } else {
-      log_lik_heldout[i] = 0;
+          cohort_effect, obs_weight);
+
+      log_lik[i] = log_sum_exp(fitted_lp);
+      class_prob[i] = softmax(fitted_lp)';
+      modal_class[i] = sort_indices_desc(fitted_lp)[1];
+
+      // Conditional predictive density of the held-out rows given the fitted
+      // rows, marginalising the latent class. Zero when no rows are held out.
+      if (hold_start[i] > 0) {
+        vector[K] hold_lp = person_class_loglik(
+            hold_start[i], hold_end[i], 0, K, C, P, y, X, cohort_id,
+            ar_mode, age_gap, log_weight, coef, sigma, rho,
+            cohort_effect, 1.0);
+        log_lik_heldout[i] = log_sum_exp(fitted_lp + hold_lp) - log_lik[i];
+      } else {
+        log_lik_heldout[i] = 0;
+      }
     }
   }
 }

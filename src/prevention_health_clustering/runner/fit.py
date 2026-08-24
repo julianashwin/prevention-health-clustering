@@ -56,6 +56,7 @@ def build_payload(
     age_center: int = DEFAULT_AGE_CENTER,
     age_scale: float = DEFAULT_AGE_SCALE,
     holdout_min_age: int | None = None,
+    emit_person_quantities: bool = False,
     grainsize: int = 0,
 ) -> StanPayload:
     """Assemble the Stan data block from a contract's long frame.
@@ -70,6 +71,23 @@ def build_payload(
         raise ValueError(f"Contract is missing channels: {', '.join(missing)}")
 
     frame = long.sort_values(["pidp", "age"]).reset_index(drop=True)
+
+    # A held-out age threshold can leave a person with no fitted rows at all
+    # (everyone whose observations begin at or after the threshold). Such a
+    # person carries no history to condition on, so they are not part of this
+    # design's population. Drop them here and record how many, rather than
+    # failing on a legitimate data condition.
+    dropped_no_history = 0
+    if holdout_min_age is not None:
+        has_history = frame.groupby("pidp")["age"].min() < holdout_min_age
+        keep_ids = has_history[has_history].index
+        dropped_no_history = int((~has_history).sum())
+        frame = frame[frame["pidp"].isin(keep_ids)].reset_index(drop=True)
+        if frame.empty:
+            raise ValueError(
+                f"holdout_min_age={holdout_min_age} leaves no person with "
+                "fitted rows."
+            )
 
     # Person row windows. Rows are contiguous per person after the sort.
     codes, person_ids = pd.factorize(frame["pidp"], sort=True)
@@ -90,10 +108,9 @@ def build_payload(
         for _, group in frame.groupby("_person", sort=True):
             fitted = group.index[~held.loc[group.index]]
             holdout = group.index[held.loc[group.index]]
-            if len(fitted) == 0:
-                raise ValueError(
-                    "holdout_min_age leaves a person with no fitted rows; "
-                    "restrict the roster before splitting."
+            if len(fitted) == 0:  # pragma: no cover - guarded above
+                raise AssertionError(
+                    "person retained without fitted rows after history filter"
                 )
             fit_start.append(int(fitted.min()) + 1)
             fit_end.append(int(fitted.max()) + 1)
@@ -157,6 +174,9 @@ def build_payload(
         "cohort_prior_scale": float(spec.cohort_prior_scale),
         "rho_prior_alpha": float(spec.rho_prior_alpha),
         "rho_prior_beta": float(spec.rho_prior_beta),
+        "emit_person_quantities": int(emit_person_quantities),
+        # not read by Stan; carried for provenance
+        "_dropped_no_history": dropped_no_history,
         "grainsize": int(grainsize or max(1, n_person // (spec.chains * 4))),
     }
     return StanPayload(
@@ -218,11 +238,15 @@ def build_inits(
         }
         if spec.ar_mode != 0:
             init["rho"] = np.full(k, 0.3)
+        # Omitted entirely when there are no cohort effects: a zero-length
+        # container's declared shape differs between model variants, and Stan
+        # rejects a shape mismatch even when the parameter is empty.
         n_cohort = payload.data["N_cohort"]
-        rows = k if spec.cohort_by_class else 1
-        init["cohort_free"] = [
-            np.zeros((rows, max(n_cohort - 1, 0))) for _ in range(c)
-        ]
+        if n_cohort > 1:
+            rows = k if spec.cohort_by_class else 1
+            init["cohort_free"] = [
+                np.zeros((rows, n_cohort - 1)) for _ in range(c)
+            ]
         inits.append({key: np.asarray(value).tolist() if isinstance(value, np.ndarray)
                       else value for key, value in init.items()})
     return inits
@@ -257,7 +281,8 @@ def fit_model(
     """Run CmdStan and return the CmdStanMCMC object."""
     output_dir.mkdir(parents=True, exist_ok=True)
     data_path = output_dir / "stan_data.json"
-    data_path.write_text(json.dumps(payload.data))
+    stan_data = {k: v for k, v in payload.data.items() if not k.startswith("_")}
+    data_path.write_text(json.dumps(stan_data))
 
     model = compile_model(spec.stan_file)
     settings = {
