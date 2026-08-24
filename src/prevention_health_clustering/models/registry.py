@@ -120,6 +120,9 @@ JOINT_HEADLINE = ModelSpec(
     description="Joint PCS+MCS K=3 with one shared latent class, PCS-anchored.",
     channels=("sf12pcs_dv", "sf12mcs_dv"),
     anchor_channel="sf12pcs_dv",
+    # The published joint fit used concentration 0.5 where the univariate fits
+    # used 1.5. Negligible against 50k people, but kept for faithfulness.
+    theta_prior_concentration=0.5,
 )
 
 PCS_AR1 = ModelSpec(

@@ -212,13 +212,37 @@ def build_inits(
     starts = np.asarray(payload.data["fit_start"]) - 1
     ends = np.asarray(payload.data["fit_end"]) - 1
 
-    # Person means on the anchor channel drive the intercept ladder.
+    # Every channel gets a data-derived intercept ladder, not just the anchor.
+    #
+    # Initialising the non-anchor channels at random was a real defect: the
+    # bivariate full-roster fit produced three distinct modes across four
+    # chains (max R-hat 2.42) because the second channel started uninformed
+    # while the anchor did not. Only one chain reached the good mode.
+    quantiles = np.linspace(0.15, 0.85, k)
     anchor = payload.data["anchor_channel"] - 1
-    person_means = np.array(
+
+    def channel_ladder(ch: int) -> np.ndarray:
+        means = np.array([y[ch][lo : hi + 1].mean() for lo, hi in zip(starts, ends)])
+        return np.quantile(means, quantiles)
+
+    # Rank every channel by the ANCHOR channel's person ordering, so the class
+    # ladders are mutually consistent: class 1 is the low-anchor group in each
+    # channel rather than each channel's own low group.
+    anchor_means = np.array(
         [y[anchor][lo : hi + 1].mean() for lo, hi in zip(starts, ends)]
     )
-    quantiles = np.linspace(0.15, 0.85, k)
-    ladder = np.quantile(person_means, quantiles)
+    edges = np.quantile(anchor_means, np.linspace(0, 1, k + 1))
+    edges[0], edges[-1] = -np.inf, np.inf
+    groups = np.digitize(anchor_means, edges[1:-1])
+
+    ladders = {}
+    for ch in range(c):
+        means = np.array([y[ch][lo : hi + 1].mean() for lo, hi in zip(starts, ends)])
+        ladders[ch] = np.array(
+            [means[groups == g].mean() if (groups == g).any() else means.mean()
+             for g in range(k)]
+        )
+    ladder = ladders[anchor]
 
     within = float(
         np.mean([y[anchor][lo : hi + 1].std() for lo, hi in zip(starts, ends)])
@@ -232,7 +256,10 @@ def build_inits(
         init = {
             "theta": np.full(k, 1.0 / k),
             "anchor_intercept": anchor_init,
-            "other_intercept": rng.normal(0.0, 0.2, size=(k, max(c - 1, 0))),
+            "other_intercept": np.column_stack(
+                [ladders[ch] + rng.normal(0.0, 0.25, size=k)
+                 for ch in range(c) if ch != anchor]
+            ) if c > 1 else np.zeros((k, 0)),
             "slope": [rng.normal(0.0, 0.05, size=(k, p - 1)) for _ in range(c)],
             "sigma_raw": np.full((1 if spec.homosigma else k, c), within),
         }
@@ -250,6 +277,179 @@ def build_inits(
         inits.append({key: np.asarray(value).tolist() if isinstance(value, np.ndarray)
                       else value for key, value in init.items()})
     return inits
+
+
+
+
+def assignment_inits(
+    spec: ModelSpec,
+    payload: StanPayload,
+    *,
+    jitter: float = 0.0,
+    seed: int | None = None,
+) -> list[dict]:
+    """Initialise from a k-means partition, replicating the predecessor recipe.
+
+    The published joint PCS+MCS fit was initialised from a joint LCGM's modal
+    labels: per labelled class, a quadratic OLS on each channel supplied alpha,
+    beta, gamma and sigma, and the label shares supplied theta. All chains
+    started at that identical point. That is what made the joint fit converge -
+    the partition of people into classes was decided before sampling, and the
+    init encoded it fully (slopes and shares, not just intercept levels).
+
+    Here k-means on per-person channel means plays the LCGM role. With
+    jitter=0 this reproduces the predecessor behaviour (all chains at one
+    point), which HIDES multimodality from R-hat: chains that never disperse
+    cannot find a second mode. Use jitter > 0 to keep the diagnostic honest,
+    or confirm separately with a multi-seed check.
+    """
+    rng = np.random.default_rng(seed if seed is not None else spec.seed)
+    k, c, p = spec.n_classes, spec.n_channels, spec.design_width
+    y = np.asarray(payload.data["y"], dtype=float)
+    X = np.asarray(payload.data["X"], dtype=float)
+    starts = np.asarray(payload.data["fit_start"]) - 1
+    ends = np.asarray(payload.data["fit_end"]) - 1
+
+    # Per-person mean per channel; k-means over the joint feature space.
+    features = np.column_stack([
+        [y[ch][lo : hi + 1].mean() for lo, hi in zip(starts, ends)]
+        for ch in range(c)
+    ])
+    # Plain Lloyd's with k-means++ style farthest-point seeding; avoids a
+    # sklearn dependency for a one-shot partition.
+    centers = features[rng.choice(len(features), 1)]
+    while len(centers) < k:
+        d2 = ((features[:, None, :] - centers[None]) ** 2).sum(-1).min(1)
+        centers = np.vstack([centers, features[rng.choice(len(features), p=d2 / d2.sum())]])
+    for _ in range(50):
+        labels = ((features[:, None, :] - centers[None]) ** 2).sum(-1).argmin(1)
+        new = np.vstack([
+            features[labels == g].mean(0) if (labels == g).any() else centers[g]
+            for g in range(k)
+        ])
+        if np.allclose(new, centers):
+            break
+        centers = new
+
+    # Per class, per channel: quadratic OLS -> alpha, beta, gamma; residual sd.
+    theta = np.array([(labels == g).mean() for g in range(k)])
+    coef = np.zeros((c, k, p))
+    sig = np.zeros((c, k))
+    for g in range(k):
+        rows = np.concatenate([
+            np.arange(lo, hi + 1)
+            for lo, hi, lab in zip(starts, ends, labels) if lab == g
+        ])
+        Xg = X[rows]
+        for ch in range(c):
+            yg = y[ch][rows]
+            b, *_ = np.linalg.lstsq(Xg, yg, rcond=None)
+            coef[ch, g, :] = b
+            resid = yg - Xg @ b
+            sig[ch, g] = max(float(resid.std()), 0.2)
+
+    # Order classes by the anchor channel's intercept, matching the model.
+    anchor = payload.data["anchor_channel"] - 1
+    order = np.argsort(coef[anchor, :, 0])
+    theta, coef, sig = theta[order], coef[:, order, :], sig[:, order]
+
+    inits = []
+    for chain in range(spec.chains):
+        jit = rng.normal(0.0, jitter, size=(c, k, p)) if jitter > 0 else 0.0
+        cj = coef + jit
+        init = {
+            "theta": np.maximum(theta, 1e-3) / np.maximum(theta, 1e-3).sum(),
+            "anchor_intercept": np.sort(cj[anchor, :, 0]),
+            "slope": [cj[ch, :, 1:] for ch in range(c)],
+            "sigma_raw": (sig.mean(1, keepdims=True).T if spec.homosigma
+                          else sig.T),
+        }
+        if c > 1:
+            init["other_intercept"] = np.column_stack(
+                [cj[ch, :, 0] for ch in range(c) if ch != anchor]
+            )
+        if spec.ar_mode != 0:
+            init["rho"] = np.full(k, 0.3)
+        n_cohort = payload.data["N_cohort"]
+        if n_cohort > 1:
+            rows_ = k if spec.cohort_by_class else 1
+            init["cohort_free"] = [np.zeros((rows_, n_cohort - 1)) for _ in range(c)]
+        inits.append({key: np.asarray(val).tolist() if isinstance(val, np.ndarray)
+                      else val for key, val in init.items()})
+    return inits
+
+
+def pathfinder_inits(
+    spec: ModelSpec,
+    payload: StanPayload,
+    *,
+    output_dir: Path,
+    num_paths: int = 8,
+    draws: int = 200,
+) -> tuple[list[dict], float]:
+    """Initialise from Pathfinder rather than a static data-informed ladder.
+
+    Pathfinder runs multi-path quasi-Newton optimisation with importance
+    resampling and is designed specifically to initialise MCMC. It is preferred
+    over a MAP point for two reasons: the MAP of a finite mixture is degenerate
+    (the density diverges as a component scale collapses onto one point), and a
+    single point start deflates R-hat for a multimodal posterior. Pathfinder
+    returns a set of draws, so each chain gets a distinct, data-informed start.
+
+    Falls back to the static ladder if Pathfinder fails, which it can do on a
+    badly conditioned mixture.
+
+    Returns (inits, seconds_spent).
+    """
+    import time
+
+    from cmdstanpy import CmdStanModel
+
+    start = time.time()
+    model = compile_model(spec.stan_file)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    stan_data = {k: v for k, v in payload.data.items() if not k.startswith("_")}
+    data_path = output_dir / "stan_data.json"
+    data_path.write_text(json.dumps(stan_data))
+    try:
+        pf = model.pathfinder(
+            data=str(data_path),
+            num_paths=num_paths,
+            draws=draws,
+            seed=spec.seed,
+            # one init dict, not one per chain: num_paths need not equal chains
+            inits=build_inits(spec, payload)[0],
+            show_console=False,
+        )
+        # CmdStanPathfinder resolves attributes to Stan variables, so
+        # draws_pd() is not available; pull variables explicitly.
+        variables = {
+            name: np.atleast_1d(pf.stan_variable(name))
+            for name in ("theta", "anchor_intercept", "other_intercept",
+                         "slope", "sigma_raw")
+            if True
+        }
+    except Exception as exc:  # noqa: BLE001 - fall back, never fail the fit
+        print(f"  pathfinder failed ({exc}); using the static ladder")
+        return build_inits(spec, payload), time.time() - start
+
+    # One distinct Pathfinder draw per chain, spread across the returned set.
+    n_draws = len(variables["theta"])
+    rows = np.linspace(0, n_draws - 1, spec.chains).astype(int)
+    inits = []
+    for row in rows:
+        init = {
+            "theta": variables["theta"][row].tolist(),
+            "anchor_intercept": sorted(variables["anchor_intercept"][row].tolist()),
+            "slope": variables["slope"][row].tolist(),
+            "sigma_raw": np.atleast_2d(variables["sigma_raw"][row]).tolist(),
+        }
+        if spec.n_channels > 1:
+            init["other_intercept"] = np.atleast_2d(
+                variables["other_intercept"][row]
+            ).tolist()
+        inits.append(init)
+    return inits, time.time() - start
 
 
 def _source_hash(stan_file: Path) -> str:
@@ -276,6 +476,7 @@ def fit_model(
     output_dir: Path,
     threads_per_chain: int = 2,
     show_console: bool = False,
+    inits: list[dict] | None = None,
     **overrides,
 ):
     """Run CmdStan and return the CmdStanMCMC object."""
@@ -294,7 +495,8 @@ def fit_model(
         "seed": spec.seed,
     }
     settings.update(overrides)
-    inits = build_inits(spec, payload)
+    if inits is None:
+        inits = build_inits(spec, payload)
     return model.sample(
         inits=inits,
         data=str(data_path),
@@ -307,7 +509,9 @@ def fit_model(
 
 __all__ = [
     "StanPayload",
+    "assignment_inits",
     "build_inits",
+    "pathfinder_inits",
     "build_payload",
     "compile_model",
     "fit_model",
