@@ -462,6 +462,84 @@ them. For analyses that turn on the worst-health group --- describing the
 bottom class, targeting --- P-FULL is the better physical instrument; for
 population dynamics, P-FUNC remains the clean choice.
 
+\section{Convexity against healthcare use}
+\label{sec:convexity}
+
+Is healthcare use convex in health --- falling steeply among the ill, flat
+among the healthy --- and does each metric's cardinalisation carry that
+shape? Following the construction-note convexity exercise, each outcome is
+regressed on the standardised measure and its square on a common sample
+(waves 7--15, all thirteen measures observed, $n = 209{,}042$), with
+measures oriented so higher = better: on a declining relationship, a
+positive quadratic = convex. One data correction first: UKHLS mainstage has
+\emph{no GP-visit count}. \code{hl2gp}, despite its name, is labelled
+``hosp or clinic \emph{out-patient} last 12 months'' (the sandbox's ``GP
+band'' was a mislabel, corrected here); the only GP variable is
+\code{servuse1} (``service use: your local doctor'', yes/no, five waves),
+included as a supplementary outcome.
+
+\begin{figure}[t]
+\includegraphics[width=\linewidth]{fig_convexity}
+\caption{Healthcare use across the distribution of each measure, and the
+quadratic (convexity) term for in-patient admission.}
+\label{fig:convexity}
+\end{figure}
+
+\begin{center}\small
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{quadratic term ($t$)} &
+\multicolumn{2}{c}{$P(\text{in-patient})$} \\
+Measure & in-patient & out-patient & bottom 1\% & top 1\% \\
+\midrule
+UKHLS PCS & $+.011$ (24) & $+.032$ (18) & .312 & .042 \\
+UKHLS MCS & $+.004$ (8) & $+.038$ (22) & .128 & .134 \\
+Physical-only composite & $+.011$ (22) & $+.002$ (1) & .331 & .033 \\
+SF-6D utility & $+.021$ (40) & $+.119$ (61) & .289 & .039 \\
+GHQ-12 (flipped) & $+.003$ (8) & $+.007$ (5) & .189 & .059 \\
+GRM original, $\theta$ & $+.020$ (43) & $+.070$ (42) & .331 & .033 \\
+GRM original, TCC & $+.012$ (23) & $+.003$ (2) & .331 & .033 \\
+P-FUNC $\theta$ & $+.019$ (42) & $+.069$ (42) & .322 & .033 \\
+P-FULL $\theta$ & $+.020$ (45) & $+.067$ (40) & \textbf{.349} & \textbf{.033} \\
+P-FULL, TCC & $+.009$ (17) & $-.026$ ($-15$) & .349 & .033 \\
+MENT $\theta$ & $+.008$ (19) & $+.062$ (37) & .206 & .056 \\
+MENT, TCC & $+.004$ (10) & $+.018$ (12) & .206 & .056 \\
+COMBINED $\theta$ & $+.018$ (44) & $+.072$ (49) & .331 & .032 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Four reads.
+
+\textbf{Utilisation is strongly convex in every latent-scale metric.} The
+in-patient rate runs from $\sim$24\% in the worst decile to $\sim$3--4\% in
+the best (base rate 8.1\%), with the quadratic terms at $t = 40$--45 for the
+GRM thetas. The gradient concentrates exactly where \S\ref{sec:ceiling}'s
+floor analysis lives: the region in which measures differ in resolution is
+the region that carries the utilisation risk.
+
+\textbf{Cardinalisation, not construct, drives the convexity.} Each
+$\theta$/TCC pair ranks people identically, yet the $\theta$ scales are
+strongly convex while the TCC (\code{grmh}) scales are near-linear in
+utilisation --- P-FULL's TCC is even mildly \emph{concave} in out-patient
+use. Convexity is a property of the chosen units, so any ``convex health
+effects'' claim must fix the scale first; conversely, \code{grmh} is the
+natural unit when something like linear-in-utilisation spacing is wanted,
+and $\theta$ the natural latent-normal unit for the mixture models.
+
+\textbf{The floor resolution pays off in real outcomes.} P-FULL's bottom
+1\% has a 34.9\% admission rate against 32.2\% for P-FUNC and 31.2\% for the
+PCS: the diagnosis items isolate a genuinely sicker extreme tail, the
+outcome-side counterpart of \S\ref{sec:ceiling}'s 575-fold floor
+de-clumping.
+
+\textbf{The GP-use binary is uninformative about shape.} At a 77.8\% base
+rate ($n = 23{,}953$ on its five waves) it saturates: quadratics are
+$\approx 0$ or mildly negative for every measure. Bottom-1\% GP use is
+$\sim$97\% against $\sim$65\% at the top --- a gradient, but the outcome's
+own ceiling swamps any curvature. A true visit count would need linked
+administrative data.
+
 \section{Recommendations}
 
 \begin{enumerate}\itemsep2pt
@@ -477,6 +555,10 @@ if it is, build the bifactor version first.
 \item SF-6D: treat as a mixed physical--mental utility (its closest GRM
 cousin is the combined bank), never as a physical measure; licence before
 publishing utilities.
+\item Report $\theta$ and \code{grmh} together when consequences matter:
+$\theta$ is the latent-normal unit the models want, \code{grmh} the
+near-linear-in-utilisation unit (\S\ref{sec:convexity}); the choice of
+cardinalisation is substantive, not cosmetic.
 \end{enumerate}
 
 \section{Reproducibility}
@@ -493,8 +575,8 @@ $10^{-5}$ on all 498{,}424 person-waves \\
 coverage; $\ge$ EIT count on 100.000\% of rows \\
 \code{data\_cleaning/06\_build\_grm2.py} & all GRM-2 specs; Q3, EAP
 identity, invariance, recency weights \\
-\code{descriptives/01--06} & measure panel, correlations, the five figures,
-ceiling/floor table \\
+\code{descriptives/01--07} & measure panel, correlations, the six figures,
+ceiling/floor and convexity tables \\
 \bottomrule
 \end{tabular}
 \end{center}
