@@ -135,6 +135,47 @@ PCS_AR1 = ModelSpec(
     ar_mode=1,
 )
 
+PHYSGRM_HEADLINE = ModelSpec(
+    name="physgrm-headline",
+    stan_file=GAUSSIAN_PANEL,
+    description=(
+        "Physical GRM (P-FULL theta: functioning + condition groups) K=3 "
+        "quadratic growth mixture, no AR term."
+    ),
+    channels=("theta_phys_full",),
+    anchor_channel="theta_phys_full",
+)
+
+PHYSGRM_AR1 = ModelSpec(
+    name="physgrm-ar1",
+    stan_file=GAUSSIAN_PANEL,
+    description="Physical GRM (P-FULL theta) K=3 with AR(1) persistence.",
+    channels=("theta_phys_full",),
+    anchor_channel="theta_phys_full",
+    ar_mode=1,
+)
+
+COMBGRM_HEADLINE = ModelSpec(
+    name="combgrm-headline",
+    stan_file=GAUSSIAN_PANEL,
+    description=(
+        "Combined physical+mental GRM theta K=3 quadratic growth mixture, "
+        "no AR term. NOTE the combined bank's known unidimensionality caveat "
+        "(docs/health_measures_note.pdf section 6)."
+    ),
+    channels=("theta_combined",),
+    anchor_channel="theta_combined",
+)
+
+COMBGRM_AR1 = ModelSpec(
+    name="combgrm-ar1",
+    stan_file=GAUSSIAN_PANEL,
+    description="Combined GRM theta K=3 with AR(1) persistence.",
+    channels=("theta_combined",),
+    anchor_channel="theta_combined",
+    ar_mode=1,
+)
+
 PCS_COHORT = ModelSpec(
     name="pcs-cohort",
     stan_file=GAUSSIAN_PANEL,
@@ -176,6 +217,10 @@ REGISTRY: dict[str, ModelSpec] = {
         MCS_HEADLINE,
         JOINT_HEADLINE,
         PCS_AR1,
+    PHYSGRM_HEADLINE,
+    PHYSGRM_AR1,
+    COMBGRM_HEADLINE,
+    COMBGRM_AR1,
         PCS_COHORT,
         JOINT_AR1_COHORT,
         MIXED_HEALTH,

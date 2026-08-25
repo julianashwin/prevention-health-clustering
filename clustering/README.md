@@ -10,3 +10,13 @@ The Bayesian latent-class modelling stream.
   vectorised variants are SLOWER than the row loop; kept as recorded findings).
 
 Fast unit tests live in `tests/`, not here. Fits write to `artifacts/`.
+
+## Batch fitting
+
+`run_fit.py` fits any registry model on any frozen contract with the honest
+partition-init recipe, computing structural diagnostics without touching
+person-level columns; `--holdout-last-k 2 --holdout-min-obs 5` holds out each
+person's last two observations (sample limited to people with at least five)
+and writes per-person held-out predictive densities.
+`runs/overnight_queue.py` runs the eight-fit AR(1)/GRM batch, two at a time,
+longest first, and writes `artifacts/overnight/digest.json`.

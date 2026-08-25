@@ -56,6 +56,8 @@ def build_payload(
     age_center: int = DEFAULT_AGE_CENTER,
     age_scale: float = DEFAULT_AGE_SCALE,
     holdout_min_age: int | None = None,
+    holdout_last_k: int | None = None,
+    holdout_min_person_obs: int | None = None,
     emit_person_quantities: bool = False,
     grainsize: int = 0,
 ) -> StanPayload:
@@ -64,8 +66,21 @@ def build_payload(
     ``holdout_min_age`` moves each person's rows at or above that age into the
     held-out window. Those rows do not enter the likelihood; they are scored in
     generated quantities as a conditional predictive density.
+
+    ``holdout_last_k`` instead holds out each person's LAST k observations (by
+    age). ``holdout_min_person_obs`` restricts the sample to people with at
+    least that many observations first, so every retained person keeps
+    ``min_obs - k`` fitted rows. The two holdout modes are mutually exclusive.
+    Because held-out rows are a within-person suffix, the AR(1) age-gap
+    recursion bridges the fit/hold boundary correctly in either mode.
     """
     spec.validate()
+    if holdout_min_age is not None and holdout_last_k is not None:
+        raise ValueError("holdout_min_age and holdout_last_k are exclusive.")
+    if holdout_last_k is not None:
+        min_obs = holdout_min_person_obs or (holdout_last_k + 1)
+        if min_obs <= holdout_last_k:
+            raise ValueError("holdout_min_person_obs must exceed holdout_last_k.")
     missing = [c for c in spec.channels if c not in long.columns]
     if missing:
         raise ValueError(f"Contract is missing channels: {', '.join(missing)}")
@@ -78,6 +93,15 @@ def build_payload(
     # design's population. Drop them here and record how many, rather than
     # failing on a legitimate data condition.
     dropped_no_history = 0
+    if holdout_last_k is not None:
+        n_obs_per = frame.groupby("pidp")["age"].size()
+        keep_ids = n_obs_per[n_obs_per >= min_obs].index
+        dropped_no_history = int((n_obs_per < min_obs).sum())
+        frame = frame[frame["pidp"].isin(keep_ids)].reset_index(drop=True)
+        if frame.empty:
+            raise ValueError(
+                f"holdout_min_person_obs={min_obs} leaves nobody in the sample."
+            )
     if holdout_min_age is not None:
         has_history = frame.groupby("pidp")["age"].min() < holdout_min_age
         keep_ids = has_history[has_history].index
@@ -97,13 +121,17 @@ def build_payload(
         include_groups=False,
     )
 
-    if holdout_min_age is None:
+    if holdout_min_age is None and holdout_last_k is None:
         fit_start = bounds["lo"].to_numpy()
         fit_end = bounds["hi"].to_numpy()
         hold_start = np.zeros(len(bounds), dtype=int)
         hold_end = np.zeros(len(bounds), dtype=int)
     else:
-        held = frame["age"] >= holdout_min_age
+        if holdout_last_k is not None:
+            # the last k rows of each person's age-sorted block are held out
+            held = frame.groupby("_person").cumcount(ascending=False) < holdout_last_k
+        else:
+            held = frame["age"] >= holdout_min_age
         fit_start, fit_end, hold_start, hold_end = [], [], [], []
         for _, group in frame.groupby("_person", sort=True):
             fitted = group.index[~held.loc[group.index]]
