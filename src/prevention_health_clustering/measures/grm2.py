@@ -137,6 +137,43 @@ def build_mental_items(
     return out.reset_index(drop=True)
 
 
+TIMED_CONDITION_ITEMS: dict[str, int] = {}
+for _g, _k in PHYS_CONDITION_ITEMS.items():
+    TIMED_CONDITION_ITEMS[f"{_g}R"] = _k     # diagnosed within the last 10 years
+    TIMED_CONDITION_ITEMS[f"{_g}S"] = _k     # diagnosed more than 10 years ago
+PHYS_TIMED_NCAT: dict[str, int] = {**{c: PHYS_NCAT[c] for c in PHYS_CORE},
+                                   **TIMED_CONDITION_ITEMS}
+
+
+def build_physical_timed_items(
+    items: pd.DataFrame,
+    chronic: pd.DataFrame,
+    *,
+    age_range: tuple[int, int] = (20, 90),
+) -> pd.DataFrame:
+    """P-TIMED: each condition group split into recent (<= 10y) and stale
+    (> 10y) items with separate discriminations — the model then ESTIMATES the
+    recency weighting instead of assuming it (the in-framework analogue of a
+    weighted-cumulative-exposure weight function).
+    """
+    core = build_testlets(items, age_range=age_range)
+    func = pd.concat([items[["pidp", "wave"]], build_func_item(items)], axis=1)
+    out = core.merge(func, on=["pidp", "wave"], how="left")
+    cols = ["pidp", "wave"] + [f"n_{g.lower()}" for g in PHYS_CONDITION_ITEMS]         + [f"nrec10_{g.lower()}" for g in PHYS_CONDITION_ITEMS]
+    out = out.merge(chronic[cols], on=["pidp", "wave"], how="left")
+    names = list(PHYS_CORE)
+    for g, k in PHYS_CONDITION_ITEMS.items():
+        recent = out[f"nrec10_{g.lower()}"]
+        stale = out[f"n_{g.lower()}"] - recent
+        out[f"{g}R"] = _reverse_count(recent, k)
+        out[f"{g}S"] = _reverse_count(stale, k)
+        names += [f"{g}R", f"{g}S"]
+    out = out[["pidp", "wave", "age"] + names].dropna(subset=names)
+    for n in names:
+        out[n] = out[n].astype(int)
+    return out.reset_index(drop=True)
+
+
 GHQ_POSITIVE = ("SCGHQA", "SCGHQC", "SCGHQD", "SCGHQG", "SCGHQH", "SCGHQL")
 GHQ_NEGATIVE = ("SCGHQB", "SCGHQE", "SCGHQF", "SCGHQI", "SCGHQJ", "SCGHQK")
 
@@ -157,7 +194,21 @@ def collapse_ghq_wording(ment: pd.DataFrame) -> pd.DataFrame:
 MENT_TESTLET_NCAT: dict[str, int] = {"MH": 9, "RE": 9, "SF": 5,
                                      "GHQPOS": 19, "GHQNEG": 19, "DEPR": 2}
 
+COMBINED_NCAT: dict[str, int] = {**PHYS_NCAT, **MENT_TESTLET_NCAT}
+
+
+def build_combined_items(phys_full: pd.DataFrame, ment_testlet: pd.DataFrame) -> pd.DataFrame:
+    """One bank over every good-coverage item: the P-FULL physical bank plus
+    the mental testlet bank (GHQ pre-collapsed by wording, as decided by the
+    two-bank Q3 diagnostics), inner-joined on person-wave."""
+    m = ment_testlet.drop(columns=["age"])
+    out = phys_full.merge(m, on=["pidp", "wave"], how="inner")
+    return out.reset_index(drop=True)
+
+
+
 __all__ = [
+    "COMBINED_NCAT",
     "GHQ_NEGATIVE",
     "GHQ_POSITIVE",
     "MENT_ITEMS",
@@ -167,7 +218,11 @@ __all__ = [
     "PHYS_CORE",
     "PHYS_DISDIF",
     "PHYS_NCAT",
+    "PHYS_TIMED_NCAT",
+    "TIMED_CONDITION_ITEMS",
+    "build_combined_items",
     "build_func_item",
+    "build_physical_timed_items",
     "build_mental_items",
     "build_physical_items",
     "collapse_ghq_wording",

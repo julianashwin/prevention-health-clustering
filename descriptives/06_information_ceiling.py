@@ -1,0 +1,149 @@
+"""How each GRM is constructed, and where every metric runs out of room.
+
+Two outputs:
+
+* fig_grm_information.png — per GRM version, the stacked item-information
+  decomposition over the latent scale with the implied measurement SE: which
+  items carry the measurement, and where the instrument goes dark. This is
+  the construction illustration: a version IS its information profile.
+
+* ceiling_floor.csv + a printed table — for every metric: share of
+  person-years at the exact maximum and minimum, the attainable score range,
+  and (for the GRMs) the EAP shrinkage and posterior sd at the all-best and
+  all-worst response patterns. Tests the 'more items buy more headroom'
+  hypothesis directly.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).parent))
+from _style import INK2, apply_style  # noqa: E402
+
+from prevention_health_clustering.config import (
+    ARTIFACTS_DIR,
+    PROCESSED_DATA_DIR,
+    ROOT_DIR,
+)
+from prevention_health_clustering.measures.grm import cat_probs
+
+TH = np.linspace(-4, 4, 161)
+
+SPECS = {
+    "GRM original": ("grm_items.csv", None, "grm_theta"),
+    "P-FUNC": ("grm2_items.csv", "P-FUNC", "theta_phys_func"),
+    "P-FULL": ("grm2_items.csv", "P-FULL", "theta_phys_full"),
+    "MENT": ("grm2_items.csv", "MENT", "theta_ment"),
+    "COMBINED": ("grm2_items.csv", "COMBINED", "theta_combined"),
+}
+
+SCORE_METRICS = ["sf12pcs_dv", "sf12mcs_dv", "PCS_phys_only", "sf6d_utility",
+                 "ghq_likert", "grm_theta", "theta_phys_func",
+                 "theta_phys_full", "theta_ment", "theta_combined"]
+
+
+def load_items(fname, spec):
+    df = pd.read_csv(PROCESSED_DATA_DIR / "measures" / fname)
+    if spec is not None:
+        df = df[df["spec"] == spec]
+    items = {}
+    for _, row in df.iterrows():
+        b = row[[c for c in df.columns if c.startswith("b")]].dropna().to_numpy(float)
+        items[row["item"]] = (float(row["a"]), b)
+    return items
+
+
+def item_information(a, b, th):
+    eps = 1e-4
+    pr = cat_probs(a, b, th)
+    p2 = cat_probs(a, b, th + eps)
+    return (((p2 - pr) / eps) ** 2 / pr).sum(axis=1)
+
+
+def main() -> int:
+    apply_style()
+    panel = pd.read_parquet(
+        PROCESSED_DATA_DIR / "measures" / "measure_panel.parquet",
+        columns=SCORE_METRICS)
+
+    # ---- information decomposition figure ----------------------------------
+    fig, axes = plt.subplots(1, len(SPECS), figsize=(3.0 * len(SPECS), 3.6),
+                             sharex=True)
+    cmap = plt.get_cmap("viridis")
+    for j, (name, (fname, spec, col)) in enumerate(SPECS.items()):
+        items = load_items(fname, spec)
+        ax = axes[j]
+        info = np.column_stack(
+            [item_information(a, b, TH) for a, b in items.values()])
+        colors = [cmap(0.05 + 0.9 * i / max(len(items) - 1, 1))
+                  for i in range(len(items))]
+        ax.stackplot(TH, info.T, colors=colors, alpha=0.92,
+                     labels=list(items))
+        total = info.sum(axis=1)
+        ax2 = ax.twinx()
+        ax2.plot(TH, 1 / np.sqrt(np.maximum(total, 1e-9)), color="#D55E00",
+                 lw=1.6, ls="--")
+        ax2.set_ylim(0, 1.2)
+        ax2.set_yticks([] if j < len(SPECS) - 1 else [0.25, 0.5, 0.75, 1.0])
+        if j == len(SPECS) - 1:
+            ax2.set_ylabel("measurement SE (dashed)", fontsize=8)
+        ax.set_title(f"{name} ({len(items)} items)")
+        ax.set_xlabel(r"latent health $\theta$")
+        if j == 0:
+            ax.set_ylabel("Fisher information (stacked)")
+        ax.legend(fontsize=5.0, ncols=2, loc="upper right")
+    fig.suptitle("What each GRM is made of: item information over the latent scale",
+                 fontweight="bold", y=1.02)
+    fig.text(0.01, -0.03,
+             "Each band is one item's Fisher information. The dashed line is the implied "
+             "measurement SE, 1/sqrt(total information): where it rises, the instrument stops "
+             "discriminating — the IRT reading of ceiling and floor.",
+             fontsize=7.5, color=INK2)
+    fig.tight_layout()
+    out = ROOT_DIR / "docs" / "figures" / "fig_grm_information.png"
+    fig.savefig(out)
+    print(f"wrote {out}")
+
+    # ---- ceiling / floor table ---------------------------------------------
+    scores = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "grm2_scores.parquet")
+    old = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "grm_scores.parquet",
+                          columns=["grm_theta", "grm_theta_sd"])
+    sd_at = {}
+    for col, sdcol, frame in (
+        ("theta_phys_func", "theta_phys_func_sd", scores),
+        ("theta_phys_full", "theta_phys_full_sd", scores),
+        ("theta_ment", "theta_ment_sd", scores),
+        ("theta_combined", "theta_combined_sd", scores),
+        ("grm_theta", "grm_theta_sd", old),
+    ):
+        x = frame[col]
+        sd_at[col] = (float(frame.loc[x.idxmax(), sdcol]),
+                      float(frame.loc[x.idxmin(), sdcol]))
+
+    rows = []
+    for v in SCORE_METRICS:
+        x = panel[v].dropna()
+        mx, mn = x.max(), x.min()
+        rows.append({
+            "measure": v, "n": len(x),
+            "ceiling_pct": 100 * (x >= mx - 1e-9).mean(),
+            "floor_pct": 100 * (x <= mn + 1e-9).mean(),
+            "range": mx - mn,
+            "sd_units": (mx - mn) / x.std(),
+            "psd_at_ceiling": sd_at.get(v, (np.nan, np.nan))[0],
+            "psd_at_floor": sd_at.get(v, (np.nan, np.nan))[1],
+        })
+    tab = pd.DataFrame(rows)
+    tab.to_csv(ARTIFACTS_DIR / "descriptives" / "ceiling_floor.csv", index=False)
+    print(tab.round(3).to_string(index=False))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

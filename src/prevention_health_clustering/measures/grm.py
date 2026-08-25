@@ -84,7 +84,10 @@ def cat_probs(a: float, b: np.ndarray, th: np.ndarray) -> np.ndarray:
     """(len(th), K) category probabilities, floored at 1e-12."""
     k = len(b) + 1
     P = np.ones((len(th), k + 1))
-    P[:, 1:k] = 1.0 / (1.0 + np.exp(-a * (th[:, None] - b[None, :])))
+    # exp overflow at extreme arguments resolves to the exact 0/1 limits, so
+    # the warning is noise, not a numerical problem.
+    with np.errstate(over="ignore"):
+        P[:, 1:k] = 1.0 / (1.0 + np.exp(-a * (th[:, None] - b[None, :])))
     P[:, k] = 0.0
     return np.maximum(P[:, :k] - P[:, 1:], 1e-12)
 

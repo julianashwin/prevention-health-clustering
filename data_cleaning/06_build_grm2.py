@@ -42,14 +42,19 @@ from prevention_health_clustering.measures.grm import (
     yens_q3,
 )
 from prevention_health_clustering.measures.grm2 import (
+    COMBINED_NCAT,
     GHQ_NEGATIVE,
     GHQ_POSITIVE,
     MENT_ITEMS,
     MENT_NCAT,
     MENT_TESTLET_NCAT,
+    PHYS_CONDITION_ITEMS,
     PHYS_NCAT,
+    PHYS_TIMED_NCAT,
+    build_combined_items,
     build_mental_items,
     build_physical_items,
+    build_physical_timed_items,
     collapse_ghq_wording,
 )
 
@@ -164,6 +169,58 @@ def main(argv=None) -> int:
     checks.append(("MENT EAP identity", abs(ids["MENT"] - 1.0) < 0.05,
                    f"{ids['MENT']:.3f}"))
 
+    # ---------------- P-TIMED: the estimated recency weighting --------------
+    p_timed = build_physical_timed_items(items, chronic)
+    fits["P-TIMED"], scores["P-TIMED"], q3s["P-TIMED"], _, ids["P-TIMED"] = (
+        fit_spec("P-TIMED", p_timed, list(PHYS_TIMED_NCAT), PHYS_TIMED_NCAT,
+                 multigroup=False))
+    print("\n    estimated recency weighting (discrimination of recent vs "
+          "stale diagnoses):")
+    for g in PHYS_CONDITION_ITEMS:
+        ar = fits["P-TIMED"].items[f"{g}R"][0]
+        as_ = fits["P-TIMED"].items[f"{g}S"][0]
+        print(f"      {g:7s} recent a = {ar:5.2f}   stale a = {as_:5.2f}   "
+              f"ratio {ar / as_ if as_ > 0 else float('inf'):5.2f}")
+    checks.append(("P-TIMED EAP identity", abs(ids["P-TIMED"] - 1.0) < 0.05,
+                   f"{ids['P-TIMED']:.3f}"))
+
+    # ---------------- COMBINED: every good-coverage item --------------------
+    combined = build_combined_items(p_full, ment_final if use_testlets
+                                    else collapse_ghq_wording(ment))
+    fits["COMBINED"], scores["COMBINED"], q3s["COMBINED"], mgs["COMBINED"], \
+        ids["COMBINED"] = fit_spec(
+            "COMBINED", combined, list(COMBINED_NCAT), COMBINED_NCAT)
+    # A single dimension over genuinely two-dimensional data leaves the
+    # minority dimension's shared variance in the residuals: the mental items
+    # cluster positively (MH-GHQNEG etc.). That is the RECORDED FINDING that
+    # justifies the two-bank design, not a bug to gate away. The gate instead
+    # requires the physical side to stay clean within the combined bank, and
+    # prints the offending mental pairs for the note.
+    names_c = list(COMBINED_NCAT)
+    ment_side = {"MH", "RE", "SF", "GHQPOS", "GHQNEG", "DEPR"}
+    q3c = q3s["COMBINED"]
+    worst_pairs = []
+    phys_max = -1.0
+    for i, a in enumerate(names_c):
+        for j in range(i + 1, len(names_c)):
+            b = names_c[j]
+            v = q3c[i, j]
+            if a in ment_side or b in ment_side:
+                worst_pairs.append((v, a, b))
+            else:
+                phys_max = max(phys_max, v)
+    worst_pairs.sort(reverse=True)
+    print("    combined-bank residual clustering (evidence of two dimensions):")
+    for v, a, b in worst_pairs[:4]:
+        print(f"      Q3({a}, {b}) = {v:+.3f}")
+    checks.append(("COMBINED physical side locally independent",
+                   phys_max < 0.25, f"max phys-phys Q3 {phys_max:+.3f}"))
+    checks.append(("COMBINED mental residuals cluster (two-dim evidence)",
+                   worst_pairs[0][0] > 0.2,
+                   f"max mental-pair Q3 {worst_pairs[0][0]:+.3f}"))
+    checks.append(("COMBINED EAP identity", abs(ids["COMBINED"] - 1.0) < 0.05,
+                   f"{ids['COMBINED']:.3f}"))
+
     # ---------------- invariance test on P-FULL -----------------------------
     if not args.skip_invariance:
         print("\ninvariance: item parameters freed across three age bands")
@@ -190,7 +247,7 @@ def main(argv=None) -> int:
     # ---------------- age-profile sensitivity: the ever question ------------
     print("\nlatent age profiles mu_a (the ever-accumulation check):")
     prof = pd.DataFrame({"age": AGES})
-    for name in ("P-FUNC", "P-FULL", "P-REC", "MENT"):
+    for name in ("P-FUNC", "P-FULL", "P-REC", "MENT", "COMBINED"):
         prof[f"mu_{name}"] = mgs[name].mu
         prof[f"sigma_{name}"] = mgs[name].sigma
     for name in ("P-FUNC", "P-FULL", "P-REC"):
@@ -203,7 +260,8 @@ def main(argv=None) -> int:
     base["theta_phys_func"] = scores["P-FUNC"]["theta"]
     base["theta_phys_func_sd"] = scores["P-FUNC"]["theta_sd"]
     for name, col in (("P-FULL", "theta_phys_full"), ("P-REC", "theta_phys_rec10"),
-                      ("MENT", "theta_ment")):
+                      ("MENT", "theta_ment"), ("COMBINED", "theta_combined"),
+                      ("P-TIMED", "theta_phys_timed")):
         s = scores[name][["pidp", "wave", "theta", "theta_sd"]].rename(
             columns={"theta": col, "theta_sd": f"{col}_sd"})
         base = base.merge(s, on=["pidp", "wave"], how="outer")
@@ -212,6 +270,8 @@ def main(argv=None) -> int:
     base["grmh_phys_func"] = grmh_from_theta(
         fits["P-FUNC"], base["theta_phys_func"].to_numpy())
     base["grmh_ment"] = grmh_from_theta(fits["MENT"], base["theta_ment"].to_numpy())
+    base["grmh_combined"] = grmh_from_theta(
+        fits["COMBINED"], base["theta_combined"].to_numpy())
 
     # correlations with the original 4-testlet GRM
     old = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "grm_scores.parquet")

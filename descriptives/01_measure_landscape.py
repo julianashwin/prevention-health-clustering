@@ -30,8 +30,8 @@ from prevention_health_clustering.measures.items import GHQ_ITEM_STEMS
 MEASURES = [
     "sf12pcs_dv", "sf12mcs_dv", "PCS_phys_only", "PCS_uk_promax",
     "sf6d_utility", "grm_theta", "theta_phys_func", "theta_phys_full",
-    "theta_phys_rec10", "theta_ment", "grmh_phys_full", "grmh_ment",
-    "ghq_likert", "ill", "n_chronic",
+    "theta_phys_rec10", "theta_ment", "theta_combined", "grmh_phys_full",
+    "grmh_ment", "ghq_likert", "ill", "n_chronic",
 ]
 
 
@@ -72,6 +72,8 @@ def main() -> int:
     print(corr["theta_phys_full"].round(3).to_string())
     print("\ncorrelations with the new mental GRM (theta_ment):")
     print(corr["theta_ment"].round(3).to_string())
+    print("\ncorrelations with the combined GRM (theta_combined):")
+    print(corr["theta_combined"].round(3).to_string())
 
     ok = panel["age"].notna() & panel["age"].between(20, 90)
     means = (panel[ok].assign(age=panel.loc[ok, "age"].astype(int))

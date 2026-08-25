@@ -1,0 +1,483 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{graphicx,booktabs,amsmath,microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage[dvipsnames]{xcolor}
+\graphicspath{{figures/}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
+\title{Health measures for the prevention project\\[2pt]
+\large Construction, validation, and the choice among them}
+\author{Julian Ashwin}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\noindent Built and validated by \code{data\_cleaning/03--06} and
+\code{descriptives/01--06}; every number here is printed by those scripts'
+self-validation output. This note records which UKHLS health variables the
+project uses, how each measure is constructed and why, what the new
+graded-response measures deliver against everything that came before them
+(the original physical GRM, PCS/MCS, the physical-only composite, SF-6D,
+GHQ), and how the ever-diagnosis, dimensionality and ceiling questions
+resolve.
+
+\section{The variable inventory}
+
+Measurement models are restricted to items asked in (nearly) every wave, so a
+score means the same thing wherever it lands in the panel. Presence was
+verified against the raw headers of all fifteen \code{indresp} files, labels
+against the UKDA-6614 dictionaries.
+
+\begin{center}\small
+\begin{tabular}{p{7.6cm}p{2.4cm}p{4.6cm}}
+\toprule
+Variables & Waves & Used \\
+\midrule
+SF-12, all 12 items (self-completion preferred) & all 15 & both GRMs; PCS/MCS rebuild; SF-6D \\
+GHQ-12 items (\code{scghqa..l}, 4 categories) & all 15 & mental GRM \\
+Impairment list \code{disdif1..12}, gated on \code{health} & all 15 & physical GRM (FUNC testlet) \\
+Long-standing illness (\code{health}) & all 15 & gate for \code{disdif}; descriptive \\
+Diagnosed conditions (\code{hcond*} families, codes 1--17) & all 15 (\S2) & condition items; sensitivities \\
+Health satisfaction (\code{sclfsat1}) & all 15 & validation outcome only \\
+SWEMWBS; ADL module; loneliness & 1/4/7/10/13; 7/9/11/13; 9--15 & excluded: fail the every-wave rule \\
+GP visits, hospital admissions & 7--15 & criterion-validity outcomes \\
+Height/weight (self-report) & wave 1 only & excluded (biomarkers are UKDA-7251, not held) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Chronic conditions}
+
+\subsection{Construction}
+UKHLS asks the full ``ever diagnosed'' inventory (\code{hcond1..17}) at a
+person's \emph{first} interview; later waves record conditions newly reported
+since the last interview under a name that changes with questionnaire
+redesigns --- \code{hcondn\{i\}} (waves 2--9), \code{hcondcode\{i\}}
+(10--12), \code{hcondncode\{i\}} (13--15), all dictionary-verified. The
+running indicator (\emph{ever had condition $i$ by wave $w$ $\Leftrightarrow$
+reported in any family at any wave $\le w$}) is monotone and defined from the
+first inventory onward (76\% of person-waves). Only the wave-1 code list is
+used, so the definition is identical in every wave. Per-condition indicators,
+diagnosis ages and group counts live in
+\code{chronic\_conditions.parquet}; nothing is collapsed before modelling.
+
+This corrects two defects in the earlier EIT count, which used
+\code{hcondns*} (``still has \emph{newly diagnosed} condition'') as its
+new-report family: that family has no codes 6 and 7 at all --- every
+in-panel heart attack and stroke was missed --- and it drops new diagnoses
+reported as already resolved. Our count is $\ge$ the EIT count on
+100.000\% of 458k person-waves (exact on 94.2\%; 26{,}516 documented
+additions, concentrated in MI, stroke and cancer).
+
+\subsection{Why ``ever'', not ``current''}
+The ``still has'' family (\code{hconds\#\#}) is asked \emph{only at the wave
+a condition is reported}: at wave 6, of 5{,}090 ever-asthma respondents,
+$\sim$570 were routed to it. A per-wave ``current'' variable would be
+$\sim$90\% carry-forward imputation. Beyond measurability, self-reported
+remission conflates control with cure --- managed hypertension and diabetes
+read as ``no longer have'', the mechanism behind the under-reporting found
+against measured disease (Johnston, Propper \& Shields 2009) and GP records
+(Kriegsman et al.\ 1996: good agreement for diabetes, poor for heart disease
+and arthritis). The monotone ever-indicator matches the deficit-accumulation
+tradition (Mitnitski, Mogilner \& Rockwood 2001; Searle et al.\ 2008). Its
+genuine cost --- old diagnoses shadowing current health --- is quantified in
+\S\ref{sec:ever}, not assumed away.
+
+\subsection{Why grouped, not seventeen indicators}
+Grouping is the testlet logic applied to diagnoses. CHD, angina, MI, CHF and
+stroke are one disease process reported several ways; as separate items they
+would violate local independence exactly as the \code{sf2a}/\code{sf2b} pair
+did before the original GRM collapsed them (Wainer \& Kiely 1987; Yen 1993).
+Rare conditions (1--2\% prevalence) also make weak, unstable IRT items ---
+minimum prevalence is an explicit deficit-inclusion criterion in Searle et
+al.\ (2008) --- and groups keep a stable clinical meaning while the code list
+grows (cf.\ Barnett et al.\ 2012). An ordinal within-group count (0/1/2+)
+keeps a severity gradient the way $\mathrm{PF}=\code{sf2a}+\code{sf2b}$ does.
+Groups: \textbf{CVD} \{CHF, CHD, angina, MI, stroke\}, \textbf{METAB}
+\{diabetes, hypertension\}, \textbf{RESP} \{asthma, bronchitis, emphysema\},
+\textbf{MSK} \{arthritis\}, \textbf{CANCER}, \textbf{OTHER} \{thyroid,
+liver, epilepsy\}; \textbf{DEPR} \{clinical depression\} sits on the mental
+side. Ever-prevalence: hypertension 21.4\%, arthritis 16.2\%, depression
+8.2\%, diabetes 7.2\%, any CVD event 7.4\%, cancer 5.1\%.
+
+\subsection{Diagnosis timing}
+Every inventory report carries \code{hconda\#\#} (age told); every in-panel
+report is dated by its wave: \textbf{100.0\% of ever-flags carry a usable
+diagnosis age}, so recency-restricted variants are exact. The stock is old:
+median diagnosis age 11 years (p25 = 5, p75 = 21); at ages 65--80, 54\% of
+flags are $>$10 years old, 26\% $>$20.
+
+\section{The graded-response measures}
+
+\subsection{Why separate physical and mental banks}
+The measurement model must stay a static map from responses to a score
+(dynamics are estimated afterwards), and PROMIS practice is separate
+unidimensional banks per domain (Cella et al.\ 2010). Two clean banks also
+make the physical--mental correlation an \emph{estimate} rather than an
+artifact: the SF-12's orthogonal scoring forces $r(\mathrm{PCS},
+\mathrm{MCS})=0$; our corrected promax on the subscales gives 0.59; published
+correlated-scoring estimates are 0.62 (Farivar, Cunningham \& Hays 2007) and
+0.71--0.73 (Tucker et al.); the two GRM thetas correlate \textbf{0.457}.
+Cross-loading SF-12 items are assigned by this repo's own UK wave-1 varimax
+loadings (phys/ment): PF .86/.14, RP .85/.25, BP .75/.17, GH .72/.27
+$\rightarrow$ physical; MH .09/.89, RE .26/.82, SF .48/.64 $\rightarrow$
+mental. \textbf{VT (energy, .55/.44) enters neither bank} (PROMIS likewise
+treats fatigue as its own domain); cognitive and sensory \code{disdif} items
+are separate WHODAS-type constructs and are excluded from both.
+
+\subsection{The banks}
+Every item is coded so category 1 is worst health.
+
+\begin{center}\small
+\begin{tabular}{lp{11.6cm}}
+\toprule
+Spec & Items \\
+\midrule
+P-FUNC & GH, PF, RP, BP (the validated original testlets) + FUNC: count of
+physical \code{disdif} limitations \{mobility, lifting, dexterity,
+coordination, personal care\}, 0/1/2/3+; \code{health}=``no'' is a valid
+structural zero (module skipped by design) \\
+P-FULL & P-FUNC + six ever-diagnosis group items (CVD/METAB/RESP 0/1/2+;
+MSK/CANCER/OTHER binary) \\
+P-REC & as P-FULL, counting only diagnoses within the last 10 years \\
+P-TIMED & as P-FULL with each group split into recent ($\le$10y) and stale
+($>$10y) items --- the model \emph{estimates} the recency weighting
+(\S\ref{sec:ever}) \\
+MENT & MH ($(6-\code{sf6a})+\code{sf6c}-1$, 9 levels), RE, SF, GHQ-positive
+and GHQ-negative wording testlets (19 levels each), ever-depression \\
+COMBINED & P-FULL $\cup$ MENT: all seventeen good-coverage items in one bank
+(\S\ref{sec:combined}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+GHQ-12 is validated internationally (Goldberg et al.\ 1997) but its
+factor-analytic ``dimensions'' largely reflect negative-wording method
+effects (Hankins 2008, contra Graetz 1991). The pre-specified rule ---
+fit item-level; collapse by wording if Yen's $Q_3$ shows positive
+within-wording dependence --- \emph{triggered} (within-wording $Q_3$ max
+$+0.26$), the same cure the original GRM applied to the PF/RP pairs.
+
+\subsection{Estimation and diagnostics}
+Same machinery as the exactly-replicated original (Samejima 1969; marginal ML
+by EM over response patterns, 121-point quadrature, pooled latent
+$N(0,1)$; multigroup by single year of age 20--90 for $\mu_a,\sigma_a$).
+Samples: P-FUNC 497{,}423 person-years; P-FULL/P-REC/P-TIMED 387{,}599
+(condition items exist from first inventory); MENT 379{,}462; COMBINED
+376{,}019.
+
+\begin{center}\small
+\begin{tabular}{lccccc}
+\toprule
+ & P-FUNC & P-FULL & P-REC & MENT & COMBINED \\
+\midrule
+max positive $Q_3$ & $-0.048$ & $+0.144$ & $+0.080$ & $+0.153$ & $+0.582^{\dagger}$ \\
+EAP identity ($\mathrm{var}+E[\mathrm{psd}^2]$) & 1.000 & 1.000 & 1.000 & 1.000 & 0.999 \\
+$r$ with original GRM $\theta$ & 0.994 & 0.985 & --- & --- & 0.917 \\
+\bottomrule
+\end{tabular}
+
+{\scriptsize $^{\dagger}$the mental-pair clustering that is itself the
+two-dimensionality evidence; the physical side stays clean (\S\ref{sec:combined}).}
+\end{center}
+
+Discriminations: the functioning items dominate --- FUNC $a=3.3$ (P-FUNC:
+GH 2.0, PF 3.7, RP 3.4, BP 2.4) --- while the condition-group items are weak
+(CVD 1.15, MSK 0.85, RESP 0.68, METAB 0.59, CANCER 0.58, OTHER 0.62): once
+functioning is measured well, a diagnosis adds little about \emph{current}
+physical health. On the mental side, the GHQ negative-wording testlet
+($a=3.15$) and MH (2.75) carry the bank; the ever-depression diagnosis is
+again weak (0.97).
+
+\begin{figure}[t]
+\includegraphics[width=\linewidth]{fig_grm_information}
+\caption{What each GRM is made of: stacked item information over the latent
+scale, with the implied measurement SE (dashed). FUNC adds a broad band of
+precision on the ill side; the condition items are visibly thin; GHQ-negative
+dominates the mental bank; the combined bank is tallest and widest but its SE
+still rises sharply above $\theta \approx +1$.}
+\label{fig:info}
+\end{figure}
+
+\section{How the measures relate}
+
+Correlations over all person-years (\code{descriptives/01}):
+
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+ & $\theta$ phys (FULL) & $\theta$ ment & $\theta$ combined \\
+\midrule
+original GRM (4 testlets) & \textbf{0.985} & 0.48 & 0.92 \\
+UKHLS PCS & 0.904 & 0.23 & 0.76 \\
+physical-only composite & 0.946 & 0.48 & 0.90 \\
+UKHLS MCS & 0.27 & \textbf{0.882} & 0.58 \\
+GHQ-12 Likert & $-0.38$ & $\mathbf{-0.904}$ & $-0.64$ \\
+SF-6D utility & 0.71 & \textbf{0.799} & 0.88 \\
+chronic count & $-0.58$ & $-0.21$ & $-0.51$ \\
+$\theta$ phys $\times$ $\theta$ ment & \multicolumn{3}{c}{\textbf{0.457}} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Three reads. The physical GRM is the object the project already validated,
+with functioning attached. The mental GRM is the MCS/GHQ construct without
+the orthogonality artifact. SF-6D correlates \emph{more} with the mental
+theta (0.80) than the physical one (0.71) --- and its closest cousin is the
+\emph{combined} bank (0.88): the SF-6D was a mixed measure all along.
+
+\begin{figure}[t]
+\includegraphics[width=\linewidth]{fig_moments_grid}
+\caption{Mean, variance and the rows of the covariance matrix (the empirics
+note's anatomy), rebuilt for the new measures. The mental GRM shows the
+textbook late-life wellbeing improvement; long-standing illness and the
+chronic count give the same physical anatomy from items disjoint from the
+SF-12.}
+\label{fig:moments}
+\end{figure}
+
+\begin{figure}[t]
+\includegraphics[width=\linewidth]{fig_cluster_trajectories}
+\caption{Partial K-means trajectory clusters ($K=3$, 50 seeded inits, sample
+fixed at people with $\ge 3$ observed baseline-PCS ages, ages 20--90).}
+\label{fig:clusters}
+\end{figure}
+
+Partial K-means (Figure~\ref{fig:clusters}): changing the \emph{scoring}
+moves the typology modestly while changing the \emph{construct} redraws it.
+The physical-only composite agrees with the baseline at ARI 0.67 (88\% same
+cluster); the IRT re-spacings sit at ARI 0.43 (original GRM) and 0.41 (GRM-2
+physical); SF-6D at 0.19 --- and the mental GRM partitions people
+near-independently of the physical baseline (\textbf{ARI 0.07}; 49\%
+same-cluster against a 47\% chance rate). The physical typology is robust to
+how physical health is scored; the mental dimension is genuinely new
+information.
+
+\section{The ever-diagnosis question, resolved}
+\label{sec:ever}
+
+The misgiving: historical diagnoses accumulate mechanically with age, so a
+diagnosis-bearing measure could manufacture ``decline'' out of stale
+paperwork. Four reads.
+
+\begin{figure}[t]
+\includegraphics[width=\linewidth]{fig_ever_sensitivity}
+\caption{(a) latent age profiles with and without diagnoses and with only
+recent diagnoses; (b) the staleness of the ever-stock; (c) the score penalty
+against the age of the oldest diagnosis.}
+\label{fig:ever}
+\end{figure}
+
+\textbf{(1) The aggregate effect is real but bounded.}
+$\mu(80)-\mu(30)$ is $-1.117$ SD functioning-only, $-1.247$ with
+ever-diagnoses, $-1.170$ with only diagnoses $\le$10 years old. Diagnoses
+steepen the measured lifecycle decline by 0.130 SD (12\%), and 59\% of that
+extra steepness comes from diagnoses more than a decade old --- leaving the
+stale-accumulation component at $\sim$6\% of the total decline.
+
+\textbf{(2) The potential was much larger than the realised effect.} Half
+the ever-stock is $>$10 years old at every age past 40 (\S2.4). The damage
+stays small because the estimator protects itself: items that cannot predict
+the functioning responses get low discriminations, so stale-heavy condition
+items simply carry little weight.
+
+\textbf{(3) The items cannot tell stale from fresh --- which cuts both
+ways.} The person-level penalty $\theta_{\mathrm{full}} -
+\theta_{\mathrm{func}}$ is flat in the age of the oldest diagnosis ($-0.05$
+SD at 0--5 years, $-0.075$ at 30+). Read as measurement of \emph{current}
+health, that is exactly the mechanism feared: no within-item discounting
+exists. It is an argument \emph{against trusting ever-items as current-state
+measures}, and simultaneously the reason their damage is capped.
+
+\textbf{(4) Asked directly, the data mostly decline to discount.} P-TIMED
+splits every group into recent ($\le$10y) and stale ($>$10y) items and lets
+the model estimate their separate discriminations --- the in-framework
+analogue of an estimated recency-weight function:
+
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+Group & $a$ recent & $a$ stale & ratio \\
+\midrule
+CVD & 1.19 & 1.21 & 0.99 \\
+METAB & 0.59 & 0.81 & 0.72 \\
+RESP & 0.68 & 0.29 & \textbf{2.31} \\
+MSK & 0.83 & 1.22 & 0.68 \\
+CANCER & 0.59 & 0.56 & 1.05 \\
+OTHER & 0.63 & 0.63 & 1.00 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Only respiratory disease wants a discount (remitting childhood asthma). For
+arthritis and the metabolic conditions the \emph{stale} item is more
+informative --- progressive diseases, where an old diagnosis means longer
+duration and worse current health. The mechanistic-accumulation story is
+really a story about \emph{remitting} conditions; for progressive conditions
+the old diagnosis is legitimately informative.
+
+\textbf{Related literature.} Estimating recency weights on past exposures is
+the weighted-cumulative-exposure literature (Sylvestre \& Abrahamowicz 2009;
+review in Kelly et al.\ 2024; R package \code{WCE}), with spline-estimated
+weight-by-recency functions --- P-TIMED is its two-knot IRT analogue.
+Letting item parameters vary continuously with a covariate such as time
+since diagnosis is moderated nonlinear factor analysis (Bauer \& Hussong
+2009; regularised variants for DIF detection), the natural next refinement
+if a smooth weighting is ever needed. The simpler administrative-data
+practice is a fixed lookback window (Preen et al.\ 2006), which P-REC
+implements. Health-state valuation handles the same issue with acute
+vs.\ post-acute utilities for events like stroke.
+
+\textbf{Verdict.} For lifecycle \emph{dynamics}, use P-FUNC (or the original
+GRM, $r=0.994$): a pure current-state instrument. P-FULL is a sound
+descriptive companion whose accumulation bias is now characterised and
+bounded ($\sim$0.08--0.13 SD over the lifecycle, concentrated in remitting
+conditions); P-REC and P-TIMED are its sensitivity band. Where conditions
+matter substantively, model them as separate channels in the Bayesian
+mixture, where ``ever'' is the correct state variable.
+
+\section{One dimension or two? The combined GRM}
+\label{sec:combined}
+
+The combined bank (all seventeen items, one latent dimension) fits, scores,
+and correlates sensibly ($r=0.92$ with the physical bank, 0.75 with the
+mental, 0.88 with SF-6D). But it fails the assumption the others satisfy:
+after conditioning on its single dimension, the mental items remain strongly
+positively correlated --- $Q_3(\mathrm{MH}, \mathrm{GHQ}^-)=+0.58$,
+$Q_3(\mathrm{GHQ}^+, \mathrm{GHQ}^-)=+0.54$, $Q_3(\mathrm{MH},
+\mathrm{RE})=+0.33$ --- while the physical side stays clean (max
+phys--phys $Q_3$ $+0.20$). That residual clustering is the data saying the
+mental items share a dimension the combined score cannot represent: with
+$r(\theta_P,\theta_M)=0.457$, one dimension is a genuine misspecification,
+not a summary. The same criteria table shows the cost in substance: the
+combined score reintroduces a mental-health artifact of $-0.82$ SD at a
+fixed physical profile (the physical banks: $0.00$), and its cohort spread
+collapses to 0.06 SD not because it is clean but because physical health
+improving and mental health deteriorating across cohorts \emph{cancel}
+inside it --- precisely the mixing the EIT note warned about. Use it only
+where a single index is externally imposed; a bifactor model (general +
+physical/mental group factors) would be the defensible one-number
+construction if that need becomes real.
+
+\begin{figure}[t]
+\includegraphics[width=\linewidth]{fig_grm_versions}
+\caption{The measure-choice panel across GRM versions (the empirics note's
+Figure 26, rebuilt): mean age path, fanning, top-censoring, and the two
+contamination reads.}
+\label{fig:versions}
+\end{figure}
+
+\section{Ceiling and floor}
+\label{sec:ceiling}
+
+Two different questions hide under ``ceiling effects'': how much probability
+mass sits at the best attainable response profile, and whether the
+instrument can \emph{discriminate} among the healthy. More items help
+enormously with the first and only marginally with the second.
+
+\begin{center}\small
+\begin{tabular}{lrrrrr}
+\toprule
+Measure & ceiling \% & floor \% & range (sd units) & psd at top & psd at bottom \\
+\midrule
+UKHLS PCS (12 items) & 0.89$^{a}$ & $\sim$0 & 6.5 & --- & --- \\
+Physical-only composite & 9.95 & 0.91 & 4.1 & --- & --- \\
+SF-6D utility & 2.98 & 0.18 & 4.7 & --- & --- \\
+GHQ-12 Likert & 0.20 & 0.31 & 6.4 & --- & --- \\
+GRM original (4 testlets) & 9.55 & 0.97 & 4.4 & 0.65 & 0.45 \\
+P-FUNC & 9.53 & 0.76 & 4.5 & 0.65 & 0.44 \\
+P-FULL & 7.16 & 0.00 & 5.3 & 0.64 & 0.56 \\
+MENT & 0.11 & 0.03 & 6.5 & 0.60 & 0.45 \\
+COMBINED & 0.05 & 0.00 & 7.5 & 0.66 & 0.55 \\
+\bottomrule
+\end{tabular}
+
+{\scriptsize $^{a}$share at the all-best 12-item profile (the exact-maximum
+read is degenerate for a continuous derived score). ``psd'' is the EAP
+posterior sd at the all-best / all-worst response pattern.}
+\end{center}
+
+The optimistic half of the hypothesis is confirmed: ceiling mass collapses
+from 9.5\% (original GRM) to 7.2\% with conditions and to 0.05--0.11\% for
+the mental and combined banks, and the floors of P-FULL and COMBINED empty
+entirely. Panel (c) of Figure~\ref{fig:versions} shows where it binds: the
+young end, where the physical banks still park 12--15\% of person-years at
+the maximum.
+
+The pessimistic half is also right, and Figure~\ref{fig:info} shows why: the
+posterior sd at the very top is $\sim$0.6--0.66 \emph{for every version} ---
+seventeen items buy no more precision among the healthy than four, because
+every added item has strongly negative thresholds (all these instruments
+measure ill-health). Extra items \emph{spread} the top mass into a finer
+ranking (ties broken by GHQ and diagnoses) without adding information where
+the healthy live. Genuinely fixing the ceiling requires items with positive
+thresholds --- vigorous-functioning items of the PROMIS physical-function
+type --- which UKHLS does not carry. For the mixture models this is a
+manageable, known feature: the likelihood sees ordered categories, not the
+score, and the ceiling category is one of them.
+
+\section{Recommendations}
+
+\begin{enumerate}\itemsep2pt
+\item Physical health for lifecycle dynamics: \textbf{P-FUNC} (or the
+original GRM). Mental health: \textbf{MENT}. Report both; their correlation
+(0.457) is a finding, not an assumption.
+\item \textbf{P-FULL} as the descriptive companion when condition burden
+should show in the score; P-REC/P-TIMED quantify its recency sensitivity.
+\item Conditions in the Bayesian mixture as separate channels; ``ever'' is
+the right state variable there.
+\item Avoid the combined score unless a single index is externally required;
+if it is, build the bifactor version first.
+\item SF-6D: treat as a mixed physical--mental utility (its closest GRM
+cousin is the combined bank), never as a physical measure; licence before
+publishing utilities.
+\end{enumerate}
+
+\section{Reproducibility}
+
+\begin{center}\small
+\begin{tabular}{lp{6.4cm}}
+\toprule
+\code{data\_cleaning/03\_build\_measures.py} & SF-12/SF-6D layer; validates
+against the construction note (max err 0.0054, 528{,}485 rows, the 6.6-pt
+artifact, tariff checks) \\
+\code{data\_cleaning/04\_build\_grm.py} & original GRM replicated to
+$10^{-5}$ on all 498{,}424 person-waves \\
+\code{data\_cleaning/05\_build\_chronic.py} & chronic layer; 100\% timing
+coverage; $\ge$ EIT count on 100.000\% of rows \\
+\code{data\_cleaning/06\_build\_grm2.py} & all GRM-2 specs; Q3, EAP
+identity, invariance, recency weights \\
+\code{descriptives/01--06} & measure panel, correlations, the five figures,
+ceiling/floor table \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Everything under \code{data/} derives from licensed UKHLS microdata and is
+never committed; all figures are aggregate statistics.
+
+\subsection*{References}
+{\small
+Barnett et al.\ (2012) \emph{Lancet} 380:37--43.
+Bauer \& Hussong (2009) \emph{Psychol Methods} 14:101--25.
+Cella et al.\ (2010) \emph{J Clin Epidemiol} 63:1179--94.
+Farivar, Cunningham \& Hays (2007) \emph{Health Qual Life Outcomes} 5:54.
+Goldberg et al.\ (1997) \emph{Psychol Med} 27:191--7.
+Graetz (1991) \emph{Soc Psychiatry Psychiatr Epidemiol} 26:132--8.
+Hankins (2008) \emph{Clin Pract Epidemiol Ment Health} 4:10.
+Johnston, Propper \& Shields (2009) \emph{J Health Econ} 28:540--52.
+Kelly et al.\ (2024) \emph{Pharmacoepidemiol Drug Saf} 33:e5701.
+Kriegsman et al.\ (1996) \emph{J Clin Epidemiol} 49:1407--17.
+Mitnitski, Mogilner \& Rockwood (2001) \emph{ScientificWorldJournal} 1:323--36.
+Preen et al.\ (2006) \emph{J Clin Epidemiol} 59:940--6.
+Samejima (1969) \emph{Psychometrika Monogr} 17.
+Searle et al.\ (2008) \emph{BMC Geriatr} 8:24.
+Sylvestre \& Abrahamowicz (2009) \emph{Stat Med} 28:3437--53.
+Wainer \& Kiely (1987) \emph{J Educ Meas} 24:185--201.
+Ware, Kosinski \& Keller (1996) \emph{Med Care} 34:220--33.
+Yen (1993) \emph{J Educ Meas} 30:187--213.
+}
+
+\end{document}
