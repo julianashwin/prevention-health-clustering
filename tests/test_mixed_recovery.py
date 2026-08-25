@@ -152,6 +152,25 @@ def main(argv=None) -> int:
           f"adl {counts['adl_limitation_count']:,}")
 
     payload = build_mixed_payload(spec, frame)
+
+    # Truth is defined in published-scale z units, but the payload standardises
+    # by the SIMULATED sample's own moments, which differ (the simulated
+    # between-class variance need not match the real panel's). Compare on the
+    # fitted scale, or a perfect model looks biased: before this transform the
+    # test failed pcs.alpha1 by +0.23 purely through an 11.8% scale gap.
+    fitted_truth = {"theta": TRUTH["theta"]}
+    for name, ch in (("pcs", "sf12pcs_dv"), ("mcs", "sf12mcs_dv")):
+        pub_m, pub_s = RAW[ch]
+        fit_m = payload.channel_moments[ch]["mean"]
+        fit_s = payload.channel_moments[ch]["sd"]
+        fitted_truth[name] = {
+            "alpha": [(a * pub_s + pub_m - fit_m) / fit_s for a in TRUTH[name]["alpha"]],
+            "beta": [b * pub_s / fit_s for b in TRUTH[name]["beta"]],
+            "gamma": [g * pub_s / fit_s for g in TRUTH[name]["gamma"]],
+            "sigma": TRUTH[name]["sigma"] * pub_s / fit_s,
+        }
+    for key in ("srh", "chronic", "adl"):
+        fitted_truth[key] = TRUTH[key]  # not standardised; no transform
     inits = mixed_assignment_inits(spec, payload, jitter=args.init_jitter)
     print(f"  partition init theta start "
           f"{[round(v, 3) for v in inits[0]['theta']]}")
@@ -185,9 +204,9 @@ def main(argv=None) -> int:
             for i in range(k):
                 record("gauss",
                        float(draws[f"coef_gauss[{ci},{i+1},{col}]"].mean()),
-                       TRUTH[name][pname][i], f"{name}.{pname}{i+1}")
+                       fitted_truth[name][pname][i], f"{name}.{pname}{i+1}")
         record("sigma", float(draws[f"sigma_gauss[{ci}]"].mean()),
-               TRUTH[name]["sigma"], f"{name}.sigma")
+               fitted_truth[name]["sigma"], f"{name}.sigma")
     for i in range(k):
         record("srh", float(draws[f"coef_srh[{i+1},1]"].mean()),
                TRUTH["srh"]["eta"][i], f"srh.eta{i+1}")

@@ -105,6 +105,22 @@ def main(argv=None) -> int:
     out = args.output / args.model
     payload = build_payload(spec, frame)
 
+    # Compare on the fitted scale: the payload standardises by the simulated
+    # sample's own moments, not the published ones truth is written in. The
+    # distortion here is only ~3-5% (it hid inside the tolerances), but the
+    # mixed-model test failed outright on the same artifact at 11.8%.
+    fitted_truth = {}
+    for channel in spec.channels:
+        t_ = TRUTH[channel]
+        fit_m = payload.channel_moments[channel]["mean"]
+        fit_s = payload.channel_moments[channel]["sd"]
+        fitted_truth[channel] = {
+            "alpha": [(a * t_["sd"] + t_["mean"] - fit_m) / fit_s for a in t_["alpha"]],
+            "beta": [b * t_["sd"] / fit_s for b in t_["beta"]],
+            "gamma": [g * t_["sd"] / fit_s for g in t_["gamma"]],
+            "sigma": t_["sigma"] * t_["sd"] / fit_s,
+        }
+
     inits = None
     if args.assignment_init:
         inits = assignment_inits(spec, payload, jitter=args.init_jitter)
@@ -136,13 +152,13 @@ def main(argv=None) -> int:
         for col, name in ((1, "alpha"), (2, "beta"), (3, "gamma")):
             for i in range(1, k + 1):
                 got = float(draws[f"coef[{ci},{i},{col}]"].mean())
-                truth = t[name][i - 1]
+                truth = fitted_truth[channel][name][i - 1]
                 d = got - truth
                 worst[name] = max(worst.get(name, 0), abs(d))
                 print(f"{channel:12s} {name + str(i):8s} {got:11.5f} {truth:11.5f} {d:10.5f}")
         row = 1 if spec.homosigma else 1
         got = float(draws[f"sigma[{row},{ci}]"].mean())
-        d = got - t["sigma"]
+        d = got - fitted_truth[channel]["sigma"]
         worst["sigma"] = max(worst.get("sigma", 0), abs(d))
         print(f"{channel:12s} {'sigma':8s} {got:11.5f} {t['sigma']:11.5f} {d:10.5f}")
 
