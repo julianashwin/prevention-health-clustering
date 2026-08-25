@@ -418,6 +418,50 @@ type --- which UKHLS does not carry. For the mixture models this is a
 manageable, known feature: the likelihood sees ordered categories, not the
 score, and the ceiling category is one of them.
 
+\subsection*{The floor, in depth}
+
+The floor is the mirror image, and here the added items genuinely work ---
+their negative thresholds sit exactly where the severely ill live
+(\code{descriptives/06}, \code{floor\_depth.csv}):
+
+\begin{center}\small
+\begin{tabular}{lccccccc}
+\toprule
+ & \multicolumn{3}{c}{measurement SE at $\theta=$} & min & \% $<-3$ &
+\% at worst & distinct $\theta$ in \\
+ & $-4$ & $-3$ & $-2$ & $\theta$ & & pattern & bottom 1\% \\
+\midrule
+GRM original & 2.15 & 0.73 & 0.33 & $-2.61$ & 0.00 & 0.97 & \textbf{2} \\
+P-FUNC & 2.12 & 0.67 & 0.30 & $-2.68$ & 0.00 & 0.76 & 3 \\
+P-FULL & \textbf{0.95} & \textbf{0.55} & 0.29 & $-3.38$ & 0.03 & 0.00 & \textbf{575} \\
+MENT & 0.56 & 0.34 & 0.33 & $-3.72$ & 0.30 & 0.03 & 1{,}524 \\
+COMBINED & \textbf{0.55} & \textbf{0.37} & 0.28 & $-4.43$ & 0.24 & 0.00 & 3{,}708 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The original GRM (and P-FUNC) have a real floor problem: the instrument goes
+dark below $\theta\approx-2.5$ (SE 0.7 at $-3$, 2.1 at $-4$), the scale
+simply ends at $-2.6$, and the entire bottom percentile collapses onto two
+or three response patterns --- the worst-off are a spike, not a
+distribution. The condition items repair precisely this: their thresholds
+($-2.6$ to $-4.6$) are the only ones deep in the ill tail, so P-FULL keeps
+SE at 0.55 at $\theta=-3$, extends the scale to $-3.4$, empties the
+worst-pattern spike entirely, and resolves the bottom percentile into 575
+distinct positions. Among the P-FUNC bottom \emph{decile} (37.6k
+person-years --- the population a prevention analysis targets), P-FUNC
+distinguishes 1{,}252 values, P-FULL 16{,}522, COMBINED essentially one per
+person-year. The mental bank has the best floor of all (GHQ thresholds reach
+$-3.5$; SE 0.34 at $-3$).
+
+This sharpens the ever-diagnosis trade-off of \S\ref{sec:ever}: the
+diagnosis items' cost is a bounded accumulation bias in the age gradient;
+their benefit is measurement depth among the severely ill, which
+functioning items alone cannot provide because severe limitation saturates
+them. For analyses that turn on the worst-health group --- describing the
+bottom class, targeting --- P-FULL is the better physical instrument; for
+population dynamics, P-FUNC remains the clean choice.
+
 \section{Recommendations}
 
 \begin{enumerate}\itemsep2pt

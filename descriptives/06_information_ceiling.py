@@ -142,6 +142,35 @@ def main() -> int:
     tab = pd.DataFrame(rows)
     tab.to_csv(ARTIFACTS_DIR / "descriptives" / "ceiling_floor.csv", index=False)
     print(tab.round(3).to_string(index=False))
+
+    # ---- the floor, in depth ----------------------------------------------
+    # SE by latent position: which versions keep measuring below theta = -2?
+    probe = np.array([-4.0, -3.0, -2.5, -2.0, -1.0, 0.0])
+    frames = {"grm_theta": old["grm_theta"],
+              "theta_phys_func": scores["theta_phys_func"],
+              "theta_phys_full": scores["theta_phys_full"],
+              "theta_ment": scores["theta_ment"],
+              "theta_combined": scores["theta_combined"]}
+    floor_rows = []
+    for name, (fname, spec, col) in SPECS.items():
+        items = load_items(fname, spec)
+        info = sum(item_information(a, b, probe) for a, b in items.values())
+        se = 1 / np.sqrt(np.maximum(info, 1e-12))
+        x = frames[col].dropna()
+        q01 = x.quantile(0.01)
+        floor_rows.append({
+            "spec": name,
+            **{f"se_at_{t:+.1f}": v for t, v in zip(probe, se)},
+            "min_theta": x.min(),
+            "pct_below_-2": 100 * (x < -2).mean(),
+            "pct_below_-3": 100 * (x < -3).mean(),
+            "pct_at_worst_pattern": 100 * (x <= x.min() + 1e-9).mean(),
+            "distinct_in_bottom_1pct": int(x[x <= q01].nunique()),
+        })
+    ftab = pd.DataFrame(floor_rows)
+    ftab.to_csv(ARTIFACTS_DIR / "descriptives" / "floor_depth.csv", index=False)
+    print("\nfloor depth (SE by latent position; tail occupancy and clumping):")
+    print(ftab.round(3).to_string(index=False))
     return 0
 
 
