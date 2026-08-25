@@ -7,7 +7,7 @@ sits in the same region of parameter space as the real data.
 
 Run directly:
 
-    PYTHONPATH=src .venv/bin/python tests/test_synthetic_recovery.py
+    PYTHONPATH=src .venv/bin/python clustering/validation/synthetic_recovery_v1.py
 """
 
 from __future__ import annotations

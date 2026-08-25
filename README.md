@@ -1,36 +1,58 @@
 # prevention-health-clustering
 
-Bayesian latent-class health trajectory models for Understanding Society (UKHLS).
+Health trajectory analysis for Understanding Society (UKHLS): data
+construction, health measures, descriptives, Bayesian latent-class models,
+and (planned) policy analysis.
 
 A focused rebuild of the analysis core from `ukhls-health-clusters`, carrying
-only the parts that are verified, used, and understood. The predecessor
-repository remains the archive of record for published evidence and its audit
-trail.
+only what is verified, used, and understood. The predecessor repository remains
+the archive of record for published evidence and its audit trail.
 
-## Status
+## Layout
 
-| Step | Component | State |
+Workstream folders hold thin scripts; everything reusable lives in one
+installable package they all import.
+
+```
+├── data_cleaning/   raw extract -> panel -> frozen contracts -> measures
+├── descriptives/    figures and tables            -> artifacts/descriptives/
+├── clustering/      model fits, validation, benchmarks -> artifacts/
+├── policy/          counterfactual analysis (planned)
+├── src/prevention_health_clustering/
+│   ├── data/        UKHLS ingest and cleaning
+│   ├── measures/    health measures (SF-12 rebuild, phys, SF-6D, GRM) [next]
+│   ├── contracts/   frozen sample contracts
+│   ├── models/      Stan programs + the model registry
+│   ├── runner/      payload building, fitting, initialisation
+│   ├── scoring/     folds, held-out scoring, leakage guards
+│   └── plotting/    shared figure style [next]
+├── tests/           fast unit tests of the package
+├── data/            gitignored: licensed inputs and derived data
+└── artifacts/       gitignored: fits, figures, benchmark outputs
+```
+
+Rule of thumb: code lives in its workstream folder until a second stream needs
+it; then it moves into the package.
+
+## Validation scoreboard
+
+| Component | Check | Result |
 |---|---|---|
-| 1 | Data layer and frozen sample contracts | reproduces the published roster exactly |
-| 2 | Gaussian mixture model + registry + runner | in progress |
-| 3 | Held-out scoring | pending |
-| 4 | Multidimensional model | pending |
-
-## Validation
-
-The step-1 contract is checked against the published `six-fit-v1` parameter
-bundle, which was fitted on the same roster:
-
-| Quantity | This repo | Published | Delta |
-|---|---|---|---|
-| Persons | 50,194 | 50,194 | exact |
-| Person-age rows | 446,966 | 446,966 | exact |
-| PCS mean | 49.1684050688419 | 49.1684050688419 | 0 |
-| PCS sd | 11.172456701314845 | 11.1724567013148 | 4.4e-14 |
+| Panel + contracts | vs frozen roster | 50,194 persons / 446,966 rows exact; PCS mean bit-identical |
+| Fold manifest | vs frozen ID | `1797b5c5a937d7f5671d` reproduced exactly |
+| PCS model | full roster vs published | max 0.05 posterior SDs |
+| MCS model | full roster vs published | max 0.04 posterior SDs |
+| Joint PCS+MCS | full roster, dispersed chains | R-hat 1.0036; shares 13.4/27.9/58.7 vs report 13.4/27.5/59.2 |
+| Mixed five-channel | synthetic recovery, off-bounds truth | all groups pass; R-hat 1.008 |
+| Held-out scoring | leakage probe | exactly 0 at a 1e-12 gate |
 
 ## Setup
 
 ```bash
 uv sync --extra dev
 ln -s /path/to/UKDA-6614-tab data/raw/UKDA-6614-tab
+export CMDSTAN=~/.cmdstan/cmdstan-2.38.0
 ```
+
+Then, in order: `data_cleaning/01_build_panel.py`,
+`data_cleaning/02_build_contracts.py`, and the scripts under `clustering/`.
