@@ -20,7 +20,7 @@ installable package they all import.
 ├── policy/          counterfactual analysis (planned)
 ├── src/prevention_health_clustering/
 │   ├── data/        UKHLS ingest and cleaning
-│   ├── measures/    health measures (SF-12 rebuild, phys, SF-6D, GRM) [next]
+│   ├── measures/    SF-12 rebuild, UK variants, phys-only, SF-6D, composites
 │   ├── contracts/   frozen sample contracts
 │   ├── models/      Stan programs + the model registry
 │   ├── runner/      payload building, fitting, initialisation
@@ -45,6 +45,7 @@ it; then it moves into the package.
 | Joint PCS+MCS | full roster, dispersed chains | R-hat 1.0036; shares 13.4/27.9/58.7 vs report 13.4/27.5/59.2 |
 | Mixed five-channel | synthetic recovery, off-bounds truth | all groups pass; R-hat 1.008 |
 | Held-out scoring | leakage probe | exactly 0 at a 1e-12 gate |
+| SF-12 measures | vs the PCS construction note | `sf12pcs_dv` rebuilt to max err 0.0054 (MCS same, given the zero floor); UK norms, variant-D row and the 6.6-pt artifact exact; SF-6D tariff worked example/ceiling/floor pass |
 
 ## Setup
 
@@ -55,4 +56,5 @@ export CMDSTAN=~/.cmdstan/cmdstan-2.38.0
 ```
 
 Then, in order: `data_cleaning/01_build_panel.py`,
-`data_cleaning/02_build_contracts.py`, and the scripts under `clustering/`.
+`data_cleaning/02_build_contracts.py`, `data_cleaning/03_build_measures.py`,
+and the scripts under `clustering/`.
