@@ -18,6 +18,7 @@ from pathlib import Path
 STAN_DIR = Path(__file__).resolve().parent / "stan"
 
 GAUSSIAN_PANEL = STAN_DIR / "mixture_gaussian_panel.stan"
+MIXED_PANEL = STAN_DIR / "mixture_mixed_panel.stan"
 
 
 @dataclass(frozen=True)
@@ -143,6 +144,21 @@ PCS_COHORT = ModelSpec(
     cohort="decade",
 )
 
+MIXED_HEALTH = ModelSpec(
+    name="mixed-health",
+    stan_file=MIXED_PANEL,
+    description=(
+        "Five-channel mixed-outcome model: PCS, MCS (Gaussian), self-rated "
+        "health (ordered logit), chronic count (neg. binomial), ADL "
+        "(hurdle neg. binomial). One shared latent class, PCS-anchored, "
+        "class 1 = worst physical health. No survival channel (five-channel "
+        "family); no tanh caps, unlike the quarantined predecessor fits."
+    ),
+    channels=("sf12pcs_dv", "sf12mcs_dv"),  # gaussian block; other channels fixed
+    anchor_channel="sf12pcs_dv",
+    theta_prior_concentration=0.5,
+)
+
 JOINT_AR1_COHORT = ModelSpec(
     name="joint-ar1-cohort",
     stan_file=GAUSSIAN_PANEL,
@@ -162,6 +178,7 @@ REGISTRY: dict[str, ModelSpec] = {
         PCS_AR1,
         PCS_COHORT,
         JOINT_AR1_COHORT,
+        MIXED_HEALTH,
     )
 }
 

@@ -15,7 +15,11 @@ import numpy as np
 import pandas as pd
 
 from prevention_health_clustering.models.registry import get_model
-from prevention_health_clustering.runner.fit import build_payload, fit_model
+from prevention_health_clustering.runner.fit import (
+    assignment_inits,
+    build_payload,
+    fit_model,
+)
 
 # Published posterior means, standardised scale, native class order.
 REFERENCE = {
@@ -53,6 +57,8 @@ def main(argv=None) -> int:
     parser.add_argument("--warmup", type=int, default=1000)
     parser.add_argument("--sampling", type=int, default=1000)
     parser.add_argument("--threads-per-chain", type=int, default=3)
+    parser.add_argument("--assignment-init", action="store_true")
+    parser.add_argument("--init-jitter", type=float, default=0.15)
     args = parser.parse_args(argv)
 
     spec = get_model(args.model)
@@ -67,8 +73,15 @@ def main(argv=None) -> int:
     for channel, m in payload.channel_moments.items():
         print(f"  {channel:14s} mean {m['mean']!r}  sd {m['sd']!r}")
 
+    inits = None
+    if args.assignment_init:
+        inits = assignment_inits(spec, payload, jitter=args.init_jitter)
+        print(f"  partition init, jitter={args.init_jitter}, "
+              f"theta start {[round(v, 3) for v in inits[0]['theta']]}")
+
     fit = fit_model(
         spec, payload,
+        inits=inits,
         output_dir=args.output,
         chains=args.chains,
         iter_warmup=args.warmup,
