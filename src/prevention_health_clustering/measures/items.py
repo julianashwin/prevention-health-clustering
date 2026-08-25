@@ -39,9 +39,20 @@ SF12_ITEM_STEMS: tuple[str, ...] = (
     "sf7",   # SF2  social activities interfered    -> SF
 )
 
-# Derived scores and the self-completion cross-sectional weight (the wave-1
-# weight defines the UK reference population for the re-scored variants).
-DEFAULT_EXTRA_STEMS: tuple[str, ...] = ("sf12pcs_dv", "sf12mcs_dv", "indscus_xw")
+# The wider every-wave health module: the 12 GHQ items (1 = best, 4 = worst),
+# the Equality Act impairment list (disdif, asked when health == 1: long-
+# standing illness; health == 2 respondents are valid structural zeros), and
+# the long-standing illness gate itself.
+GHQ_ITEM_STEMS: tuple[str, ...] = tuple(f"scghq{c}" for c in "abcdefghijkl")
+DISDIF_STEMS: tuple[str, ...] = tuple(f"disdif{i}" for i in range(1, 13)) + ("disdif96",)
+HEALTH_MODULE_STEMS: tuple[str, ...] = GHQ_ITEM_STEMS + DISDIF_STEMS + ("health",)
+
+# Derived scores, the self-completion cross-sectional weight (the wave-1
+# weight defines the UK reference population for the re-scored variants), and
+# the every-wave health module used by the two-dimensional GRM.
+DEFAULT_EXTRA_STEMS: tuple[str, ...] = (
+    "sf12pcs_dv", "sf12mcs_dv", "indscus_xw",
+) + HEALTH_MODULE_STEMS
 
 
 def wave_item_columns(
@@ -104,6 +115,9 @@ def extract_sf12_items(
 
 __all__ = [
     "DEFAULT_EXTRA_STEMS",
+    "DISDIF_STEMS",
+    "GHQ_ITEM_STEMS",
+    "HEALTH_MODULE_STEMS",
     "SF12_ITEM_STEMS",
     "WAVES",
     "extract_sf12_items",

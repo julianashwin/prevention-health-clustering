@@ -47,6 +47,7 @@ it; then it moves into the package.
 | Held-out scoring | leakage probe | exactly 0 at a 1e-12 gate |
 | SF-12 measures | vs the PCS construction note | `sf12pcs_dv` rebuilt to max err 0.0054 (MCS same, given the zero floor); UK norms, variant-D row and the 6.6-pt artifact exact; SF-6D tariff worked example/ceiling/floor pass |
 | GRM (physical) | vs the EIT note's grm.rds fit | own-code Python refit: same 498,424 person-years, discriminations to 3e-5, person-wave theta to 1e-5, age latent distributions to 5dp |
+| GRM-2 (phys + mental) | 11 self-validation gates | functioning + condition banks, GHQ wording testlets triggered by Q3 as pre-specified; tracks the original GRM at r = 0.994; ever-diagnosis sensitivity quantified in docs/health_measures_note.md |
 
 ## Setup
 

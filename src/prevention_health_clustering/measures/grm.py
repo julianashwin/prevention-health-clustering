@@ -157,7 +157,11 @@ def fit_grm(
         for j in range(J):
             k = ncat[j]
             r = np.zeros((k, nq))
-            np.add.at(r, Y[:, j] - 1, Wn)
+            yj = Y[:, j] - 1
+            for cat in range(k):
+                mask = yj == cat
+                if mask.any():
+                    r[cat] = Wn[mask].sum(axis=0)
 
             def nll(p, k=k, r=r):
                 a, b = _unpack(p, k)
@@ -168,7 +172,10 @@ def fit_grm(
         # ---- M step: group latent distributions ---------------------------
         if G > 1:
             gs = np.zeros((G, nq))
-            np.add.at(gs, grp, Wn)
+            for g in range(G):
+                mask = grp == g
+                if mask.any():
+                    gs[g] = Wn[mask].sum(axis=0)
             n_g = gs.sum(axis=1)
             mu = gs @ th / n_g
             sg = np.sqrt(np.maximum(gs @ th**2 / n_g - mu**2, 1e-6))

@@ -8,6 +8,8 @@ Thin drivers that turn the licensed raw extract into analysis inputs, in order:
 | `02_build_contracts.py` | frozen sample contracts under `data/processed/contracts/` |
 | `03_build_measures.py` | `data/processed/measures/sf12_measures.parquet`: subscales, US/UK PCS-MCS variants, `PCS_phys_only`, SF-6D utility, Farivar composites |
 | `04_build_grm.py` | `data/processed/measures/grm_scores.parquet`: GRM theta, `grmh` (TCC scale), age-by-age latent distributions |
+| `05_build_chronic.py` | `data/processed/measures/chronic_conditions.parquet`: per-condition ever indicators, diagnosis ages, clinical group counts, 10-year-recency counts |
+| `06_build_grm2.py` | `data/processed/measures/grm2_scores.parquet`: physical GRM (functioning / +ever-diagnoses / recency sensitivity) and mental GRM, with age profiles, Q3 and invariance diagnostics |
 
 All reusable logic lives in `src/prevention_health_clustering/{data,contracts,measures}`;
 scripts here only orchestrate and print. Outputs under `data/` are gitignored —

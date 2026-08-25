@@ -34,14 +34,28 @@ from prevention_health_clustering.measures.composites import (
     equal_weight_composite,
     farivar_composites,
 )
+from prevention_health_clustering.measures.chronic import (
+    CONDITION_GROUPS,
+    CONDITION_LABELS,
+    build_condition_history,
+)
+from prevention_health_clustering.measures.grm2 import (
+    build_mental_items,
+    build_physical_items,
+)
 
 __all__ = [
+    "CONDITION_GROUPS",
+    "CONDITION_LABELS",
     "PHYS_SCALES",
     "SCALES",
     "SF12_ITEM_STEMS",
     "UKStructure",
     "US_COEF",
     "US_NORMS",
+    "build_condition_history",
+    "build_mental_items",
+    "build_physical_items",
     "build_subscales",
     "derive_uk_structure",
     "equal_weight_composite",

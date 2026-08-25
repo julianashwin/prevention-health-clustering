@@ -24,6 +24,8 @@ dependencies = [
     "pyarrow>=15.0",
     "scipy>=1.11",
     "cmdstanpy>=1.2",
+    "scikit-learn>=1.9.0",
+    "matplotlib>=3.11.1",
 ]
 
 [project.optional-dependencies]
