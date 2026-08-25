@@ -171,6 +171,26 @@ def main() -> int:
     ftab.to_csv(ARTIFACTS_DIR / "descriptives" / "floor_depth.csv", index=False)
     print("\nfloor depth (SE by latent position; tail occupancy and clumping):")
     print(ftab.round(3).to_string(index=False))
+
+    # resolution among the worst-off: within the P-FUNC bottom decile, how
+    # many distinct positions does each richer bank resolve?
+    m = scores.dropna(subset=["theta_phys_func", "theta_phys_full",
+                              "theta_combined"])
+    dec = m["theta_phys_func"] <= m["theta_phys_func"].quantile(0.10)
+    print(f"\nP-FUNC bottom decile (n={int(dec.sum()):,}): distinct theta "
+          f"FUNC {m.loc[dec, 'theta_phys_func'].nunique():,}, "
+          f"FULL {m.loc[dec, 'theta_phys_full'].nunique():,}, "
+          f"COMBINED {m.loc[dec, 'theta_combined'].nunique():,}")
+
+    # the honest SF-12-family ceilings: share at the all-best item profile
+    sub_cols = [f"sub_{s_}" for s_ in
+                ("PF", "RP", "BP", "GH", "VT", "SF", "RE", "MH")]
+    sf = pd.read_parquet(PROCESSED_DATA_DIR / "measures" /
+                         "sf12_measures.parquet", columns=sub_cols).dropna()
+    all8 = (sf >= 100 - 1e-9).all(axis=1).mean()
+    phys4 = (sf[sub_cols[:4]] >= 100 - 1e-9).all(axis=1).mean()
+    print(f"all-best profile share: 8 subscales {100 * all8:.2f}% "
+          f"(PCS/MCS ceiling), physical 4 {100 * phys4:.2f}% (phys-only)")
     return 0
 
 

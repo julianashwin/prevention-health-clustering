@@ -15,7 +15,7 @@
 \maketitle
 
 \noindent Built and validated by \code{data\_cleaning/03--06} and
-\code{descriptives/01--06}; every number here is printed by those scripts'
+\code{descriptives/01--07}; every number here is printed by those scripts'
 self-validation output. This note records which UKHLS health variables the
 project uses, how each measure is constructed and why, what the new
 graded-response measures deliver against everything that came before them
@@ -42,7 +42,7 @@ Long-standing illness (\code{health}) & all 15 & gate for \code{disdif}; descrip
 Diagnosed conditions (\code{hcond*} families, codes 1--17) & all 15 (\S2) & condition items; sensitivities \\
 Health satisfaction (\code{sclfsat1}) & all 15 & validation outcome only \\
 SWEMWBS; ADL module; loneliness & 1/4/7/10/13; 7/9/11/13; 9--15 & excluded: fail the every-wave rule \\
-GP visits, hospital admissions & 7--15 & criterion-validity outcomes \\
+Hospital out- and in-patient attendance (\code{hl2gp}, \code{hosp}; \S\ref{sec:convexity} on the absent GP count) & 7--15 & criterion-validity outcomes \\
 Height/weight (self-report) & wave 1 only & excluded (biomarkers are UKDA-7251, not held) \\
 \bottomrule
 \end{tabular}
@@ -54,8 +54,9 @@ Height/weight (self-report) & wave 1 only & excluded (biomarkers are UKDA-7251, 
 UKHLS asks the full ``ever diagnosed'' inventory (\code{hcond1..17}) at a
 person's \emph{first} interview; later waves record conditions newly reported
 since the last interview under a name that changes with questionnaire
-redesigns --- \code{hcondn\{i\}} (waves 2--9), \code{hcondcode\{i\}}
-(10--12), \code{hcondncode\{i\}} (13--15), all dictionary-verified. The
+redesigns --- \code{hcondn\{i\}} in waves 2--9; from the wave-10 redesign,
+\code{hcondcode\{i\}} and \code{hcondncode\{i\}}, both present in waves
+10--15 and both used --- all dictionary-verified. The
 running indicator (\emph{ever had condition $i$ by wave $w$ $\Leftrightarrow$
 reported in any family at any wave $\le w$}) is monotone and defined from the
 first inventory onward (76\% of person-waves). Only the wave-1 code list is
@@ -106,7 +107,7 @@ side. Ever-prevalence: hypertension 21.4\%, arthritis 16.2\%, depression
 Every inventory report carries \code{hconda\#\#} (age told); every in-panel
 report is dated by its wave: \textbf{100.0\% of ever-flags carry a usable
 diagnosis age}, so recency-restricted variants are exact. The stock is old:
-median diagnosis age 11 years (p25 = 5, p75 = 21); at ages 65--80, 54\% of
+median time since diagnosis 11 years (p25 = 5, p75 = 21); at ages 65--80, 54\% of
 flags are $>$10 years old, 26\% $>$20.
 
 \section{The graded-response measures}
@@ -185,9 +186,10 @@ two-dimensionality evidence; the physical side stays clean (\S\ref{sec:combined}
 
 Discriminations: the functioning items dominate --- FUNC $a=3.3$ (P-FUNC:
 GH 2.0, PF 3.7, RP 3.4, BP 2.4) --- while the condition-group items are weak
-(CVD 1.15, MSK 0.85, RESP 0.68, METAB 0.59, CANCER 0.58, OTHER 0.62): once
-functioning is measured well, a diagnosis adds little about \emph{current}
-physical health. On the mental side, the GHQ negative-wording testlet
+(P-FULL: MSK 1.30, CVD 1.23, METAB 0.86, OTHER 0.65, CANCER 0.60, RESP
+0.41): once functioning is measured well, a diagnosis adds comparatively
+little about \emph{current} physical health --- with arthritis, a condition
+that \emph{is} impaired functioning, the strongest of them. On the mental side, the GHQ negative-wording testlet
 ($a=3.15$) and MH (2.75) carry the bank; the ever-depression diagnosis is
 again weak (0.97).
 
@@ -251,7 +253,7 @@ The physical-only composite agrees with the baseline at ARI 0.67 (88\% same
 cluster); the IRT re-spacings sit at ARI 0.43 (original GRM) and 0.41 (GRM-2
 physical); SF-6D at 0.19 --- and the mental GRM partitions people
 near-independently of the physical baseline (\textbf{ARI 0.07}; 49\%
-same-cluster against a 47\% chance rate). The physical typology is robust to
+same-cluster against a 37\% chance rate). The physical typology is robust to
 how physical health is scored; the mental dimension is genuinely new
 information.
 
@@ -469,7 +471,8 @@ Is healthcare use convex in health --- falling steeply among the ill, flat
 among the healthy --- and does each metric's cardinalisation carry that
 shape? Following the construction-note convexity exercise, each outcome is
 regressed on the standardised measure and its square on a common sample
-(waves 7--15, all thirteen measures observed, $n = 209{,}042$), with
+(waves 7--15, all thirteen
+measures observed; $n = 209{,}042$ in-patient, $208{,}936$ out-patient), with
 measures oriented so higher = better: on a declining relationship, a
 positive quadratic = convex. One data correction first: UKHLS mainstage has
 \emph{no GP-visit count}. \code{hl2gp}, despite its name, is labelled
@@ -536,7 +539,7 @@ de-clumping.
 \textbf{The GP-use binary is uninformative about shape.} At a 77.8\% base
 rate ($n = 23{,}953$ on its five waves) it saturates: quadratics are
 $\approx 0$ or mildly negative for every measure. Bottom-1\% GP use is
-$\sim$97\% against $\sim$65\% at the top --- a gradient, but the outcome's
+$\sim$97\% against 56--74\% at the top, by measure --- a gradient, but the outcome's
 own ceiling swamps any curvature. A true visit count would need linked
 administrative data.
 

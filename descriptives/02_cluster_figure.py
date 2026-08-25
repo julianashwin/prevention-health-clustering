@@ -90,12 +90,15 @@ def main() -> int:
     base = labels["sf12pcs_dv"]
     for metric in MEASURES:
         both = base.notna() & labels[metric].notna()
+        p = base[both].value_counts(normalize=True).sort_index()
+        q = labels[metric][both].value_counts(normalize=True).sort_index()
         rows.append({
             "measure": metric,
             "n": int(both.sum()),
             "ARI_vs_baseline": adjusted_rand_score(base[both], labels[metric][both]),
             "AMI_vs_baseline": adjusted_mutual_info_score(base[both], labels[metric][both]),
             "pct_same": float((base[both] == labels[metric][both]).mean()),
+            "pct_same_chance": float((p.values * q.values).sum()),
         })
     agree = pd.DataFrame(rows)
     out_dir = ARTIFACTS_DIR / "descriptives"
