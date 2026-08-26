@@ -23,6 +23,8 @@ graded-response measures deliver against everything that came before them
 GHQ), and how the ever-diagnosis, dimensionality and ceiling questions
 resolve.
 
+\tableofcontents
+
 \section{The variable inventory}
 
 Measurement models are restricted to items asked in (nearly) every wave, so a
@@ -192,6 +194,48 @@ little about \emph{current} physical health --- with arthritis, a condition
 that \emph{is} impaired functioning, the strongest of them. On the mental side, the GHQ negative-wording testlet
 ($a=3.15$) and MH (2.75) carry the bank; the ever-depression diagnosis is
 again weak (0.97).
+
+\subsection{Routing: who is asked what}
+\label{sec:routing}
+
+Two items in the physical bank are asked conditionally, and both deserve
+stating plainly.
+
+\textbf{The functioning testlet is gated on long-standing illness.} The
+\code{disdif} impairment list is only put to respondents who report a
+long-standing illness, so FUNC takes its best category structurally for the
+$66.2\%$ of scored rows with \code{health == 2}. Only $33.8\%$ of rows
+actually answer the module, and among those FUNC is well spread
+($17/14/18/51\%$ across its four levels). The item is therefore
+\emph{83.4\%} top category overall: it says nothing about differences among
+the healthy and everything about gradations among the ill --- which is
+exactly what its estimated hurdles ($-1.83$, $-1.42$, $-1.05$) and its high
+discrimination ($a = 3.4$) encode. This is a feature for our purposes,
+because the ill tail is where the other items have run out
+(\S\ref{sec:ceiling}), but it does mean FUNC is partly a re-reading of the
+long-standing-illness question. It is not double counting in a way the model
+minds: FUNC's largest residual correlation with any other item is $+0.031$.
+A further 6{,}451 rows report an illness but leave the module unanswered;
+those are treated as missing, not as zero limitations.
+
+\textbf{The diagnosis items exclude the BHPS sample entirely.} The condition
+inventory is asked at a person's first interview, and wave 2 --- where the
+BHPS continuers joined UKHLS --- has no inventory at all. They are then
+never routed back to it: only $4.4\%$ of the 16{,}204 people first
+interviewed at wave 2 ever receive one, against $94.8\%$ of wave-1 entrants
+and $70.7\%$ of wave-3 entrants. P-FULL therefore drops 14{,}721 people
+outright ($17.4\%$ of persons, 109{,}470 person-waves), and this is a
+survey-design exclusion rather than attrition.
+
+Whether that matters depends on the use. On health it looks benign: the
+dropped people are indistinguishable from the kept on every measured
+dimension (mean GH $3.32$ vs $3.32$, PF $4.23$ vs $4.24$, FUNC $3.66$ vs
+$3.67$). On \emph{panel structure} it is not benign at all: the excluded
+BHPS members are the longest-observed people in the study ($7.4$
+observations each against $5.5$ for those kept). Any diagnosis-bearing
+measure therefore discards precisely the respondents with the richest
+longitudinal information, which is a poor trade for trajectory work
+(\S\ref{sec:multidim}).
 
 \begin{figure}[t]
 \includegraphics[width=\linewidth]{fig_grm_information}
@@ -368,6 +412,30 @@ physical/mental group factors) would be the defensible one-number
 construction if that need becomes real.
 
 \begin{figure}[t]
+\includegraphics[width=\linewidth]{fig_combined_grm_model}
+\caption{The model behind the combined metric, in the empirics note's
+hurdles-on-the-health-axis form, for the most all-encompassing bank. (a)
+every hurdle of all seventeen items against the population distribution of
+$\theta$; (b) the hurdle curves for items spanning the weight range; (c) two
+people whose category numbers sum to the same total.}
+\label{fig:combmodel}
+\end{figure}
+
+Figure~\ref{fig:combmodel} draws the combined bank as a set of hurdles.
+Panel (a) makes the division of labour visible: the physical items (RP, FUNC,
+PF, BP, GH; $a = 1.9$--$2.9$) cluster their hurdles between $-2.5$ and $0$,
+the mental items (GHQNEG, MH, GHQPOS; $a = 1.2$) spread theirs across the
+whole axis and beyond it, and the diagnosis items ($a = 0.4$--$1.0$) sit far
+to the left. Panel (c) then shows what that means for a score. Two people
+whose answers sum to exactly the same total --- one carrying the deficit on
+the physical items, the other on the mental ones --- receive
+$\theta = -1.15$ and $\theta = +0.18$, a gap of $1.3$ standard deviations.
+The combined bank is not a balanced physical--mental index; it is
+physically dominated, because the physical items are the steeper and hence
+the more reliable ones. That is a second, independent reason (alongside the
+residual clustering of \S\ref{sec:combined}) to prefer the two-bank design.
+
+\begin{figure}[t]
 \includegraphics[width=\linewidth]{fig_grm_versions}
 \caption{The measure-choice panel across GRM versions (the empirics note's
 Figure 26, rebuilt): mean age path, fanning, top-censoring, and the two
@@ -445,6 +513,22 @@ COMBINED & \textbf{0.55} & \textbf{0.37} & 0.28 & $-4.43$ & 0.24 & 0.00 & 3{,}70
 \bottomrule
 \end{tabular}
 \end{center}
+
+A note on reading Figure~\ref{fig:info}: P-FULL carries visible information
+out to the left edge of the axis where the other physical banks have none.
+That is real measurement, not an artefact of where the axis stops. Total test
+information at $\theta = -4$ is $1.10$ for P-FULL against $0.22$ for P-FUNC,
+and at $\theta = -6$ it is $0.37$ against $0.00$; the axis is not hiding a
+cliff, the curve simply keeps declining. The information there comes almost
+entirely from the diagnosis items --- CVD ($34\%$ of it), METAB ($18\%$),
+OTHER ($10\%$) --- whose hurdles sit at $-3.6$ and $-4.1$, precisely in that
+region. It is the opposite of a floor effect: a floor effect is information
+\emph{collapsing} at the bottom, which is what the functioning-only banks do.
+The caveat is that a few of these thresholds are weakly identified because so
+few people sit that low (RESP's first hurdle is estimated at $-10.5$, CANCER's
+at $-6.5$ in the combined bank), so the far tail should not be read as
+precisely located --- but at $\theta = -4$ the contributing hurdles are all
+within the range the data actually cover.
 
 The original GRM (and P-FUNC) have a real floor problem: the instrument goes
 dark below $\theta\approx-2.5$ (SE 0.7 at $-3$, 2.1 at $-4$), the scale
@@ -796,6 +880,88 @@ the holdout fits reproduce their full-sample siblings' structure closely
 reassuring but does not make them representative. And the combined-channel
 fits inherit \S\ref{sec:combined}'s unidimensionality caveat: a single class
 structure over two correlated dimensions.
+
+\section{Towards a multidimensional model}
+\label{sec:multidim}
+
+The predecessor's five-channel mixed model used PCS and MCS (Gaussian),
+self-rated health (ordered logit), a chronic count (negative binomial) and an
+ADL count (hurdle negative binomial). Everything in this note argues for a
+different set, and the binding constraint is coverage.
+
+\begin{center}\small
+\begin{tabular}{lrrl}
+\toprule
+Candidate channel & person-waves & persons & limiting gate \\
+\midrule
+$\theta$ physical, P-FUNC & 497{,}423 & 84{,}679 & none (every wave) \\
+$\theta$ mental, without DEPR & 489{,}278 & 81{,}729 & none (every wave) \\
+$\theta$ mental, as fitted (with DEPR) & 379{,}462 & 67{,}017 & diagnosis inventory \\
+$\theta$ physical, P-FULL & 387{,}599 & 69{,}958 & diagnosis inventory \\
+chronic count & \multicolumn{2}{c}{$76\%$ of person-waves} & diagnosis inventory \\
+ADL count & \multicolumn{2}{c}{4 waves ($\sim 8\%$)} & scheduled module \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{One weak item is costing a quarter of the sample.} The mental bank as
+fitted includes ever-diagnosed depression, which inherits the BHPS exclusion
+of \S\ref{sec:routing}. Dropping that single item --- one hurdle, $a =
+0.93$, the weakest item in the bank bar the rare diagnoses --- recovers
+109{,}816 person-waves and 14{,}712 people, a $22.4\%$ increase. Jointly
+observing a physical and a mental channel then covers 484{,}832 person-waves
+on 81{,}458 people (49{,}545 of them with three or more observations),
+against 376{,}019 / 66{,}841 / 38{,}478 if either channel carries a
+diagnosis item. That is a $29\%$ larger estimation sample for the loss of
+almost no information.
+
+\textbf{Recommended specification.} Three channels, and the ragged-channel
+machinery already in \code{runner/mixed.py} handles them as they stand:
+
+\begin{enumerate}\itemsep2pt
+\item \textbf{$\theta$ physical (P-FUNC)}, Gaussian. Replaces PCS and,
+because self-rated health enters as the GH item and functioning as FUNC, it
+also absorbs the old model's separate self-rated-health channel and its ADL
+channel --- the latter traded for \code{disdif}, which measures the same
+construct in every wave rather than four.
+\item \textbf{$\theta$ mental without DEPR}, Gaussian. Replaces MCS, without
+the orthogonality artifact, and with GHQ-12 doing most of the work.
+\item \textbf{Chronic condition count}, negative binomial, on the $76\%$ of
+person-waves where the inventory exists. Kept as a channel rather than folded
+into a measurement model, which is where \S\ref{sec:ever} concluded it
+belongs: ``ever'' is the correct state variable for a diagnosis, its
+accumulation is a process to be modelled rather than an artefact to be
+corrected, and as a channel its missingness is explicit instead of silently
+deleting people.
+\end{enumerate}
+
+Two properties of this design matter. First, the class structure is
+identified off channels 1 and 2, which are observed for everyone in every
+wave, so the BHPS members contribute to the typology even though channel 3 is
+missing for them --- the opposite of the current arrangement, where they are
+dropped outright. Second, the missingness in channel 3 is a survey-design
+gate, not a health-related process: the excluded people are indistinguishable
+on every health measure (\S\ref{sec:routing}), so treating it as ignorable
+conditional on the observed channels is defensible in a way that ADL's
+scheduled-module missingness also is, but that attrition would not be.
+
+\textbf{What to leave out, and why.} Utilisation (\S\ref{sec:convexity}) is
+an outcome for validating the measures, not a health dimension to be
+clustered on. SF-6D is a mixed physical--mental utility
+(\S\ref{sec:combined}) and would duplicate both channels at once. The
+combined GRM is physically dominated (Figure~\ref{fig:combmodel}) and its
+residuals say the data want two dimensions, not one. SWEMWBS, loneliness and
+the ADL module all fail the every-wave rule.
+
+\textbf{An extension worth considering later.} Channels 1 and 2 currently
+compress each domain to a point estimate and then treat it as data, discarding
+the posterior sd the GRM already computes (\S\ref{sec:ceiling}: $0.27$ near
+the population mean, rising to $0.65$ at the extremes). Passing that through
+as a known measurement-error variance per observation is a small change to
+the Gaussian channels and would stop the model reading heteroskedastic
+measurement noise as heterogeneity in health --- which, given the ceiling and
+floor results, is concentrated exactly in the classes the model cares most
+about.
 
 \section{Recommendations}
 
