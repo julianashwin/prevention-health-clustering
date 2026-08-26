@@ -603,36 +603,153 @@ The PCS resists this ($\theta_1$ .165 under AR(1)), which is consistent with
 its coarser floor (\S\ref{sec:ceiling}): it cannot separate the severely ill
 finely enough for the boundary to move.
 
-\textbf{Held-out predictive densities.} Because the channels differ in
-scale, raw log densities are not comparable; each is therefore benchmarked
-on its own held-out rows against an age-quadratic Gaussian null estimated on
-that fit's own fitted rows.
+\subsection*{Class trajectories and shares}
+
+\begin{figure}[t]
+\includegraphics[width=\linewidth]{fig_trajectory_comparison}
+\caption{Fitted class mean trajectories $\alpha_k + \beta_k a + \gamma_k
+a^2$ (with $a = (\text{age}-55)/10$) for all eight fits, on each channel's
+standardised scale. Line width is proportional to the class share.}
+\label{fig:trajectories}
+\end{figure}
+
+Figure~\ref{fig:trajectories} puts every fit on one standardised axis. Three
+regularities hold everywhere: the three classes are ordered in level at
+every age and never cross; all three decline; and the worst class declines
+\emph{fastest}, so the classes fan apart over the life course. The gap
+between the best and worst class widens from $1.2$--$1.9$ sd at age 30 to
+$1.8$--$2.2$ sd at age 80.
 
 \begin{center}\small
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrrrr}
 \toprule
-Channel & model & $N(0,1)$ null & age-quadratic null & gain \\
+Fit & worst-class & \multicolumn{2}{c}{level gap (best $-$ worst)} &
+\multicolumn{2}{c}{decline, age 30--80} \\
+ & share & age 30 & age 80 & worst & best \\
 \midrule
-PCS & $-0.988$ & $-1.519$ & $-1.416$ & $+0.428$ \\
-GRM phys (P-FULL) & $-0.915$ & $-1.469$ & $-1.376$ & $+0.461$ \\
-GRM combined & $-0.982$ & $-1.481$ & $-1.452$ & $+0.470$ \\
+PCS, AR(1) & .165 & 1.24 & 2.20 & $-1.62$ & $-0.66$ \\
+PCS, AR(1) + holdout & .146 & 1.35 & 2.19 & $-1.45$ & $-0.61$ \\
+GRM phys, baseline & .159 & 1.74 & 2.06 & $-1.22$ & $-0.89$ \\
+GRM phys, AR(1) & .328 & 1.21 & 1.81 & $-1.44$ & $-0.84$ \\
+GRM phys, AR(1) + holdout & .313 & 1.22 & 1.79 & $-1.32$ & $-0.75$ \\
+GRM comb, baseline & .163 & 1.86 & 2.19 & $-0.90$ & $-0.57$ \\
+GRM comb, AR(1) & .290 & 1.38 & 1.95 & $-1.12$ & $-0.56$ \\
+GRM comb, AR(1) + holdout & .271 & 1.41 & 1.91 & $-0.96$ & $-0.46$ \\
 \bottomrule
 \end{tabular}
 
-{\scriptsize Log predictive density per held-out observation (two per
-person, 58--79k rows).}
+{\scriptsize Standardised channel units. Class 1 is worst health.}
 \end{center}
 
-All three mixtures buy $0.43$--$0.47$ nats per held-out observation over the
-age-only null --- substantial, and remarkably similar across instruments.
-The physical GRM has both the best absolute density and (with the combined
-bank) the largest gain, but the differences between channels are small
-relative to what all three gain over the null: the latent-class structure,
-not the choice among these three measures, is what carries the predictive
-content. Note these are \emph{within}-person predictions with the class
-posterior conditioned on each person's own earlier observations --- a
-different and easier estimand than the new-person scoring of
-\code{scoring/new\_person.py}, and not to be compared with it.
+The specifications differ in \emph{how} they separate the classes, and the
+difference is systematic. Adding the AR term to a GRM channel moves the
+worst class up in level (its age-30 gap to the best class narrows from 1.74
+to 1.21 on the physical channel) while making it decline more steeply
+($-1.22 \to -1.44$) and roughly doubling its membership. In other words the
+baseline finds a \emph{small, extreme, comparatively flat} worst class; with
+persistence available the model instead finds a \emph{larger, less extreme,
+faster-declining} one. The ratio of worst-class to best-class decline --- a
+compact summary of how much of the story is trajectory divergence rather
+than fixed level differences --- rises from $1.37$ to $1.72$ (physical) and
+$1.57$ to $2.00$ (combined) when persistence is added, while the PCS sits
+at $2.4$--$2.5$ in both its specifications.
+
+The holdout fits track their full-sample siblings closely on every one of
+these quantities (shares within $.02$, level gaps within $.11$ sd, declines
+within $.18$ sd), so the restriction to people with five or more
+observations changes the estimated typology very little.
+
+\subsection*{Out-of-sample prediction}
+
+\textbf{What the model's held-out density actually conditions on.} The Stan
+generated quantities restart the AR(1) recursion at the first held-out row
+with the \emph{stationary} variance, so the person's own last fitted value
+is not carried forward through $\rho$. The fitted rows reach the held-out
+rows only through the class posterior (the second held-out row does condition
+on the first). That is a coherent estimand --- what the latent class
+structure alone predicts --- but it is not the forecast a persistence model
+is capable of. Both are therefore reported below, computed offline on the
+same rows; the offline machinery reproduces the model's own stored held-out
+densities to a correlation of $0.9999998$, which validates it. The
+AR-conditional forecast uses the same class posterior but carries the last
+fitted deviation forward, $\mu_k(a_h) + \rho_k^{G}\,(y_{\text{last}} -
+\mu_k(a_{\text{last}}))$, with the gap-adjusted predictive variance.
+
+Two benchmarks are estimated on the fitted rows only: an age-quadratic
+Gaussian, and last-observation-carried-forward (LOCF), which is a strong
+naive predictor for a persistent quantity like health.
+
+\begin{center}\small
+\begin{tabular}{llrrrrr}
+\toprule
+Channel & Predictor & LPD/obs & RMSE & $R^2$ & cover$_{50}$ & cover$_{90}$ \\
+\midrule
+PCS & model, AR-conditional & $\mathbf{-1.005}$ & 0.671 & $\mathbf{.614}$ & .56 & .89 \\
+ & model, class-only (Stan) & $-1.043$ & 0.706 & .573 & .60 & .90 \\
+ & LOCF & $-1.118$ & 0.740 & .531 & .61 & .90 \\
+ & age-quadratic & $-1.416$ & 0.991 & .159 & .52 & .88 \\
+\addlinespace
+GRM phys & model, AR-conditional & $\mathbf{-0.889}$ & 0.589 & $\mathbf{.672}$ & .54 & .91 \\
+ & model, class-only (Stan) & $-1.015$ & 0.665 & .582 & .53 & .91 \\
+ & LOCF & $-0.994$ & 0.653 & .596 & .56 & .90 \\
+ & age-quadratic & $-1.376$ & 0.958 & .133 & .50 & .90 \\
+\addlinespace
+GRM comb & model, AR-conditional & $\mathbf{-0.961}$ & 0.635 & $\mathbf{.627}$ & .54 & .90 \\
+ & model, class-only (Stan) & $-1.079$ & 0.709 & .535 & .54 & .90 \\
+ & LOCF & $-1.058$ & 0.697 & .551 & .56 & .90 \\
+ & age-quadratic & $-1.452$ & 1.030 & .020 & .48 & .89 \\
+\bottomrule
+\end{tabular}
+
+{\scriptsize Per held-out observation (two per person; 58--79k rows), on the
+standardised channel scale. 400 posterior draws. cover$_{50}$ and
+cover$_{90}$ are the empirical coverage of central predictive intervals
+with nominal 0.50 and 0.90.}
+\end{center}
+
+\textbf{Age alone predicts almost nothing at the person level.} The
+age-quadratic benchmark reaches $R^2 = .02$--$.16$. Everything interesting
+in these data is between-person, which is the premise of the whole exercise
+and is worth having measured.
+
+\textbf{The class structure alone does not beat carrying the last
+observation forward.} On the model's own estimand, the mixture edges LOCF on
+the PCS ($R^2$ .573 vs .531) but \emph{loses} to it on both GRM channels
+(.582 vs .596; .535 vs .551). A three-class typology plus an age polynomial
+is roughly as informative about a person's next two observations as simply
+assuming they will be where they were last time --- no better on the sharper
+measures. Stated plainly: the classes describe lifecycle shape well, but
+they are a coarse summary of an individual's current position.
+
+\textbf{Persistence is what makes the model predict.} Carrying the last
+deviation forward lifts $R^2$ to .61--.67, clearly ahead of LOCF on every
+channel, and improves the log density by $.04$--$.13$ nats per observation.
+The gain over LOCF is largest on the physical GRM (.672 vs .596). The two
+ingredients are complementary: the class trajectory supplies where the
+person is heading, $\rho$ supplies how much of where they are now to carry
+with them, and LOCF is the degenerate case that keeps the level and ignores
+the trajectory.
+
+\textbf{The physical GRM predicts best on every metric} (LPD $-0.889$, RMSE
+$0.589$, $R^2$ $.672$), ahead of the combined bank ($.627$) and the PCS
+($.614$). This is the floor analysis (\S\ref{sec:ceiling}) showing up in
+out-of-sample terms: a measure that resolves the ill tail finely gives the
+model more to predict \emph{with} as well as more to predict.
+
+\textbf{Calibration is good at the tails, mildly conservative in the
+middle.} 90\% intervals cover 88--91\%, close to nominal. 50\% intervals
+cover 48--61\%, over-covering on most fits --- and the same pattern appears
+for the naive benchmarks, so it reflects health changes being more sharply
+peaked than Gaussian rather than a defect of the mixture. A heavier-tailed
+observation model (Student-$t$ residuals) is the natural refinement.
+
+\textbf{Implication for the model code.} If held-out prediction is a target
+rather than a diagnostic, the generated-quantities block should carry the
+last fitted value into the held-out window rather than restarting at the
+stationary variance --- on these fits that is worth about $.04$--$.13$ nats
+per observation and $.04$--$.09$ of $R^2$. Until then, held-out numbers
+reported by the fits themselves should be read as class-structure
+diagnostics, not as the model's predictive ceiling.
 
 \textbf{Caveats.} The holdout samples are people with at least five
 observations, who are healthier and better-retained than the full roster;

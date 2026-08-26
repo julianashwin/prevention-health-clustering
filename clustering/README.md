@@ -20,6 +20,10 @@ person's last two observations (sample limited to people with at least five)
 and writes per-person held-out predictive densities.
 `runs/overnight_queue.py` runs the eight-fit AR(1)/GRM batch, two at a time,
 longest first, and writes `artifacts/overnight/digest.json`.
-`heldout_benchmark.py` scores each holdout fit's held-out density against
-marginal and age-quadratic nulls on its own rows, which is what makes the
-channels comparable (note section 9).
+`oos_assessment.py` is the full out-of-sample assessment of the holdout
+fits: it reproduces the model's own held-out density offline (validated to
+corr 0.9999998), adds the AR-conditional forecast the generated quantities
+do not compute, and scores both against age-quadratic and
+last-observation-carried-forward benchmarks on density, point accuracy and
+interval calibration (note section 9). It needs structural draws extracted
+from the chain CSVs (columns 1-33) into `<dir>/<tag>.csv`.
