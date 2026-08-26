@@ -20,3 +20,6 @@ person's last two observations (sample limited to people with at least five)
 and writes per-person held-out predictive densities.
 `runs/overnight_queue.py` runs the eight-fit AR(1)/GRM batch, two at a time,
 longest first, and writes `artifacts/overnight/digest.json`.
+`heldout_benchmark.py` scores each holdout fit's held-out density against
+marginal and age-quadratic nulls on its own rows, which is what makes the
+channels comparable (note section 9).
