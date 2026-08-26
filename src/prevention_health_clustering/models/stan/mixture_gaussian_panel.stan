@@ -32,10 +32,18 @@ functions {
    *
    * Passing the window explicitly is what makes held-out scoring free: the
    * fitted rows and the held-out rows use the same function.
+   *
+   * `prev_row` anchors the AR(1) recursion. With 0 the window opens at the
+   * stationary variance, which is right for a person's first fitted row.
+   * With a row index it opens by carrying that row's deviation forward,
+   * which is what a held-out window should do: the person's last fitted
+   * observation is known, so a persistence model must condition on it.
+   * Ignored when ar_mode == 0, where observations are independent given the
+   * class.
    */
   vector person_class_loglik(
       int row_start, int row_end,
-      int include_log_weight,
+      int include_log_weight, int prev_row,
       int K, int C, int P,
       array[] vector y, matrix X,
       array[] int cohort_id,
@@ -68,15 +76,20 @@ functions {
           for (n in row_start:row_end) {
             real mu = dot_product(X[n], coef[c][k])
                       + cohort_effect[c][cohort_id[n]];
-            if (n == row_start) {
+            if (n == row_start && prev_row == 0) {
               total += normal_lpdf(y[c][n] | mu,
                                    sigma[k, c] / sqrt(1 - square(rho[k])));
             } else {
+              if (n == row_start) {
+                mu_prev = dot_product(X[prev_row], coef[c][k])
+                          + cohort_effect[c][cohort_id[prev_row]];
+              }
               real gap = age_gap[n];
               real rho_gap = pow(rho[k], gap);
               real var_mult = (1 - pow(rho[k], 2 * gap)) / (1 - square(rho[k]));
+              real y_prev = n == row_start ? y[c][prev_row] : y[c][n - 1];
               total += normal_lpdf(
-                  y[c][n] | mu + rho_gap * (y[c][n - 1] - mu_prev),
+                  y[c][n] | mu + rho_gap * (y_prev - mu_prev),
                   sigma[k, c] * sqrt(fmax(var_mult, 1e-9)));
             }
             mu_prev = mu;
@@ -105,7 +118,7 @@ functions {
       real n_obs = fit_end[i] - fit_start[i] + 1;
       real obs_weight = pow(n_obs, -person_weight_power);
       lp += log_sum_exp(person_class_loglik(
-          fit_start[i], fit_end[i], 1, K, C, P, y, X, cohort_id,
+          fit_start[i], fit_end[i], 1, 0, K, C, P, y, X, cohort_id,
           ar_mode, age_gap, log_weight, coef, sigma, rho,
           cohort_effect, obs_weight));
     }
@@ -244,13 +257,14 @@ generated quantities {
   array[emit_person_quantities ? N_person : 0] int<lower=1, upper=K> modal_class;
   vector[emit_person_quantities ? N_person : 0] log_lik;
   vector[emit_person_quantities ? N_person : 0] log_lik_heldout;
+  vector[emit_person_quantities ? N_person : 0] log_lik_heldout_marginal;
 
   if (emit_person_quantities == 1) {
     for (i in 1:N_person) {
       real n_obs = fit_end[i] - fit_start[i] + 1;
       real obs_weight = pow(n_obs, -person_weight_power);
       vector[K] fitted_lp = person_class_loglik(
-          fit_start[i], fit_end[i], 1, K, C, P, y, X, cohort_id,
+          fit_start[i], fit_end[i], 1, 0, K, C, P, y, X, cohort_id,
           ar_mode, age_gap, log_weight, coef, sigma, rho,
           cohort_effect, obs_weight);
 
@@ -260,14 +274,29 @@ generated quantities {
 
       // Conditional predictive density of the held-out rows given the fitted
       // rows, marginalising the latent class. Zero when no rows are held out.
+      //
+      // Two estimands, because they answer different questions. The default
+      // carries the last fitted observation forward through rho, which is
+      // the forecast a persistence model can actually make. The marginal
+      // one opens the held-out window at the stationary variance, so the
+      // fitted rows reach it only through the class posterior: that is what
+      // the latent class structure alone predicts. With ar_mode == 0 the two
+      // coincide.
       if (hold_start[i] > 0) {
         vector[K] hold_lp = person_class_loglik(
-            hold_start[i], hold_end[i], 0, K, C, P, y, X, cohort_id,
+            hold_start[i], hold_end[i], 0, fit_end[i], K, C, P, y, X,
+            cohort_id, ar_mode, age_gap, log_weight, coef, sigma, rho,
+            cohort_effect, 1.0);
+        vector[K] hold_lp_marg = person_class_loglik(
+            hold_start[i], hold_end[i], 0, 0, K, C, P, y, X, cohort_id,
             ar_mode, age_gap, log_weight, coef, sigma, rho,
             cohort_effect, 1.0);
         log_lik_heldout[i] = log_sum_exp(fitted_lp + hold_lp) - log_lik[i];
+        log_lik_heldout_marginal[i] =
+            log_sum_exp(fitted_lp + hold_lp_marg) - log_lik[i];
       } else {
         log_lik_heldout[i] = 0;
+        log_lik_heldout_marginal[i] = 0;
       }
     }
   }

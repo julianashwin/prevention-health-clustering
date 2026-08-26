@@ -661,16 +661,17 @@ observations changes the estimated typology very little.
 
 \subsection*{Out-of-sample prediction}
 
-\textbf{What the model's held-out density actually conditions on.} The Stan
-generated quantities restart the AR(1) recursion at the first held-out row
-with the \emph{stationary} variance, so the person's own last fitted value
-is not carried forward through $\rho$. The fitted rows reach the held-out
+\textbf{What the model's held-out density conditions on.} As the eight fits
+were run, the Stan generated quantities restarted the AR(1) recursion at the
+first held-out row with the \emph{stationary} variance, so the person's own
+last fitted value was not carried forward through $\rho$. The fitted rows reach the held-out
 rows only through the class posterior (the second held-out row does condition
 on the first). That is a coherent estimand --- what the latent class
 structure alone predicts --- but it is not the forecast a persistence model
-is capable of. Both are therefore reported below, computed offline on the
-same rows; the offline machinery reproduces the model's own stored held-out
-densities to a correlation of $0.9999998$, which validates it. The
+is capable of, and it understates what these fits know. The model has since
+been corrected (\S\ref{sec:gqfix}); the results below were computed offline
+on the same rows, with the offline machinery first validated by reproducing
+the fits' own stored held-out densities to a correlation of $0.9999998$. The
 AR-conditional forecast uses the same class posterior but carries the last
 fitted deviation forward, $\mu_k(a_h) + \rho_k^{G}\,(y_{\text{last}} -
 \mu_k(a_{\text{last}}))$, with the gap-adjusted predictive variance.
@@ -743,13 +744,50 @@ for the naive benchmarks, so it reflects health changes being more sharply
 peaked than Gaussian rather than a defect of the mixture. A heavier-tailed
 observation model (Student-$t$ residuals) is the natural refinement.
 
-\textbf{Implication for the model code.} If held-out prediction is a target
-rather than a diagnostic, the generated-quantities block should carry the
-last fitted value into the held-out window rather than restarting at the
-stationary variance --- on these fits that is worth about $.04$--$.13$ nats
-per observation and $.04$--$.09$ of $R^2$. Until then, held-out numbers
-reported by the fits themselves should be read as class-structure
-diagnostics, not as the model's predictive ceiling.
+\subsection*{The corrected generated quantities}
+\label{sec:gqfix}
+
+The measurement above is a defect worth fixing rather than documenting, so
+\code{person\_class\_loglik} now takes a \code{prev\_row} argument that
+anchors the AR(1) recursion: $0$ opens a window at the stationary variance
+(correct for a person's first fitted row), a row index opens it by carrying
+that row's deviation forward. The generated-quantities block emits both
+estimands rather than replacing one with the other ---
+\code{log\_lik\_heldout} is now AR-conditional, and
+\code{log\_lik\_heldout\_marginal} preserves the class-only quantity these
+eight fits reported.
+
+The model block is untouched: it passes \code{prev\_row = 0}, and
+\code{log\_prob} at a fixed parameter point returns bit-identical values
+before and after the change ($-15686.1620000000$ on the test payload). The
+existing posteriors therefore remain valid --- only the reported held-out
+quantity changes. \code{tests/test\_gq\_heldout.py} recomputes both
+estimands in numpy from the same payload and draws and requires agreement to
+$10^{-5}$, and checks that they coincide exactly when \code{ar\_mode == 0}.
+
+What the corrected block reports on these fits, per held-out observation
+(the joint density of the two-row window, so the second row conditions on
+the first's realised value --- which is why it exceeds the row-by-row
+forecast in the table above):
+
+\begin{center}\small
+\begin{tabular}{lrrr}
+\toprule
+Channel & class-only (as run) & AR-conditional (corrected) & gain \\
+\midrule
+PCS & $-1.043$ & $-0.964$ & $+0.079$ \\
+GRM physical & $-1.015$ & $-0.836$ & $+0.180$ \\
+GRM combined & $-1.079$ & $-0.908$ & $+0.171$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+So the correction is worth $0.08$--$0.18$ nats per held-out observation on
+the reported density, and most on the physical GRM --- the channel whose
+persistence estimate is the strongest. Held-out numbers from the eight fits
+in this note are the class-only column, and should be read as
+class-structure diagnostics; anything refitted from here reports the
+corrected quantity.
 
 \textbf{Caveats.} The holdout samples are people with at least five
 observations, who are healthier and better-retained than the full roster;

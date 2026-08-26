@@ -128,6 +128,7 @@ def main(argv=None) -> int:
         n_held = len(held_idx)
 
         ll_stan = np.zeros((D, n_person))
+        ll_joint = np.zeros((D, n_person))
         lp_ar = np.zeros((D, n_held))
         lp_cls = np.zeros((D, n_held))
         pred_ar = np.zeros((D, n_held))
@@ -144,6 +145,13 @@ def main(argv=None) -> int:
 
             lp_all, mu = class_loglik_block(z, a, gap, window_start,
                                             coef, sigma, rho)
+            # The fixed generated-quantities block treats each person's rows
+            # as ONE continuous AR sequence, so the held-out window opens on
+            # the last fitted row and the second held-out row conditions on
+            # the first. That is exactly class_loglik_block with only the
+            # person boundary as a window start.
+            lp_cont, _ = class_loglik_block(
+                z, a, gap, frame["new_person"].to_numpy(), coef, sigma, rho)
             fit_lp = np.zeros((n_person, K))
             np.add.at(fit_lp, person[~held], lp_all[~held])
             unnorm = np.log(theta)[None, :] + fit_lp
@@ -153,6 +161,10 @@ def main(argv=None) -> int:
             np.add.at(hold_lp, person[held], lp_all[held])
             ll_stan[d] = (logsumexp(unnorm + hold_lp, axis=1)
                           - logsumexp(unnorm, axis=1))
+            hold_lp_joint = np.zeros((n_person, K))
+            np.add.at(hold_lp_joint, person[held], lp_cont[held])
+            ll_joint[d] = (logsumexp(unnorm + hold_lp_joint, axis=1)
+                           - logsumexp(unnorm, axis=1))
 
             ww = w[held_person]
             stat_sd = sigma / np.sqrt(1 - rho**2)
@@ -186,6 +198,11 @@ def main(argv=None) -> int:
         beta, *_ = np.linalg.lstsq(X, z[fit_rows], rcond=None)
         sd_age = (z[fit_rows] - X @ beta).std(ddof=3)
         Xh = np.column_stack([np.ones(n_held), a[held_idx], a[held_idx] ** 2])
+
+        joint_pp = (logsumexp(ll_joint, axis=0) - np.log(D)) / HOLD_K
+        print(f"  {tag}: AR-conditional JOINT density (what the fixed GQ "
+              f"reports) = {joint_pp.mean():.4f} per held-out observation",
+              flush=True)
 
         out_rows += [
             metrics("model, AR-conditional forecast", tag, label, y,
