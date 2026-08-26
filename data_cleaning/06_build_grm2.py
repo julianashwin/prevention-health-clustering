@@ -169,6 +169,23 @@ def main(argv=None) -> int:
     checks.append(("MENT EAP identity", abs(ids["MENT"] - 1.0) < 0.05,
                    f"{ids['MENT']:.3f}"))
 
+    # ---------------- MENT without the DEPR diagnosis gate ------------------
+    # DEPR is one weak item (a ~ 0.95, one hurdle) but it carries the
+    # condition inventory's BHPS exclusion into the mental bank, costing 22%
+    # of person-waves. The diagnosis-free bank is what the multidimensional
+    # model uses; both are scored so the cost is visible.
+    ment_nd_raw = build_mental_items(items, chronic, include_depr=False)
+    ment_nd = (collapse_ghq_wording(ment_nd_raw.assign(DEPR=1))
+               .drop(columns=["DEPR"]) if use_testlets
+               else ment_nd_raw)
+    nd_names = [c for c in m_names if c != "DEPR"]
+    nd_ncat = {k: v for k, v in m_ncat.items() if k != "DEPR"}
+    fits["MENT-ND"], scores["MENT-ND"], q3s["MENT-ND"], _, ids["MENT-ND"] = (
+        fit_spec("MENT-ND", ment_nd, nd_names, nd_ncat, multigroup=False))
+    checks.append(("MENT-ND recovers the excluded sample",
+                   len(scores["MENT-ND"]) > 1.2 * len(scores["MENT"]),
+                   f"{len(scores['MENT-ND']):,} vs {len(scores['MENT']):,} rows"))
+
     # ---------------- P-TIMED: the estimated recency weighting --------------
     p_timed = build_physical_timed_items(items, chronic)
     fits["P-TIMED"], scores["P-TIMED"], q3s["P-TIMED"], _, ids["P-TIMED"] = (
@@ -261,7 +278,8 @@ def main(argv=None) -> int:
     base["theta_phys_func_sd"] = scores["P-FUNC"]["theta_sd"]
     for name, col in (("P-FULL", "theta_phys_full"), ("P-REC", "theta_phys_rec10"),
                       ("MENT", "theta_ment"), ("COMBINED", "theta_combined"),
-                      ("P-TIMED", "theta_phys_timed")):
+                      ("P-TIMED", "theta_phys_timed"),
+                      ("MENT-ND", "theta_ment_nodepr")):
         s = scores[name][["pidp", "wave", "theta", "theta_sd"]].rename(
             columns={"theta": col, "theta_sd": f"{col}_sd"})
         base = base.merge(s, on=["pidp", "wave"], how="outer")

@@ -9,6 +9,7 @@ Thin drivers that turn the licensed raw extract into analysis inputs, in order:
 | `03_build_measures.py` | `data/processed/measures/sf12_measures.parquet`: subscales, US/UK PCS-MCS variants, `PCS_phys_only`, SF-6D utility, Farivar composites |
 | `04_build_grm.py` | `data/processed/measures/grm_scores.parquet`: GRM theta, `grmh` (TCC scale), age-by-age latent distributions |
 | `05_build_chronic.py` | `data/processed/measures/chronic_conditions.parquet`: per-condition ever indicators, diagnosis ages, clinical group counts, 10-year-recency counts |
+| `08_build_multidim_contract.py` | frozen contract for the multidimensional model: both GRM channels, chronic count and mortality hazard on one shared row set |
 | `07_build_grm_contracts.py` | frozen lifecycle contracts for the GRM clustering channels (`physgrm_*`, `combgrm_*`) |
 | `06_build_grm2.py` | `data/processed/measures/grm2_scores.parquet`: physical GRM (functioning / +ever-diagnoses / recency-restricted / recent-stale split) and mental GRM, plus the combined all-item bank, with age profiles, Q3, invariance and estimated recency weights |
 

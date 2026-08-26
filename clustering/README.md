@@ -27,3 +27,10 @@ do not compute, and scores both against age-quadratic and
 last-observation-carried-forward benchmarks on density, point accuracy and
 interval calibration (note section 9). It needs structural draws extracted
 from the chain CSVs (columns 1-33) into `<dir>/<tag>.csv`.
+
+`run_multidim.py` fits the multidimensional mixture (two GRM channels
+Gaussian with optional AR(1), chronic count negative-binomial, mortality
+hazard toggleable and never held out) in four variants: baseline, holdout,
+ar1, ar1-holdout. `runs/multidim_queue.py` runs all four, two at a time.
+The sample filter applies to every variant so the four differ by
+specification alone.

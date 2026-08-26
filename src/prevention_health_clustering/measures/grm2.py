@@ -112,8 +112,15 @@ def build_mental_items(
     chronic: pd.DataFrame,
     *,
     age_range: tuple[int, int] = (20, 90),
+    include_depr: bool = True,
 ) -> pd.DataFrame:
-    """Person-wave mental item bank, complete cases, 1 = worst."""
+    """Person-wave mental item bank, complete cases, 1 = worst.
+
+    ``include_depr`` False drops the ever-diagnosed-depression item BEFORE
+    the complete-case rule is applied, which is the point of dropping it: the
+    item carries the condition inventory's BHPS exclusion, so keeping it in
+    the completeness rule costs 22% of person-waves for one weak item.
+    """
     d = items.copy()
     d = d[d["age"].notna() & d["age"].between(*age_range)]
     for v, k in (("sf4a", 5), ("sf4b", 5), ("sf6a", 5), ("sf6c", 5), ("sf7", 5)):
@@ -127,10 +134,14 @@ def build_mental_items(
     for stem in GHQ_ITEM_STEMS:
         raw = d[stem].where(d[stem].isin([1, 2, 3, 4]))
         out[stem.upper()] = 5 - raw          # reverse: 1 = worst
-    depr = chronic[["pidp", "wave", "ever_17"]]
-    out = out.merge(depr, on=["pidp", "wave"], how="left")
-    out["DEPR"] = np.where(out["ever_17"].isna(), np.nan, 2 - out["ever_17"])
     names = list(MENT_ITEMS)
+    if include_depr:
+        depr = chronic[["pidp", "wave", "ever_17"]]
+        out = out.merge(depr, on=["pidp", "wave"], how="left")
+        out["DEPR"] = np.where(out["ever_17"].isna(), np.nan,
+                               2 - out["ever_17"])
+    else:
+        names = [n for n in names if n != "DEPR"]
     out = out[["pidp", "wave", "age"] + names].dropna(subset=names)
     for n in names:
         out[n] = out[n].astype(int)
