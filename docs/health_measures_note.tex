@@ -99,12 +99,62 @@ minimum prevalence is an explicit deficit-inclusion criterion in Searle et
 al.\ (2008) --- and groups keep a stable clinical meaning while the code list
 grows (cf.\ Barnett et al.\ 2012). An ordinal within-group count (0/1/2+)
 keeps a severity gradient the way $\mathrm{PF}=\code{sf2a}+\code{sf2b}$ does.
-Groups: \textbf{CVD} \{CHF, CHD, angina, MI, stroke\}, \textbf{METAB}
-\{diabetes, hypertension\}, \textbf{RESP} \{asthma, bronchitis, emphysema\},
-\textbf{MSK} \{arthritis\}, \textbf{CANCER}, \textbf{OTHER} \{thyroid,
-liver, epilepsy\}; \textbf{DEPR} \{clinical depression\} sits on the mental
-side. Ever-prevalence: hypertension 21.4\%, arthritis 16.2\%, depression
-8.2\%, diabetes 7.2\%, any CVD event 7.4\%, cancer 5.1\%.
+The groupings follow the disease process rather than the questionnaire.
+\textbf{CVD} collects the several names UKHLS gives to one underlying
+process --- atherosclerosis and its consequences --- which is why a
+respondent can plausibly report three of its five items at once.
+\textbf{METAB} keeps the two long-term managed conditions apart from those
+acute events: hypertension and diabetes are treated rather than survived, and
+both are far commoner. \textbf{RESP} spans the chronic airway diseases;
+\textbf{MSK} is the single commonest cause of physical limitation in the
+data; \textbf{CANCER} stays alone because it is a distinct process and the
+one most relevant to mortality. \textbf{OTHER} pools the remainder, none of
+which reaches 5\%, so that no item has to be estimated on a prevalence near
+1\%.
+
+The seventeen conditions, their groups, and what each one is:
+
+\begin{center}\small
+\begin{tabular}{llp{6.5cm}r}
+\toprule
+Group & Condition & What it is & Ever \\
+\midrule
+\textbf{CVD} & angina & chest pain when the heart's blood supply cannot meet demand, typically on exertion & 2.9\% \\
+ & heart attack & a blocked artery kills part of the heart muscle & 2.7\% \\
+ & coronary heart disease & the arteries feeding the heart narrow with fatty deposits & 2.4\% \\
+ & stroke & blood supply to part of the brain is cut off, damaging brain tissue & 2.1\% \\
+ & congestive heart failure & the heart pumps too weakly, causing breathlessness and fluid retention & 0.8\% \\
+ & \emph{any of the above} & & \emph{7.4\%} \\
+\addlinespace
+\textbf{METAB} & high blood pressure & blood pressure persistently above the healthy range & 21.4\% \\
+ & diabetes & the body cannot regulate blood sugar properly & 7.2\% \\
+ & \emph{either} & & \emph{24.7\%} \\
+\addlinespace
+\textbf{RESP} & asthma & airways narrow and inflame in episodes, causing wheeze and breathlessness & 15.4\% \\
+ & chronic bronchitis & long-term airway inflammation with persistent cough and phlegm & 2.0\% \\
+ & emphysema & the lungs' air sacs are permanently damaged, so breathing is laboured & 0.8\% \\
+ & \emph{any of the above} & & \emph{16.7\%} \\
+\addlinespace
+\textbf{MSK} & arthritis & painful inflammation and stiffness of the joints & 16.2\% \\
+\addlinespace
+\textbf{CANCER} & cancer or malignancy & any malignant tumour & 5.1\% \\
+\addlinespace
+\textbf{OTHER} & hypothyroidism & an under-active thyroid gland, slowing the body's metabolism & 4.2\% \\
+ & liver condition & any long-term liver disease, such as cirrhosis or hepatitis & 2.2\% \\
+ & hyperthyroidism & an over-active thyroid gland, speeding the metabolism up & 1.3\% \\
+ & epilepsy & a tendency to recurrent seizures from abnormal electrical activity in the brain & 1.3\% \\
+ & \emph{any of the above} & & \emph{8.1\%} \\
+\addlinespace
+\textbf{DEPR}$^{\dagger}$ & clinical depression & a diagnosed depressive disorder, as distinct from transient low mood & 8.2\% \\
+\bottomrule
+\end{tabular}
+
+{\scriptsize ``Ever'' is the share of person-waves at which the condition has
+been reported at or before that wave, among the 458{,}468 person-waves with
+an inventory. Conditions are listed within group by prevalence.
+$^{\dagger}$DEPR is the one group assigned to the mental bank rather than the
+physical one.}
+\end{center}
 
 \subsection{Diagnosis timing}
 Every inventory report carries \code{hconda\#\#} (age told); every in-panel
