@@ -48,12 +48,21 @@ MEASURES = {
     "grm_theta": "GRM original, theta",
     "grmh": "GRM original, TCC",
     "theta_phys_func": "P-FUNC theta",
+    "grmh_phys_func": "P-FUNC, TCC",
     "theta_phys_full": "P-FULL theta",
     "grmh_phys_full": "P-FULL, TCC",
     "theta_ment": "MENT theta",
     "grmh_ment": "MENT, TCC",
     "theta_combined": "COMBINED theta",
+    "grmh_combined": "COMBINED, TCC",
 }
+
+# every bank that exists on both rulers, for the theta-vs-TCC panel
+PAIRS = [("grm_theta", "grmh", "GRM original"),
+         ("theta_phys_func", "grmh_phys_func", "P-FUNC"),
+         ("theta_phys_full", "grmh_phys_full", "P-FULL"),
+         ("theta_ment", "grmh_ment", "MENT"),
+         ("theta_combined", "grmh_combined", "COMBINED")]
 HEADLINE = ["sf12pcs_dv", "sf6d_utility", "grm_theta", "theta_phys_func",
             "theta_phys_full", "theta_ment", "theta_combined"]
 COLORS = {"sf12pcs_dv": "#12395B", "sf6d_utility": "#3D9970",
@@ -141,7 +150,7 @@ def main() -> int:
     tab.to_csv(out_dir / "convexity_tests.csv", index=False)
 
     # ---- figure ------------------------------------------------------------
-    fig, axes = plt.subplots(1, 3, figsize=(12.6, 3.9))
+    fig, axes = plt.subplots(1, 4, figsize=(16.4, 3.9))
     for ax, out, oname in ((axes[0], "inpatient", "P(in-patient stay)"),
                            (axes[1], "hl2gp", "out-patient band (0-4)")):
         s = d[complete & d[out].notna()]
@@ -164,6 +173,24 @@ def main() -> int:
     ax.axvline(0, color="#444444", lw=0.8)
     ax.set_title("quadratic term, P(in-patient)")
     ax.set_xlabel("coefficient on $z^2$")
+    # --- theta against TCC, same bank, both outcomes ----------------------
+    ax = axes[3]
+    yy = np.arange(len(PAIRS))[::-1]
+    for k, (oc, col, lab) in enumerate((("inpatient", "#12395B", "in-patient"),
+                                        ("hl2gp", "#CC5500", "out-patient"))):
+        t = tab[tab["outcome"] == oc].set_index("measure")["quadratic"]
+        off = 0.19 * (1 - 2 * k)
+        ax.barh(yy + off, [t[a] for a, _, _ in PAIRS], height=0.34,
+                color=col, alpha=0.95, label=f"{lab}, theta")
+        ax.barh(yy + off, [t[b] for _, b, _ in PAIRS], height=0.34,
+                color="none", edgecolor=col, lw=1.5, hatch="////",
+                label=f"{lab}, TCC")
+    ax.set_yticks(yy, [lab for _, _, lab in PAIRS], fontsize=7.2)
+    ax.axvline(0, color="#444444", lw=0.8)
+    ax.set_title("same bank, both rulers")
+    ax.set_xlabel("coefficient on $z^2$")
+    ax.legend(fontsize=6.0, loc="lower right")
+
     fig.suptitle("Convexity of healthcare use in each health metric "
                  "(waves 7–15, common sample)", fontweight="bold", y=1.02)
     fig.text(0.01, -0.01,

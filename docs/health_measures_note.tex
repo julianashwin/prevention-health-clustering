@@ -696,7 +696,7 @@ Is healthcare use convex in health --- falling steeply among the ill, flat
 among the healthy --- and does each metric's cardinalisation carry that
 shape? Following the construction-note convexity exercise, each outcome is
 regressed on the standardised measure and its square on a common sample
-(waves 7--15, all thirteen
+(waves 7--15, all fifteen
 measures observed; $n = 209{,}042$ in-patient, $208{,}936$ out-patient), with
 measures oriented so higher = better: on a declining relationship, a
 positive quadratic = convex. One data correction first: UKHLS mainstage has
@@ -709,10 +709,12 @@ included as a supplementary outcome.
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_convexity}
 \caption{Healthcare use across the distribution of each measure, and the
-quadratic (convexity) term for in-patient admission. All thirteen measures
-are tested (Table above); the seven plotted are UKHLS PCS, SF-6D utility,
-the original GRM, P-FUNC, P-FULL, the mental GRM and the combined GRM, each
-oriented so higher means better health.}
+quadratic (convexity) term for in-patient admission. All fifteen measures
+are tested (Table above); the seven plotted in the first two panels are
+UKHLS PCS, SF-6D utility, the original GRM, P-FUNC, P-FULL, the mental GRM
+and the combined GRM, each oriented so higher means better health. The
+fourth panel sets each bank's $\theta$ (solid) against its TCC (hatched) for
+both outcomes: identical people, identical ranking, different units.}
 \label{fig:convexity}
 \end{figure}
 
@@ -728,17 +730,30 @@ UKHLS MCS & $+.004$ (8) & $+.038$ (22) & .128 & .134 \\
 Physical-only composite & $+.011$ (22) & $+.002$ (1) & .331 & .033 \\
 SF-6D utility & $+.021$ (40) & $+.119$ (61) & .289 & .039 \\
 GHQ-12 (flipped) & $+.003$ (8) & $+.007$ (5) & .189 & .059 \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{each bank on both rulers}} \\
 GRM original, $\theta$ & $+.020$ (43) & $+.070$ (42) & .331 & .033 \\
 GRM original, TCC & $+.012$ (23) & $+.003$ (2) & .331 & .033 \\
+\addlinespace
 P-FUNC $\theta$ & $+.019$ (42) & $+.069$ (42) & .322 & .033 \\
+P-FUNC, TCC & $+.008$ (17) & $\mathbf{-.017}$ $(-9)$ & .322 & .033 \\
+\addlinespace
 P-FULL $\theta$ & $+.020$ (45) & $+.067$ (40) & \textbf{.349} & \textbf{.033} \\
-P-FULL, TCC & $+.009$ (17) & $-.026$ ($-15$) & .349 & .033 \\
+P-FULL, TCC & $+.009$ (17) & $\mathbf{-.026}$ $(-15)$ & \textbf{.349} & \textbf{.033} \\
+\addlinespace
 MENT $\theta$ & $+.008$ (19) & $+.062$ (37) & .206 & .056 \\
 MENT, TCC & $+.004$ (10) & $+.018$ (12) & .206 & .056 \\
+\addlinespace
 COMBINED $\theta$ & $+.018$ (44) & $+.072$ (49) & .331 & .032 \\
+COMBINED, TCC & $+.010$ (24) & $+.001$ (0) & .331 & .032 \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+Every bank now appears on both rulers, and the last two columns are the
+control: they are rank statistics, so within a pair they are \emph{identical}
+across $\theta$ and TCC to three decimals. Anything that moves between the two
+rows of a pair is cardinalisation and nothing else.
 
 Four reads.
 
@@ -749,14 +764,27 @@ GRM thetas. The gradient concentrates exactly where \S\ref{sec:ceiling}'s
 floor analysis lives: the region in which measures differ in resolution is
 the region that carries the utilisation risk.
 
-\textbf{Cardinalisation, not construct, drives the convexity.} Each
-$\theta$/TCC pair ranks people identically, yet the $\theta$ scales are
-strongly convex while the TCC (\code{grmh}) scales are near-linear in
-utilisation --- P-FULL's TCC is even mildly \emph{concave} in out-patient
-use. Convexity is a property of the chosen units, so any ``convex health
-effects'' claim must fix the scale first; conversely, \code{grmh} is the
-natural unit when something like linear-in-utilisation spacing is wanted,
-and $\theta$ the natural latent-normal unit for the mixture models.
+\textbf{Cardinalisation, not construct, drives the convexity --- and the two
+outcomes part company.} Each $\theta$/TCC pair ranks people identically, so
+every difference below is units and nothing else.
+
+\emph{In-patient admission is convex on both rulers.} Every TCC row keeps a
+$t$ between 10 and 24, roughly half the $\theta$ magnitude. Re-ruling moves
+the size of the effect and not the conclusion.
+
+\emph{Out-patient attendance is where the ruler decides the answer.} On
+$\theta$ every bank is strongly convex, $t = 37$--49. On the TCC the same
+banks give $+.003$ $(t=2)$ for the original, $+.001$ $(t=0)$ for COMBINED and
+$+.018$ $(t=12)$ for MENT --- and turn \emph{concave} for both physical banks,
+$-.017$ $(t=-9)$ for P-FUNC and $-.026$ $(t=-15)$ for P-FULL. A $t$ of $-15$
+is not a null result; it is a confident statement of the opposite shape.
+
+Convexity is therefore a property of the chosen units, and a ``convex health
+effects'' claim means nothing until the scale is fixed. Conversely
+\code{grmh} is the natural unit when something close to
+linear-in-utilisation spacing is wanted --- the near-zero TCC quadratics are
+that property, stated --- and $\theta$ the natural latent-normal unit for the
+mixture models.
 
 \textbf{The floor resolution pays off in real outcomes.} P-FULL's bottom
 1\% has a 34.9\% admission rate against 32.2\% for P-FUNC and 31.2\% for the
@@ -765,8 +793,10 @@ outcome-side counterpart of \S\ref{sec:ceiling}'s 575-fold floor
 de-clumping.
 
 \textbf{The GP-use binary is uninformative about shape.} At a 77.8\% base
-rate ($n = 23{,}953$ on its five waves) it saturates: quadratics are
-$\approx 0$ or mildly negative for every measure. Bottom-1\% GP use is
+rate ($n = 23{,}953$ on its five waves) it saturates: the $\theta$ quadratics
+are $\approx 0$ for every bank. The TCC rows are uniformly negative and
+significantly so ($t = -5$ to $-8$), which is the same units effect as
+out-patient use rather than anything about GP visits. Bottom-1\% GP use is
 $\sim$97\% against 56--74\% at the top, by measure --- a gradient, but the outcome's
 own ceiling swamps any curvature. A true visit count would need linked
 administrative data.
@@ -1106,6 +1136,118 @@ measurement noise as heterogeneity in health --- which, given the ceiling and
 floor results, is concentrated exactly in the classes the model cares most
 about.
 
+\section{The multidimensional model}
+\label{sec:multifit}
+
+The specification of \S\ref{sec:multidim} was fitted in four variants ---
+baseline, holdout, AR(1), AR(1)+holdout --- on one common sample of 38{,}268
+people and 388{,}774 person-waves, so the four differ by specification alone.
+Three channels: the physical GRM (P-FUNC) and the mental GRM without DEPR,
+both Gaussian, and the chronic count as a negative binomial, masked on the
+$24\%$ of rows with no diagnosis inventory. Mortality was toggled off for
+this round. All four converged.
+
+\begin{center}\small
+\begin{tabular}{lrlllr}
+\toprule
+Variant & max $\hat R$ & $\theta$ (shares) & $\rho$ & chronic at 55 & wall \\
+\midrule
+baseline & 1.0032 & .189 / .377 / .434 & --- & 2.6 / 1.4 / 0.13 & 8.0 h \\
+holdout & 1.0049 & .187 / .371 / .442 & --- & 2.6 / 1.4 / 0.14 & 6.8 h \\
+AR(1) & 1.0014 & .190 / .398 / .413 & .73 / .61 / .60 & 2.9 / 1.1 / 0.01 & 19.0 h \\
+AR(1) + holdout & 1.0023 & .195 / .389 / .416 & .72 / .58 / .58 & 2.9 / 1.1 / 0.01 & 18.2 h \\
+\bottomrule
+\end{tabular}
+
+{\scriptsize ``chronic at 55'' is the implied mean condition count at age 55
+for each class.}
+\end{center}
+
+\textbf{Extra channels stabilise the classes against the AR term.} In the
+univariate fits of \S\ref{sec:ar1} adding persistence roughly doubled the
+worst class (.16 $\to$ .33 on both GRM channels). Here the shares are flat
+across all four variants at about .19 / .38 / .42. The mechanism in
+\S\ref{sec:ar1} was that a single channel cannot separate a small extreme
+class from the autocorrelation of repeated low observations, so once $\rho$
+can absorb the latter the boundary moves; with three channels the class is
+identified from agreement \emph{across} channels, and persistence no longer
+competes for the same variation.
+
+\textbf{Persistence is much less class-graded than the univariate fits
+implied.} $\rho = .73 / .61 / .60$ here, against $.78 / .27 / .39$ for the
+physical GRM alone. The worst class remains the most persistent, but the
+other two are far more so once a second correlated channel is observed: a
+shock that looks transient in one measure reads as persistent when two move
+together. That is a warning about reading $\rho$ off a single channel.
+
+\textbf{The classes absorb the overdispersion in the chronic count.} The
+implied means at 55 --- $2.6 / 1.4 / 0.13$ conditions --- weight up to $1.08$
+against an observed mean of $1.045$, so the mixture reproduces the marginal.
+And \code{phi\_chronic} settles at $656$ (baseline) to $920$ (AR), which for
+a negative binomial is effectively Poisson: after conditioning on class and
+age there is almost no overdispersion left to model.
+
+\subsection*{Held-out prediction, channel by channel}
+
+Chronic is nearly free to predict --- carrying the last observed count
+forward is exactly right on $93.4\%$ of the 58{,}600 held-out chronic rows
+--- so a single held-out number would be flattered by it. The density is
+therefore decomposed by channel offline, validated by reproducing the fits'
+own stored per-person values (correlation $0.999999$, maximum deviation
+$0.04$).
+
+\begin{center}\small
+\begin{tabular}{lrrr}
+\toprule
+ & \multicolumn{2}{c}{AR(1) + holdout} & holdout \\
+Channel & AR-conditional & class-only & (no AR) \\
+\midrule
+$\theta$ physical & $-0.936$ & $-1.059$ & $-1.121$ \\
+$\theta$ mental & $-1.138$ & $-1.245$ & $-1.321$ \\
+chronic count & $-0.981$ & $-0.981$ & $-1.086$ \\
+\midrule
+all three & $-1.021$ & $-1.105$ & $-1.184$ \\
+\bottomrule
+\end{tabular}
+
+{\scriptsize Log predictive density per held-out row. 76{,}536 rows on each
+Gaussian channel, 58{,}623 on the count.}
+\end{center}
+
+Three readings. First, the two Gaussian channels gain $0.12$ and $0.11$ nats
+per row from carrying the last value forward, while \textbf{the chronic
+channel gains exactly zero} --- to three decimal places, because the model
+carries no persistence term on that channel at all. It predicts the count
+from class and age, never from the person's own previous count.
+
+Second, that omission is expensive. The distribution of the change from a
+person's last observed count is $93.4\%$ zero, $5.8\%$ $+1$, $0.6\%$ $+2$ or
+more, with an entropy of $0.274$ nats. A channel that used the previous count
+could therefore reach about $-0.27$ per row where the fitted model achieves
+$-0.98$: roughly \textbf{0.7 nats per row left on the table}, far more than
+the $0.12$ the AR term buys on the Gaussian side. This is the count-channel
+analogue of the generated-quantities defect of \S\ref{sec:gqfix}, and the
+obvious next fix: the chronic channel should condition on the last observed
+count, either as an offset or through a monotone accumulation process.
+
+Third, the physical channel predicts better than the mental one on every
+variant ($-0.94$ against $-1.14$), the same ordering the univariate fits
+found, and the non-AR holdout has AR-conditional and class-only densities
+identical to four decimal places --- correct by construction when there is no
+persistence to carry, and a useful check that the toggle behaves.
+
+\textbf{Caveats.} Mortality is absent from this round, so nothing here speaks
+to how the classes differ in survival. The GRM thetas enter as point
+estimates: the posterior standard deviation the measurement model already
+computes ($0.27$ near the population mean, $0.65$ at the extremes,
+\S\ref{sec:ceiling}) is discarded, so the mixture reads heteroskedastic
+measurement noise as heterogeneity in health, and does so most where the
+extreme classes live. Passing that through as a known per-observation
+variance is a small change to the Gaussian channels and the natural next
+extension. Finally, the univariate comparison in \S\ref{sec:ar1} used P-FULL
+while this model uses P-FUNC, so the two are not a nested pair; a univariate
+P-FUNC fit would close that gap.
+
 \section{Recommendations}
 
 \begin{enumerate}\itemsep2pt
@@ -1146,6 +1288,9 @@ ceiling/floor and convexity tables \\
 \code{clustering/run\_fit.py}, \code{runs/overnight\_queue.py} & the
 \S\ref{sec:ar1} batch: generic registry fits, last-two-observations holdout,
 per-person held-out densities \\
+\code{clustering/run\_multidim.py}, \code{runs/multidim\_queue.py},
+\code{multidim\_channel\_decomp.py} & the \S\ref{sec:multifit} batch and its
+per-channel held-out decomposition \\
 \bottomrule
 \end{tabular}
 \end{center}
