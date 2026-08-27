@@ -119,12 +119,22 @@ def main() -> int:
 
     ax = axes[1, 0]
     for v, (label, color) in MEASURES.items():
-        mx = panel[v].max()
-        s = prof(v, lambda z: 100 * (z.dropna() >= mx - 1e-9).mean())
-        ax.plot(AGES, s, lw=1.9, color=color)
-    ax.set_title("(c) Share of person-years at the exact maximum")
+        mx, mn = panel[v].max(), panel[v].min()
+        top = prof(v, lambda z: 100 * (z.dropna() >= mx - 1e-9).mean())
+        bot = prof(v, lambda z: 100 * (z.dropna() <= mn + 1e-9).mean())
+        ax.plot(AGES, top, lw=1.9, color=color)
+        ax.plot(AGES, -bot, lw=1.9, color=color, ls="--")
+    ax.axhline(0, color="#444444", lw=0.8)
+    ax.set_title("(c) Running out of room: ceiling above, floor below")
     ax.set_xlabel("age")
-    ax.set_ylabel("%")
+    ax.set_ylabel("% of person-years at the limit")
+    lo, hi = ax.get_ylim()
+    ticks = [t for t in ax.get_yticks() if lo <= t <= hi]
+    ax.set_yticks(ticks, [f"{abs(t):.0f}" for t in ticks])
+    ax.text(0.98, 0.95, "at the MAXIMUM (solid)", transform=ax.transAxes,
+            fontsize=7, color=INK2, va="top", ha="right")
+    ax.text(0.98, 0.03, "at the MINIMUM (dashed)", transform=ax.transAxes,
+            fontsize=7, color=INK2, va="bottom", ha="right")
 
     ax = axes[1, 1]
     idx = np.arange(len(MEASURES))
@@ -140,11 +150,13 @@ def main() -> int:
     ax.legend(fontsize=7.2)
 
     fig.suptitle("Choosing among the GRM versions", fontweight="bold", y=0.995)
-    fig.text(0.01, -0.012,
-             "Panels (a)–(c) on ages 25–80. The artifact in (d) is the worst-minus-best mental-health "
-             "decile gap among person-years at the identical median physical profile — negative for the "
-             "mental measures by construction (they are supposed to move).",
-             fontsize=7.5, color=INK2)
+    fig.text(0.01, -0.005,
+             "Panels (a)–(c) on ages 25–80. In (c) the solid line is the share of person-years at the\n"
+             "measure's exact maximum and the dashed line, mirrored below zero, the share at its exact\n"
+             "minimum; both axes are read as positive percentages. The artifact in (d) is the\n"
+             "worst-minus-best mental-health decile gap among person-years at the identical median\n"
+             "physical profile — negative for the mental measures by construction, since they should move.",
+             fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_grm_versions.png"
     fig.savefig(out)

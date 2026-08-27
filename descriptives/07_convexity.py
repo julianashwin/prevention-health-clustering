@@ -166,11 +166,11 @@ def main() -> int:
     ax.set_xlabel("coefficient on $z^2$")
     fig.suptitle("Convexity of healthcare use in each health metric "
                  "(waves 7–15, common sample)", fontweight="bold", y=1.02)
-    fig.text(0.01, -0.04,
-             "Measures oriented so higher = better; on a declining relationship a positive "
-             "quadratic = convex. UKHLS records utilisation, not expenditure; hl2gp is "
-             "out-patient attendance (the survey has no GP-visit count).",
-             fontsize=7.4, color=INK2)
+    fig.text(0.01, -0.01,
+             "Measures are oriented so higher = better; on a declining relationship a positive quadratic\n"
+             "means convex. UKHLS records utilisation, not expenditure, and hl2gp is out-patient\n"
+             "attendance \u2014 the survey carries no GP-visit count.",
+             fontsize=7.4, color=INK2, va="top")
     fig.tight_layout()
     figpath = ROOT_DIR / "docs" / "figures" / "fig_convexity.png"
     fig.savefig(figpath)

@@ -111,13 +111,12 @@ def main() -> int:
             axes[row0 + r, j].tick_params(labelsize=7)
     fig.suptitle("Mean, variance and the rows of the covariance matrix",
                  fontweight="bold", y=1.0)
-    fig.text(0.01, -0.015,
-             "Profiles are five-year centred rolling means; cells with n < 100 dropped. "
-             "Each covariance line starts on the diagonal at its five-year bin and runs nine "
-             "years. Rows two and three share a vertical scale within each measure. The "
-             "chronic count cannot fall by construction (so its NEGATED series cannot rise), "
-             "and its bottom row carries no persistence information.",
-             fontsize=7.5, color=INK2)
+    fig.text(0.01, -0.004,
+             "Profiles are five-year centred rolling means; cells with n < 100 are dropped. Each covariance line\n"
+             "starts on the diagonal at its five-year bin and runs nine years. Rows two and three share a vertical\n"
+             "scale within each measure. The chronic count cannot fall by construction (so its negated series\n"
+             "cannot rise), and its bottom row therefore carries no information about persistence.",
+             fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_moments_grid.png"
     fig.savefig(out)

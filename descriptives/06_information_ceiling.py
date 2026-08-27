@@ -110,11 +110,11 @@ def main() -> int:
         axes[r, c].axis("off")
     fig.suptitle("What each GRM is made of: item information over the latent scale",
                  fontweight="bold", y=1.0)
-    fig.text(0.01, -0.02,
-             "Each band is one item's Fisher information. The dashed line is the implied "
-             "measurement SE, 1/sqrt(total information): where it rises, the instrument stops "
-             "discriminating \u2014 the IRT reading of ceiling and floor.",
-             fontsize=7.5, color=INK2)
+    fig.text(0.01, -0.005,
+             "Each band is one item's Fisher information. The dashed line is the implied measurement SE,\n"
+             "1/sqrt(total information): where it rises, the instrument stops discriminating \u2014 the IRT\n"
+             "reading of ceiling and floor.",
+             fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_grm_information.png"
     fig.savefig(out)

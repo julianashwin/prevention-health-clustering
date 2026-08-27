@@ -32,19 +32,30 @@ MIN_AGE, MAX_AGE, MIN_OBS, K, MIN_SUPPORT = 20, 90, 3, 3, 25
 
 MEASURES = {
     "sf12pcs_dv": "UKHLS PCS (baseline)",
+    "sf12mcs_dv": "UKHLS MCS",
     "PCS_phys_only": "Physical subscales only",
+    "PCS_uk_promax": "UK promax PCS (oblique)",
     "sf6d_utility": "SF-6D utility",
+    "ghq_flipped": "GHQ-12 (negated)",
     "grm_theta": "GRM physical, 4 testlets (original)",
-    "theta_phys_full": "GRM-2 physical (+function, +conditions)",
+    "theta_phys_func": "GRM-2 physical, P-FUNC (+function)",
+    "theta_phys_full": "GRM-2 physical, P-FULL (+conditions)",
     "theta_ment": "GRM-2 mental",
+    "theta_combined": "GRM-2 combined (17 items)",
+    "chronic_flipped": "Chronic conditions (negated)",
 }
 
 
 def main() -> int:
     apply_style()
+    cols = ["pidp", "age", "ghq_likert", "n_chronic"] + [
+        m for m in MEASURES if m not in ("ghq_flipped", "chronic_flipped")]
     panel = pd.read_parquet(
         PROCESSED_DATA_DIR / "measures" / "measure_panel.parquet",
-        columns=["pidp", "age"] + list(MEASURES))
+        columns=list(dict.fromkeys(cols)))
+    # negated so that every measure runs higher = better health
+    panel["ghq_flipped"] = -panel["ghq_likert"]
+    panel["chronic_flipped"] = -panel["n_chronic"]
     panel = panel[panel["age"].notna()]
     panel["age"] = panel["age"].astype(int)
     panel = panel[panel["age"].between(MIN_AGE, MAX_AGE)]
@@ -109,9 +120,9 @@ def main() -> int:
 
     # ---- figure -------------------------------------------------------------
     n = len(MEASURES)
-    ncols = 3
+    ncols = 4
     nrows = int(np.ceil(n / ncols))
-    fig = plt.figure(figsize=(11.5, 4.1 * nrows))
+    fig = plt.figure(figsize=(14.5, 3.9 * nrows))
     gs = fig.add_gridspec(nrows * 2, ncols, height_ratios=[3.2, 0.75] * nrows,
                           hspace=0.45, wspace=0.25)
     for i, (metric, title) in enumerate(MEASURES.items()):
@@ -123,7 +134,7 @@ def main() -> int:
             s = t[(t["cluster"] == cl) & (t["count"] >= MIN_SUPPORT)]
             ax.plot(s["age"], s["mean"], color=CLUSTER[cl], lw=1.8,
                     label=f"cluster {cl + 1}")
-        ax.set_title(title)
+        ax.set_title(title, fontsize=9)
         ax.grid(True, axis="y")
         if i == 0:
             ax.legend(loc="lower left", ncols=1)
@@ -132,17 +143,20 @@ def main() -> int:
                       colors=CLUSTER, alpha=0.9)
         axc.set_ylim(0, 1)
         axc.set_yticks([])
-        axc.set_xlabel("age")
+        # only the bottom band carries the axis label, or it collides with the
+        # panel titles of the row beneath
+        if i >= len(MEASURES) - ncols:
+            axc.set_xlabel("age")
         axc.set_xlim(MIN_AGE, MAX_AGE)
         for spine in ("left",):
             axc.spines[spine].set_visible(False)
     fig.suptitle("Partial K-means trajectory clusters, K = 3, common sample",
                  fontweight="bold", y=1.005)
-    fig.text(0.01, -0.01,
-             "Sample fixed at people with ≥ 3 observed ages of the baseline PCS, ages 20–90. "
-             "Cluster curves shown where ≥ 25 members observed; strips show the cluster "
-             "composition of the observed sample at each age.",
-             fontsize=7.5, color=INK2)
+    fig.text(0.01, -0.005,
+             "Sample fixed at people with ≥ 3 observed ages of the baseline PCS, ages 20–90.\n"
+             "Cluster curves are shown where ≥ 25 members are observed; the strip beneath each\n"
+             "panel shows the cluster composition of the observed sample at each age.",
+             fontsize=7.5, color=INK2, va="top")
     fig_path = ROOT_DIR / "docs" / "figures" / "fig_cluster_trajectories.png"
     fig.savefig(fig_path)
     print(f"wrote {fig_path}")

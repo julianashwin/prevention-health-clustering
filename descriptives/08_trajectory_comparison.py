@@ -108,11 +108,11 @@ def main() -> int:
         ax.set_ylabel("standardised channel units")
     fig.suptitle("Fitted class trajectories and shares across the eight fits",
                  fontweight="bold", y=1.0)
-    fig.text(0.01, -0.02,
-             "Line width is proportional to the class share. All channels are standardised "
-             "(mean 0, sd 1 over the fitted sample), so levels are comparable across panels; "
-             "class 1 is worst health by the anchor convention.",
-             fontsize=7.5, color=INK2)
+    fig.text(0.01, -0.006,
+             "Line width is proportional to the class share. All channels are standardised (mean 0, sd 1 over\n"
+             "the fitted sample), so levels are comparable across panels; class 1 is worst health by the\n"
+             "anchor convention.",
+             fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_trajectory_comparison.png"
     fig.savefig(out)

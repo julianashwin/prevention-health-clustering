@@ -166,12 +166,12 @@ def main() -> int:
 
     fig.suptitle("The model behind the combined metric: hurdles on the health axis",
                  fontweight="bold", y=0.99)
-    fig.text(0.005, -0.015,
-             "Each item is a set of hurdles on the health axis; clearing one is logistic in how far above it "
-             "you sit, with steepness a. Marginal answer frequencies fix where the hurdles are, the associations "
-             "between items fix how steep they are. Point size in (a) is proportional to a; arrows mark hurdles "
-             "beyond the axis, which are weakly identified because so few people sit that low.",
-             fontsize=7.4, color=INK2)
+    fig.text(0.005, -0.005,
+             "Each item is a set of hurdles on the health axis; clearing one is logistic in how far above it you sit,\n"
+             "with steepness a. Marginal answer frequencies fix where the hurdles are; the associations between\n"
+             "items fix how steep they are. Point size in (a) is proportional to a, and arrows mark hurdles beyond\n"
+             "the axis, which are weakly identified because so few people sit that low.",
+             fontsize=7.4, color=INK2, va="top")
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_combined_grm_model.png"
     fig.savefig(out)

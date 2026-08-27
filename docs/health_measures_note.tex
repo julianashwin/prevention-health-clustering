@@ -387,21 +387,49 @@ within-person information and are not subject to it.
 \includegraphics[width=\linewidth]{fig_cluster_trajectories}
 \caption{Partial K-means trajectory clusters ($K=3$, 50 seeded inits,
 sample fixed at people with $\ge 3$ observed baseline-PCS ages, ages
-20--90). Six measures: the UKHLS PCS, the physical-only subscale composite,
-SF-6D utility, the original four-testlet GRM, the physical GRM in its P-FULL
-specification, and the mental GRM.}
+20--90), across the same twelve measures as Figure~\ref{fig:moments}. GHQ and
+the chronic count are negated so every panel runs higher = better health. The
+chronic count is monotone by construction, so its three bands can only fall
+and never cross --- a property of the measure, not a finding about people.}
 \label{fig:clusters}
 \end{figure}
 
 Partial K-means (Figure~\ref{fig:clusters}): changing the \emph{scoring}
 moves the typology modestly while changing the \emph{construct} redraws it.
-The physical-only composite agrees with the baseline at ARI 0.67 (88\% same
-cluster); the IRT re-spacings sit at ARI 0.43 (original GRM) and 0.41 (GRM-2
-physical); SF-6D at 0.19 --- and the mental GRM partitions people
-near-independently of the physical baseline (\textbf{ARI 0.07}; 49\%
-same-cluster against a 37\% chance rate). The physical typology is robust to
-how physical health is scored; the mental dimension is genuinely new
-information.
+Against the PCS baseline, on the common sample:
+
+\begin{center}\small
+\begin{tabular}{lrrr}
+\toprule
+Measure & ARI & \% same cluster & chance \\
+\midrule
+Physical subscales only & \textbf{0.667} & 87.9 & 43.0 \\
+UK promax PCS (oblique) & 0.464 & 79.4 & 39.5 \\
+P-FUNC & 0.442 & 76.9 & 38.1 \\
+GRM original (4 testlets) & 0.425 & 75.6 & 37.7 \\
+P-FULL & 0.409 & 74.9 & 37.5 \\
+GRM combined (17 items) & 0.266 & 66.1 & 36.8 \\
+SF-6D utility & 0.185 & 60.0 & 37.4 \\
+Chronic conditions (negated) & 0.120 & 56.1 & 44.3 \\
+GHQ-12 (negated) & 0.079 & 51.4 & 40.8 \\
+GRM mental & 0.074 & 49.2 & 37.1 \\
+UKHLS MCS & \textbf{0.053} & 48.0 & 40.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The physical measures agree substantially with the baseline whatever the
+scoring --- 0.41 to 0.67 --- and the ordering is instructive: the composite
+that merely re-weights the same subscales agrees most, the IRT re-spacings
+sit in the middle, and the further a measure moves from the PCS's item set
+the lower it falls. The mental measures sit at the bottom, essentially at
+chance: MCS at ARI 0.053 and the mental GRM at 0.074, with same-cluster rates
+of 48\% and 49\% against chance rates of 40\% and 37\%. The combined bank
+lands between the two families at 0.27, which is what a physically-dominated
+mixture of them should do. So the physical typology is robust to how physical
+health is scored, and the mental dimension partitions people almost
+independently of it --- the same conclusion the two-bank correlation of
+$0.457$ reaches by a different route.
 
 \section{The ever-diagnosis question, resolved}
 \label{sec:ever}
@@ -539,9 +567,16 @@ residual clustering of \S\ref{sec:combined}) to prefer the two-bank design.
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_grm_versions}
 \caption{The measure-choice panel across measures (the empirics note's
-Figure 30, rebuilt): mean age path, fanning, top-censoring, and the two
-contamination reads. Seven measures: UKHLS PCS, SF-6D utility, the original
-four-testlet GRM, P-FUNC, P-FULL, the mental GRM and the combined GRM.}
+Figure 30, rebuilt): mean age path, dispersion, how much room each measure
+has left at its two limits, and the two contamination reads. Seven measures:
+UKHLS PCS, SF-6D utility, the original four-testlet GRM, P-FUNC, P-FULL, the
+mental GRM and the combined GRM. Panel (c) now carries both limits --- the
+solid line is the share of person-years at the measure's exact maximum, the
+dashed line, mirrored below zero, the share at its exact minimum, and both
+are read as positive percentages. The asymmetry is the point: ceiling mass
+runs to $15\%$ at the young end while floor mass never exceeds about $1.5\%$
+anywhere, so these instruments run out of room among the healthy long before
+they do among the ill.}
 \label{fig:versions}
 \end{figure}
 
