@@ -355,16 +355,33 @@ theta (0.80) than the physical one (0.71) --- and its closest cousin is the
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_moments_grid}
 \caption{Mean, variance and the rows of the covariance matrix (the empirics
-note's anatomy) for the full metric suite, two banks of six. GHQ is flipped
-so every panel reads higher = better. The mental family (MCS, GHQ, mental
-GRM) shows the textbook late-life wellbeing improvement; the physical
-measures share one anatomy --- accelerating mean decline, rising-then-
-plateauing dispersion, fanning covariance rows; the chronic count gives the
-physical mean and variance reads from items fully disjoint from the SF-12,
-while its covariance row carries no persistence information because the
-count cannot fall.}
+note's anatomy) for the full metric suite, two banks of six. GHQ and the
+chronic count are \emph{negated}, so on every panel higher means better
+health. The mental family (MCS, GHQ, mental GRM) shows the textbook late-life
+wellbeing improvement; the physical measures share one anatomy ---
+accelerating mean decline, rising-then-plateauing dispersion, fanning
+covariance rows; the chronic count gives the physical mean and variance reads
+from items fully disjoint from the SF-12, while its covariance row carries no
+persistence information because the count cannot fall (so its negated series
+cannot rise).}
 \label{fig:moments}
 \end{figure}
+
+Two cautions on the mental hump, because on an auto-scaled axis it looks
+dramatic. It is modest in size: mean GHQ falls from $11.75$ at age 55 to
+$10.24$ at 70, which on a $0$--$36$ scale with a standard deviation of $5.62$
+is $0.27$ sd; the axis spans less than two points, which is what makes it
+read as a step change. And \emph{most of it is composition rather than
+ageing}: among the 1{,}461 people observed in both windows, mean GHQ improves
+by only $0.44$ points between ages 53--57 and 68--72, against a
+cross-sectional gap of $1.42$ over the same ages, so under a third of the
+apparent improvement survives holding the people fixed. The remainder is
+selective non-response and attrition --- GHQ completion falls from $91\%$ at
+age 70 to $77\%$ at 90 --- together with cohort differences. This applies to
+every panel of the figure: these are pooled cross-sections in which age,
+cohort and period are confounded, and they are descriptive scaffolding rather
+than within-person trajectories. The mixture models of \S\ref{sec:ar1} do use
+within-person information and are not subject to it.
 
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_cluster_trajectories}

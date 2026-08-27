@@ -7,8 +7,8 @@ diagonal at a five-year base-age bin and runs nine years, cells kept at
 n >= 100. Variance and covariance panels share a vertical scale per measure.
 The chronic count cannot fall by construction, so its covariance row carries
 no persistence information; it is included for the mean and variance reads.
-GHQ is flipped (higher = better) so every panel reads the same way. Twelve
-measures, two banks of six.
+GHQ and the chronic count are negated (higher = better) so every panel reads
+the same way. Twelve measures, two banks of six.
 
 Outputs: docs/figures/fig_moments_grid.png
 """
@@ -39,7 +39,7 @@ MEASURES = {
     "theta_phys_full": "GRM-2 phys (FULL)",
     "theta_ment": "GRM-2 mental",
     "theta_combined": "GRM-2 combined",
-    "n_chronic": "chronic conditions",
+    "chronic_flipped": "chronic conditions (negated)",
 }
 PER_ROW = 6
 MIN_CELL = 100
@@ -47,12 +47,15 @@ MIN_CELL = 100
 
 def main() -> int:
     apply_style()
-    cols = ["pidp", "age", "ghq_likert"] + [
-        m for m in MEASURES if m != "ghq_flipped"]
+    cols = ["pidp", "age", "ghq_likert", "n_chronic"] + [
+        m for m in MEASURES if m not in ("ghq_flipped", "chronic_flipped")]
     panel = pd.read_parquet(
         PROCESSED_DATA_DIR / "measures" / "measure_panel.parquet",
         columns=list(dict.fromkeys(cols)))
+    # Both are negated so that on EVERY panel higher means better health,
+    # which is what makes the twelve columns readable side by side.
     panel["ghq_flipped"] = -panel["ghq_likert"]
+    panel["chronic_flipped"] = -panel["n_chronic"]
     panel = panel[panel["age"].notna()]
     panel["age"] = panel["age"].astype(int)
     panel = panel[panel["age"].between(20, 90)]
@@ -112,8 +115,8 @@ def main() -> int:
              "Profiles are five-year centred rolling means; cells with n < 100 dropped. "
              "Each covariance line starts on the diagonal at its five-year bin and runs nine "
              "years. Rows two and three share a vertical scale within each measure. The "
-             "chronic count cannot fall by construction, so its bottom row carries no "
-             "persistence information.",
+             "chronic count cannot fall by construction (so its NEGATED series cannot rise), "
+             "and its bottom row carries no persistence information.",
              fontsize=7.5, color=INK2)
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_moments_grid.png"
