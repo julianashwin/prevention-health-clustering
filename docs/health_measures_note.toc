@@ -10,11 +10,11 @@
 \contentsline {subsection}{\numberline {3.3}Estimation and diagnostics}{5}{subsection.3.3}%
 \contentsline {subsection}{\numberline {3.4}Routing: who is asked what}{6}{subsection.3.4}%
 \contentsline {section}{\numberline {4}How the measures relate}{7}{section.4}%
-\contentsline {section}{\numberline {5}The ever-diagnosis question, resolved}{9}{section.5}%
-\contentsline {section}{\numberline {6}One dimension or two? The combined GRM}{11}{section.6}%
-\contentsline {section}{\numberline {7}Ceiling and floor}{13}{section.7}%
-\contentsline {section}{\numberline {8}Convexity against healthcare use}{15}{section.8}%
-\contentsline {section}{\numberline {9}Latent-class trajectories under AR(1) persistence}{16}{section.9}%
-\contentsline {section}{\numberline {10}Towards a multidimensional model}{21}{section.10}%
-\contentsline {section}{\numberline {11}Recommendations}{22}{section.11}%
-\contentsline {section}{\numberline {12}Reproducibility}{23}{section.12}%
+\contentsline {section}{\numberline {5}The ever-diagnosis question, resolved}{10}{section.5}%
+\contentsline {section}{\numberline {6}One dimension or two? The combined GRM}{12}{section.6}%
+\contentsline {section}{\numberline {7}Ceiling and floor}{14}{section.7}%
+\contentsline {section}{\numberline {8}Convexity against healthcare use}{16}{section.8}%
+\contentsline {section}{\numberline {9}Latent-class trajectories under AR(1) persistence}{17}{section.9}%
+\contentsline {section}{\numberline {10}Towards a multidimensional model}{22}{section.10}%
+\contentsline {section}{\numberline {11}Recommendations}{23}{section.11}%
+\contentsline {section}{\numberline {12}Reproducibility}{24}{section.12}%

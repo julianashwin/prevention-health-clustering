@@ -73,37 +73,47 @@ def main() -> int:
         columns=SCORE_METRICS)
 
     # ---- information decomposition figure ----------------------------------
-    fig, axes = plt.subplots(1, len(SPECS), figsize=(3.0 * len(SPECS), 3.6),
+    ncols = 3
+    nrows = int(np.ceil(len(SPECS) / ncols))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4.0 * ncols, 3.5 * nrows),
                              sharex=True)
+    axes = np.atleast_2d(axes)
     cmap = plt.get_cmap("viridis")
     for j, (name, (fname, spec, col)) in enumerate(SPECS.items()):
+        r, c = divmod(j, ncols)
+        ax = axes[r, c]
         items = load_items(fname, spec)
-        ax = axes[j]
         info = np.column_stack(
             [item_information(a, b, TH) for a, b in items.values()])
         colors = [cmap(0.05 + 0.9 * i / max(len(items) - 1, 1))
                   for i in range(len(items))]
-        ax.stackplot(TH, info.T, colors=colors, alpha=0.92,
-                     labels=list(items))
+        ax.stackplot(TH, info.T, colors=colors, alpha=0.92, labels=list(items))
         total = info.sum(axis=1)
         ax2 = ax.twinx()
         ax2.plot(TH, 1 / np.sqrt(np.maximum(total, 1e-9)), color="#D55E00",
                  lw=1.6, ls="--")
         ax2.set_ylim(0, 1.2)
-        ax2.set_yticks([] if j < len(SPECS) - 1 else [0.25, 0.5, 0.75, 1.0])
-        if j == len(SPECS) - 1:
+        # SE scale only on the last occupied panel of each row
+        last_in_row = (j == len(SPECS) - 1) or (divmod(j + 1, ncols)[0] != r)
+        if last_in_row:
             ax2.set_ylabel("measurement SE (dashed)", fontsize=8)
-        ax.set_title(f"{name} ({len(items)} items)")
-        ax.set_xlabel(r"latent health $\theta$")
-        if j == 0:
+        else:
+            ax2.set_yticks([])
+        ax.set_title(f"{name} ({len(items)} items)", fontsize=10)
+        if r == nrows - 1 or j >= len(SPECS) - ncols:
+            ax.set_xlabel(r"latent health $\theta$")
+        if c == 0:
             ax.set_ylabel("Fisher information (stacked)")
-        ax.legend(fontsize=5.0, ncols=2, loc="upper right")
+        ax.legend(fontsize=5.6, ncols=2, loc="upper right")
+    for j in range(len(SPECS), nrows * ncols):
+        r, c = divmod(j, ncols)
+        axes[r, c].axis("off")
     fig.suptitle("What each GRM is made of: item information over the latent scale",
-                 fontweight="bold", y=1.02)
-    fig.text(0.01, -0.03,
+                 fontweight="bold", y=1.0)
+    fig.text(0.01, -0.02,
              "Each band is one item's Fisher information. The dashed line is the implied "
              "measurement SE, 1/sqrt(total information): where it rises, the instrument stops "
-             "discriminating — the IRT reading of ceiling and floor.",
+             "discriminating \u2014 the IRT reading of ceiling and floor.",
              fontsize=7.5, color=INK2)
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_grm_information.png"

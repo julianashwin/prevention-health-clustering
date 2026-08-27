@@ -90,6 +90,7 @@ genuine cost --- old diagnoses shadowing current health --- is quantified in
 \S\ref{sec:ever}, not assumed away.
 
 \subsection{Why grouped, not seventeen indicators}
+\label{sec:groups}
 Grouping is the testlet logic applied to diagnoses. CHD, angina, MI, CHF and
 stroke are one disease process reported several ways; as separate items they
 would violate local independence exactly as the \code{sf2a}/\code{sf2b} pair
@@ -291,14 +292,36 @@ longitudinal information, which is a poor trade for trajectory work
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_grm_information}
 \caption{What each GRM is made of: stacked item information over the latent
-scale, with the implied measurement SE (dashed). Panels, left to right: the
-original four-testlet physical GRM (GH, PF, RP, BP); P-FUNC (those four plus
-FUNC); P-FULL (P-FUNC plus the six diagnosis groups); MENT, the mental bank
-(MH, RE, SF, the two GHQ wording testlets, DEPR); and COMBINED, all
-seventeen items. FUNC adds a broad band of precision on the ill side; the
-condition items are visibly thin; GHQ-negative dominates the mental bank;
-the combined bank is tallest and widest but its SE still rises sharply above
-$\theta \approx +1$.}
+scale, with the implied measurement SE (dashed, right axis); each band is one
+item, ordered as in the legend.
+%
+\emph{Panels:} \textbf{GRM original} is the four-testlet physical measure
+replicated from the EIT note; \textbf{P-FUNC} adds the functioning testlet;
+\textbf{P-FULL} adds the six diagnosis groups; \textbf{MENT} is the mental
+bank; \textbf{COMBINED} is all seventeen items at once.
+%
+\emph{Physical items, from the SF-12:} \textbf{GH} general health (the single
+self-rated-health question), \textbf{PF} physical functioning (moderate
+activities, climbing stairs), \textbf{RP} role-physical (cutting down or
+being limited at work because of physical health), \textbf{BP} bodily pain;
+\textbf{FUNC} is the count of Equality Act physical limitations (mobility,
+lifting, dexterity, coordination, personal care).
+%
+\emph{Diagnosis groups:} \textbf{CVD} cardiovascular events, \textbf{METAB}
+diabetes and high blood pressure, \textbf{RESP} chronic airway disease,
+\textbf{MSK} arthritis, \textbf{CANCER}, \textbf{OTHER} the pooled remainder
+of thyroid, liver and epilepsy (\S\ref{sec:groups}).
+%
+\emph{Mental items:} \textbf{MH} mental health (calm; downhearted),
+\textbf{RE} role-emotional (cutting down or working less carefully because of
+emotional health), \textbf{SF} social functioning (health interfering with
+social activities), \textbf{GHQPOS} and \textbf{GHQNEG} the positively- and
+negatively-worded halves of the GHQ-12, \textbf{DEPR} ever-diagnosed clinical
+depression.
+%
+FUNC adds a broad band of precision on the ill side; the condition items are
+visibly thin; GHQ-negative dominates the mental bank; the combined bank is
+tallest and widest but its SE still rises sharply above $\theta \approx +1$.}
 \label{fig:info}
 \end{figure}
 
