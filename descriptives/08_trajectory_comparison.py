@@ -34,14 +34,14 @@ AGES = np.arange(20, 91)
 A = (AGES - 55) / 10.0
 
 FITS = [
-    ("pcs-ar1", "PCS, AR(1)"),
-    ("pcs-ar1-ho", "PCS, AR(1) + holdout"),
-    ("physgrm-base", "GRM phys, baseline"),
-    ("physgrm-ar1", "GRM phys, AR(1)"),
-    ("physgrm-ar1-ho", "GRM phys, AR(1) + holdout"),
-    ("combgrm-base", "GRM comb, baseline"),
-    ("combgrm-ar1", "GRM comb, AR(1)"),
-    ("combgrm-ar1-ho", "GRM comb, AR(1) + holdout"),
+    ("pcs-ar1", "UKHLS PCS · AR(1)"),
+    ("pcs-ar1-ho", "UKHLS PCS · AR(1) + holdout"),
+    ("physgrm-base", "GRM physical (P-FULL) · baseline"),
+    ("physgrm-ar1", "GRM physical (P-FULL) · AR(1)"),
+    ("physgrm-ar1-ho", "GRM physical (P-FULL) · AR(1) + holdout"),
+    ("combgrm-base", "GRM combined (17 items) · baseline"),
+    ("combgrm-ar1", "GRM combined (17 items) · AR(1)"),
+    ("combgrm-ar1-ho", "GRM combined (17 items) · AR(1) + holdout"),
 ]
 
 
@@ -99,7 +99,7 @@ def main() -> int:
                     lw=0.8 + 4.0 * theta[k],
                     label=f"class {k+1}: {theta[k]:.0%}")
         ax.axhline(0, color="#cccccc", lw=0.7, ls=":")
-        ax.set_title(label, fontsize=9.5)
+        ax.set_title(label, fontsize=8.6)
         ax.legend(fontsize=6.6, loc="lower left")
         ax.grid(True, axis="y")
     for ax in axes[1]:

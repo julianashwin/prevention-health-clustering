@@ -1,6 +1,7 @@
 \documentclass[11pt]{article}
 \usepackage[margin=2.6cm]{geometry}
 \usepackage{graphicx,booktabs,amsmath,microtype}
+\usepackage{float}   % [H]: figures stay where they are written
 \usepackage[hidelinks]{hyperref}
 \usepackage[dvipsnames]{xcolor}
 \graphicspath{{figures/}}
@@ -237,13 +238,17 @@ measure therefore discards precisely the respondents with the richest
 longitudinal information, which is a poor trade for trajectory work
 (\S\ref{sec:multidim}).
 
-\begin{figure}[t]
+\begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_grm_information}
 \caption{What each GRM is made of: stacked item information over the latent
-scale, with the implied measurement SE (dashed). FUNC adds a broad band of
-precision on the ill side; the condition items are visibly thin; GHQ-negative
-dominates the mental bank; the combined bank is tallest and widest but its SE
-still rises sharply above $\theta \approx +1$.}
+scale, with the implied measurement SE (dashed). Panels, left to right: the
+original four-testlet physical GRM (GH, PF, RP, BP); P-FUNC (those four plus
+FUNC); P-FULL (P-FUNC plus the six diagnosis groups); MENT, the mental bank
+(MH, RE, SF, the two GHQ wording testlets, DEPR); and COMBINED, all
+seventeen items. FUNC adds a broad band of precision on the ill side; the
+condition items are visibly thin; GHQ-negative dominates the mental bank;
+the combined bank is tallest and widest but its SE still rises sharply above
+$\theta \approx +1$.}
 \label{fig:info}
 \end{figure}
 
@@ -274,7 +279,7 @@ the orthogonality artifact. SF-6D correlates \emph{more} with the mental
 theta (0.80) than the physical one (0.71) --- and its closest cousin is the
 \emph{combined} bank (0.88): the SF-6D was a mixed measure all along.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_moments_grid}
 \caption{Mean, variance and the rows of the covariance matrix (the empirics
 note's anatomy) for the full metric suite, two banks of six. GHQ is flipped
@@ -288,10 +293,13 @@ count cannot fall.}
 \label{fig:moments}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_cluster_trajectories}
-\caption{Partial K-means trajectory clusters ($K=3$, 50 seeded inits, sample
-fixed at people with $\ge 3$ observed baseline-PCS ages, ages 20--90).}
+\caption{Partial K-means trajectory clusters ($K=3$, 50 seeded inits,
+sample fixed at people with $\ge 3$ observed baseline-PCS ages, ages
+20--90). Six measures: the UKHLS PCS, the physical-only subscale composite,
+SF-6D utility, the original four-testlet GRM, the physical GRM in its P-FULL
+specification, and the mental GRM.}
 \label{fig:clusters}
 \end{figure}
 
@@ -312,11 +320,14 @@ The misgiving: historical diagnoses accumulate mechanically with age, so a
 diagnosis-bearing measure could manufacture ``decline'' out of stale
 paperwork. Four reads.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_ever_sensitivity}
-\caption{(a) latent age profiles with and without diagnoses and with only
-recent diagnoses; (b) the staleness of the ever-stock; (c) the score penalty
-against the age of the oldest diagnosis.}
+\caption{The ever-diagnosis question, all three panels on the physical
+GRM. (a) latent age profiles $\mu_a$ under P-FUNC (functioning only), P-FULL
+(plus ever-diagnoses) and P-REC (plus diagnoses at most ten years old); (b)
+the staleness of the UKHLS chronic-condition stock; (c) the per-person gap
+$\theta_{\text{P-FULL}} - \theta_{\text{P-FUNC}}$ against the age of that
+person's oldest diagnosis.}
 \label{fig:ever}
 \end{figure}
 
@@ -411,7 +422,7 @@ where a single index is externally imposed; a bifactor model (general +
 physical/mental group factors) would be the defensible one-number
 construction if that need becomes real.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_combined_grm_model}
 \caption{The model behind the combined metric, in the empirics note's
 hurdles-on-the-health-axis form, for the most all-encompassing bank. (a)
@@ -435,11 +446,12 @@ physically dominated, because the physical items are the steeper and hence
 the more reliable ones. That is a second, independent reason (alongside the
 residual clustering of \S\ref{sec:combined}) to prefer the two-bank design.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_grm_versions}
-\caption{The measure-choice panel across GRM versions (the empirics note's
-Figure 26, rebuilt): mean age path, fanning, top-censoring, and the two
-contamination reads.}
+\caption{The measure-choice panel across measures (the empirics note's
+Figure 30, rebuilt): mean age path, fanning, top-censoring, and the two
+contamination reads. Seven measures: UKHLS PCS, SF-6D utility, the original
+four-testlet GRM, P-FUNC, P-FULL, the mental GRM and the combined GRM.}
 \label{fig:versions}
 \end{figure}
 
@@ -569,10 +581,13 @@ band'' was a mislabel, corrected here); the only GP variable is
 \code{servuse1} (``service use: your local doctor'', yes/no, five waves),
 included as a supplementary outcome.
 
-\begin{figure}[t]
+\begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_convexity}
 \caption{Healthcare use across the distribution of each measure, and the
-quadratic (convexity) term for in-patient admission.}
+quadratic (convexity) term for in-patient admission. All thirteen measures
+are tested (Table above); the seven plotted are UKHLS PCS, SF-6D utility,
+the original GRM, P-FUNC, P-FULL, the mental GRM and the combined GRM, each
+oriented so higher means better health.}
 \label{fig:convexity}
 \end{figure}
 
@@ -689,11 +704,14 @@ finely enough for the boundary to move.
 
 \subsection*{Class trajectories and shares}
 
-\begin{figure}[t]
+\begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_trajectory_comparison}
 \caption{Fitted class mean trajectories $\alpha_k + \beta_k a + \gamma_k
 a^2$ (with $a = (\text{age}-55)/10$) for all eight fits, on each channel's
-standardised scale. Line width is proportional to the class share.}
+standardised scale. Channels: the UKHLS PCS, the physical GRM in its P-FULL
+specification (\code{theta\_phys\_full}: functioning plus diagnosis groups),
+and the combined seventeen-item GRM (\code{theta\_combined}). Line width is
+proportional to the class share.}
 \label{fig:trajectories}
 \end{figure}
 

@@ -45,13 +45,14 @@ def main() -> int:
     # (a) latent age profiles
     ax = axes[0]
     for col, lab, color in (
-        ("mu_P-FUNC", "functioning only", BLUE),
-        ("mu_P-FULL", "+ ever diagnoses", ORANGE),
-        ("mu_P-REC", "+ diagnoses ≤ 10y old", GREEN),
+        ("mu_P-FUNC", "P-FUNC: functioning only", BLUE),
+        ("mu_P-FULL", "P-FULL: + ever diagnoses", ORANGE),
+        ("mu_P-REC", "P-REC: + diagnoses ≤ 10y old", GREEN),
     ):
         ax.plot(prof["age"], prof[col], lw=1.7, color=color, label=lab)
     ax.axhline(0, color="#bbbbbb", lw=0.7)
-    ax.set_title("(a) Latent physical health by age")
+    ax.set_title("(a) Latent physical health by age\n(physical GRM, three diagnosis specifications)",
+                 fontsize=9.5)
     ax.set_xlabel("age")
     ax.set_ylabel(r"$\mu_a$ (pooled latent N(0,1))")
     ax.legend(loc="lower left")
@@ -76,7 +77,7 @@ def main() -> int:
     ax.plot(share10.index, share10, lw=1.7, color=PURPLE, label="> 10 years old")
     ax.plot(share20.index, share20, lw=1.7, color=ORANGE, label="> 20 years old")
     ax.set_ylim(0, 1)
-    ax.set_title("(b) How old the ever-stock is")
+    ax.set_title("(b) How old the ever-stock is\n(UKHLS chronic-condition diagnoses)", fontsize=9.5)
     ax.set_xlabel("age")
     ax.set_ylabel("share of condition flags")
     ax.legend(loc="upper left")
@@ -101,7 +102,8 @@ def main() -> int:
                label=f"no diagnosis ({healthy.mean():+.2f})")
     ax.bar(range(len(prof_gap)), prof_gap["mean"], color=BLUE, width=0.65)
     ax.set_xticks(range(len(prof_gap)), prof_gap.index)
-    ax.set_title("(c) Score penalty vs age of OLDEST diagnosis")
+    ax.set_title("(c) P-FULL minus P-FUNC, by age of oldest diagnosis",
+                 fontsize=9.5)
     ax.set_xlabel("years since oldest diagnosis")
     ax.set_ylabel(r"$\theta_{full} - \theta_{func}$, mean")
     ax.legend(loc="lower left")
