@@ -48,8 +48,10 @@ CHANNELS = [
 def main() -> int:
     apply_style()
     rows = []
-    fig, axes = plt.subplots(len(VARIANTS), len(CHANNELS),
-                             figsize=(11.4, 2.9 * len(VARIANTS)), sharex=True)
+    comp = pd.read_csv(ARTIFACTS_DIR / "descriptives"
+                       / "class_composition_by_age.csv")
+    fig, axes = plt.subplots(len(VARIANTS), len(CHANNELS) + 1,
+                             figsize=(14.6, 2.9 * len(VARIANTS)), sharex=True)
     for r, (tag, vlabel) in enumerate(VARIANTS):
         summ = json.loads((ARTIFACTS_DIR / "multidim" / tag
                            / "run_summary.json").read_text())
@@ -84,13 +86,26 @@ def main() -> int:
                 ax.set_xlabel("age")
             if r == 0 and c == 0:
                 ax.legend(fontsize=7, loc="lower left")
+        # fourth column: the observed class composition, a row-level property
+        axc = axes[r, len(CHANNELS)]
+        g = comp[comp["fit"] == f"multidim-{tag}"].sort_values("age")
+        axc.stackplot(g["age"], *[g[f"class{k+1}"] for k in (0, 1, 2)],
+                      colors=CLUSTER, alpha=0.9)
+        axc.set_ylim(0, 1); axc.set_xlim(20, 90)
+        axc.set_ylabel("share observed", fontsize=8)
+        if r == 0:
+            axc.set_title("class composition by age", fontsize=10)
+        if r == len(VARIANTS) - 1:
+            axc.set_xlabel("age")
     fig.suptitle("Multidimensional fits: one class structure, three channels",
                  fontweight="bold", y=1.0)
     fig.text(0.01, -0.004,
              "One row per variant, one column per channel. Line width is proportional to the class share,\n"
              "which is a property of the fit and so identical across each row. The Gaussian channels are\n"
              "shown on the original GRM theta scale; the count channel as the implied mean number of\n"
-             "conditions. Class 1 is worst physical health by the anchor convention.",
+             "conditions. Class 1 is worst physical health by the anchor convention. The fourth column\n"
+             "is the class composition of the person-waves observed at each age: the shares theta are\n"
+             "lifetime constants, but who is in the sample at each age is not.",
              fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_multidim_trajectories.png"

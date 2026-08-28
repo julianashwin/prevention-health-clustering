@@ -90,9 +90,15 @@ def main() -> int:
     print(sp.round(3).to_string(index=False))
     print()
 
-    fig, axes = plt.subplots(2, 4, figsize=(13.4, 6.4), sharex=True,
-                             sharey=True)
-    for ax, (tag, label) in zip(axes.ravel(), FITS):
+    comp = pd.read_csv(ARTIFACTS_DIR / "descriptives"
+                       / "class_composition_by_age.csv")
+    fig = plt.figure(figsize=(13.4, 7.6))
+    gs = fig.add_gridspec(4, 4, height_ratios=[3.2, 0.7, 3.2, 0.7],
+                          hspace=0.38, wspace=0.22)
+    for i, (tag, label) in enumerate(FITS):
+        r, c = divmod(i, 4)
+        ax = fig.add_subplot(gs[2 * r, c])
+        axc = fig.add_subplot(gs[2 * r + 1, c], sharex=ax)
         theta, mat = curves[tag]
         for k in range(3):
             ax.plot(AGES, mat[:, k], color=CLUSTER[k],
@@ -100,18 +106,26 @@ def main() -> int:
                     label=f"class {k+1}: {theta[k]:.0%}")
         ax.axhline(0, color="#cccccc", lw=0.7, ls=":")
         ax.set_title(label, fontsize=8.6)
-        ax.legend(fontsize=6.6, loc="lower left")
+        ax.legend(fontsize=6.4, loc="lower left")
         ax.grid(True, axis="y")
-    for ax in axes[1]:
-        ax.set_xlabel("age")
-    for ax in axes[:, 0]:
-        ax.set_ylabel("standardised channel units")
+        ax.tick_params(labelbottom=False)
+        if c == 0:
+            ax.set_ylabel("standardised channel units", fontsize=8.5)
+        g = comp[comp["fit"] == tag].sort_values("age")
+        axc.stackplot(g["age"], *[g[f"class{k+1}"] for k in range(3)],
+                      colors=CLUSTER, alpha=0.9)
+        axc.set_ylim(0, 1); axc.set_yticks([]); axc.set_xlim(20, 90)
+        axc.spines["left"].set_visible(False)
+        if r == 1:
+            axc.set_xlabel("age")
     fig.suptitle("Fitted class trajectories and shares across the eight fits",
                  fontweight="bold", y=1.0)
     fig.text(0.01, -0.006,
              "Line width is proportional to the class share. All channels are standardised (mean 0, sd 1 over\n"
              "the fitted sample), so levels are comparable across panels; class 1 is worst health by the\n"
-             "anchor convention.",
+             "anchor convention. The strip beneath each panel is the model's class composition of the\n"
+             "person-waves OBSERVED at each age: theta is a lifetime constant, but who is in the sample\n"
+             "is not.",
              fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_trajectory_comparison.png"
