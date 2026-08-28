@@ -1290,6 +1290,100 @@ extension. Finally, the univariate comparison in \S\ref{sec:ar1} used P-FULL
 while this model uses P-FUNC, so the two are not a nested pair; a univariate
 P-FUNC fit would close that gap.
 
+\section{Predicting outcomes the models never saw}
+\label{sec:outcomes}
+
+Everything so far scores a model against the health variables it was fitted
+to. This section asks a different question: given a person's class posterior,
+how well can we predict outcomes that appear in \emph{no} channel of
+\emph{any} fitted model --- death, and healthcare use? Mortality was toggled
+off for the multidimensional round and utilisation was never a channel, so
+this is criterion validity, and it is the comparison that decides whether the
+typology is useful beyond describing its own inputs.
+
+Three outcomes: death during the panel (person-level), any in-patient stay in
+the last twelve months, and the out-patient attendance band $0$--$4$ (both
+person-wave, waves 7--15). Three predictor sets, each also carrying a
+quadratic in age so that what is measured is what each adds to age alone:
+age only; age plus the two free class posteriors; and age plus the model's
+own continuous health measure, which is the fair competitor because it is
+what the classes summarise. People are split $70/30$, the outcome model
+fitted on the $70$ and scored on the $30$.
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{fig_outcome_prediction}
+\caption{Out-of-sample gain over an age-only quadratic, whose own value is in
+brackets beside each fit. Fits differ in sample, so the age baselines differ
+and it is the gains, not the levels, that compare across rows.}
+\label{fig:outcomes}
+\end{figure}
+
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+ & mortality & in-patient & out-patient \\
+ & \multicolumn{2}{c}{AUC, in / out} & $R^2$, in / out \\
+\midrule
+\multicolumn{4}{l}{\emph{age only}} \\
+\quad PCS sample & .836 / .831 & .576 / .588 & .011 / .012 \\
+\quad multidim sample & .828 / .815 & .586 / .596 & .010 / .012 \\
+\addlinespace
+\multicolumn{4}{l}{\emph{age + class posterior}} \\
+\quad PCS, AR(1) & .856 / .857 & .678 / .686 & .143 / .148 \\
+\quad P-FULL, baseline & .853 / \textbf{.861} & .674 / .681 & .155 / \textbf{.166} \\
+\quad P-FULL, AR(1) & .852 / .860 & .675 / .680 & .148 / .157 \\
+\quad combined, baseline & .850 / .856 & .664 / .672 & .157 / .165 \\
+\quad multidim, baseline & .843 / .841 & .667 / .673 & .152 / .153 \\
+\quad multidim, AR(1) & .841 / .837 & .663 / .670 & .144 / .141 \\
+\addlinespace
+\multicolumn{4}{l}{\emph{age + the continuous measure}} \\
+\quad P-FULL & .860 / \textbf{.866} & .705 / \textbf{.710} & .187 / \textbf{.194} \\
+\quad multidim (P-FUNC) & .855 / .850 & .705 / .710 & .182 / .185 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{The continuous measure beats the classes on every outcome, in every
+fit, in and out of sample.} For out-patient attendance the gap is large:
+$R^2$ of $.194$ against $.166$, so discretising into three classes throws
+away about a sixth of what the measure knows. For in-patient stays it is
+$.710$ against $.681$ in AUC. This is the sharpest statement of a theme
+running through the note --- the classes are a summary, and summarising
+costs. If prediction is the goal, use $\theta$; the typology earns its place
+by being interpretable and by describing trajectories, not by predicting
+better than the thing it summarises.
+
+\textbf{Age already predicts mortality well, and health adds little.} The
+age-only AUC is $.83$, and the best class specification reaches $.861$ --- a
+gain of about $.027$. Health measured in mid-life is a weak marginal
+predictor of death once age is known, at least at this horizon. Utilisation
+is the opposite: age alone gives AUC $.59$ for in-patient stays and
+$R^2 = .01$ for out-patient bands, and health does the overwhelming majority
+of the work. Prevention targeted on these measures should expect to move
+utilisation far more readily than mortality.
+
+\textbf{The multidimensional classes are not better than the univariate ones
+at this, and are slightly worse.} On gain over age they are comparable for
+mortality ($+.026$ against $+.027$ for P-FULL baseline) but behind on both
+utilisation outcomes ($+.077$ against $+.100$ AUC for in-patient; $+.141$
+against $+.154$ $R^2$ for out-patient). Adding channels bought stability and
+interpretation (\S\ref{sec:multifit}), not external predictive power. Note
+the samples differ, so only the gains are comparable, and the multidim
+measure column is P-FUNC where the univariate is P-FULL.
+
+\textbf{The AR variants predict external outcomes slightly worse than their
+baselines}, consistently across all three outcomes and both families. That is
+coherent with \S\ref{sec:ar1}: the AR term absorbs within-person variation
+that would otherwise separate the classes, so the classes it leaves behind
+carry marginally less information about anything else.
+
+\textbf{Caveat.} The class posteriors come from mixtures fitted on all
+people, so the $70/30$ split tests the class-to-outcome relationship out of
+sample but not the whole pipeline; a fully clean version would refit each
+mixture on the training people. In-sample and out-of-sample figures are
+nonetheless close throughout --- often the out-of-sample number is the higher
+of the two --- so there is little sign of the outcome models overfitting.
+
 \section{Recommendations}
 
 \begin{enumerate}\itemsep2pt
@@ -1325,8 +1419,8 @@ $10^{-5}$ on all 498{,}424 person-waves \\
 coverage; $\ge$ EIT count on 100.000\% of rows \\
 \code{data\_cleaning/06\_build\_grm2.py} & all GRM-2 specs; Q3, EAP
 identity, invariance, recency weights \\
-\code{descriptives/01--07} & measure panel, correlations, the six figures,
-ceiling/floor and convexity tables \\
+\code{descriptives/01--12} & measure panel, correlations, every figure, the
+ceiling/floor, convexity, class-composition and outcome-prediction tables \\
 \code{clustering/run\_fit.py}, \code{runs/overnight\_queue.py} & the
 \S\ref{sec:ar1} batch: generic registry fits, last-two-observations holdout,
 per-person held-out densities \\

@@ -79,15 +79,24 @@ def gauss_rows(Y, X, coef, sigma, rho, gap, wstart, ar):
     return out
 
 
-def composition(ages, person, fit_lp, theta, n_person):
-    """Posterior class shares among the person-waves observed at each age."""
+def composition(ages, person, fit_lp, theta, n_person, pids=None):
+    """Posterior class shares among the person-waves observed at each age.
+
+    Returns the age composition and, when person ids are supplied, the
+    per-person class posterior itself (which 12_outcome_prediction.py uses to
+    score the classes against external outcomes).
+    """
     unnorm = np.log(theta)[None, :] + fit_lp
     w = np.exp(unnorm - logsumexp(unnorm, axis=1, keepdims=True))
     rows = pd.DataFrame(w[person], columns=[f"class{k+1}" for k in range(K)])
     rows["age"] = ages
     g = rows.groupby("age").mean()
     g["n"] = rows.groupby("age").size()
-    return g.reset_index()
+    post = None
+    if pids is not None:
+        post = pd.DataFrame(w, columns=[f"class{k+1}" for k in range(K)])
+        post.insert(0, "pidp", pids)
+    return g.reset_index(), post
 
 
 def univariate_fit(tag, model, contract, hold_k):
@@ -120,7 +129,7 @@ def univariate_fit(tag, model, contract, hold_k):
     fit_lp = np.zeros((n_person, K))
     np.add.at(fit_lp, person[fitted], lp[fitted])
     ages = np.round(X[:, 1] * 10 + 55).astype(int)
-    return composition(ages, person, fit_lp, theta, n_person)
+    return composition(ages, person, fit_lp, theta, n_person, pl.person_ids)
 
 
 def multidim_fit(tag, ar, hold):
@@ -160,32 +169,36 @@ def multidim_fit(tag, ar, hold):
     lpc[cobs] = nb2(cy[cobs, None], (X @ cch.T)[cobs], p["phi_chronic"]["mean"])
     np.add.at(fit_lp, person[fitted], lpc[fitted])
     ages = np.round(X[:, 1] * 10 + 55).astype(int)
-    return composition(ages, person, fit_lp, theta, n_person)
+    return composition(ages, person, fit_lp, theta, n_person, pl.person_ids)
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--validate", action="store_true")
     args = ap.parse_args(argv)
-    out = []
+    out, posts = [], []
     for tag, model, contract, hk in UNIVARIATE:
-        g = univariate_fit(tag, model, contract, hk)
+        g, post = univariate_fit(tag, model, contract, hk)
         g.insert(0, "fit", tag); g.insert(1, "family", "univariate")
         out.append(g)
+        post.insert(0, "fit", tag); posts.append(post)
         print(f"  {tag:16s} ages {g['age'].min()}-{g['age'].max()}, "
               f"share at 30 {g.loc[g.age==30,'class1'].iloc[0]:.3f} / "
               f"at 80 {g.loc[g.age==80,'class1'].iloc[0]:.3f} (class 1)")
     for tag, ar, hold in MULTIDIM:
-        g = multidim_fit(tag, ar, hold)
+        g, post = multidim_fit(tag, ar, hold)
         g.insert(0, "fit", f"multidim-{tag}"); g.insert(1, "family", "multidim")
         out.append(g)
+        post.insert(0, "fit", f"multidim-{tag}"); posts.append(post)
         print(f"  multidim-{tag:12s} share at 30 "
               f"{g.loc[g.age==30,'class1'].iloc[0]:.3f} / at 80 "
               f"{g.loc[g.age==80,'class1'].iloc[0]:.3f} (class 1)")
     tab = pd.concat(out, ignore_index=True)
     path = ARTIFACTS_DIR / "descriptives" / "class_composition_by_age.csv"
     tab.to_csv(path, index=False)
-    print(f"\nwrote {path} ({len(tab):,} rows)")
+    ppath = ARTIFACTS_DIR / "descriptives" / "class_posteriors.parquet"
+    pd.concat(posts, ignore_index=True).to_parquet(ppath, index=False)
+    print(f"\nwrote {path} ({len(tab):,} rows) and {ppath}")
     return 0
 
 
