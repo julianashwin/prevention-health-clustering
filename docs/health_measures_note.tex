@@ -1187,6 +1187,36 @@ And \code{phi\_chronic} settles at $656$ (baseline) to $920$ (AR), which for
 a negative binomial is effectively Poisson: after conditioning on class and
 age there is almost no overdispersion left to model.
 
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{fig_multidim_trajectories}
+\caption{Class trajectories and shares for the four multidimensional fits,
+one row per variant and one column per channel. A fit has a single class
+structure, so the shares are identical across a row and the line width
+(proportional to the share) repeats; what changes across the row is what each
+class \emph{does} on each channel. The Gaussian channels are returned to the
+original GRM $\theta$ scale using each fit's standardising moments; the count
+channel shows the implied mean number of conditions. Class 1 is worst
+physical health by the anchor convention. Together with
+Figure~\ref{fig:trajectories}, which covers the eight univariate fits, every
+Bayesian model in this note has its trajectories and shares drawn.}
+\label{fig:multitraj}
+\end{figure}
+
+Figure~\ref{fig:multitraj} makes the classes legible as types rather than as
+parameter vectors. The physical channel behaves as the univariate fits led us
+to expect: three ordered, non-crossing, accelerating declines, with class 1
+falling from about $-0.1$ at age 20 to $-1.7$ at 90 while class 3 stays near
+$+0.5$ until the sixties. The mental channel is where the multidimensional
+model earns its keep. Its trajectories \emph{rise} with age for every class,
+recovering the late-life wellbeing pattern of Figure~\ref{fig:moments} inside a
+model that is simultaneously fitting a steep physical decline --- and they
+rise fastest for class 3, so the healthiest physical type is also pulling
+away mentally. Class 1 is worst on both channels at every age, which is worth
+stating because nothing in the model forces it: only the physical channel
+carries the ordering constraint, so the mental ordering is an estimate. The
+count channel then separates the classes most sharply of the three, from
+about $4.5$ conditions at age 80 in class 1 to $0.7$ in class 3.
+
 \subsection*{Held-out prediction, channel by channel}
 
 Chronic is nearly free to predict --- carrying the last observed count

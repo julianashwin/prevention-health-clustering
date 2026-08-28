@@ -17,5 +17,5 @@
 \contentsline {section}{\numberline {9}Latent-class trajectories under AR(1) persistence}{18}{section.9}%
 \contentsline {section}{\numberline {10}Towards a multidimensional model}{22}{section.10}%
 \contentsline {section}{\numberline {11}The multidimensional model}{23}{section.11}%
-\contentsline {section}{\numberline {12}Recommendations}{25}{section.12}%
-\contentsline {section}{\numberline {13}Reproducibility}{25}{section.13}%
+\contentsline {section}{\numberline {12}Recommendations}{27}{section.12}%
+\contentsline {section}{\numberline {13}Reproducibility}{27}{section.13}%
