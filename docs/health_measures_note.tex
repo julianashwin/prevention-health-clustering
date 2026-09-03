@@ -1054,6 +1054,80 @@ reassuring but does not make them representative. And the combined-channel
 fits inherit \S\ref{sec:combined}'s unidimensionality caveat: a single class
 structure over two correlated dimensions.
 
+\subsection{How much of that convexity is real?}
+\label{sec:convexdetail}
+
+The figure above plots utilisation against \emph{percentiles} of each
+measure, and the claim of convexity deserves more scrutiny than a percentile
+axis can give it. Two separate things inflate it.
+
+\textbf{The horizontal scale.} Percentiles are a rank transform, so equal
+horizontal steps are equal shares of people rather than equal amounts of
+health. For a roughly normal $\theta$ the bottom decile spans far more of the
+health scale than the fifth does, and compressing it to the same width bends
+the left-hand end upward. Panels (a) and (b) of
+Figure~\ref{fig:convexdetail} show the same relationship on the two axes:
+the sharp elbow on the percentile axis becomes a smooth decay on $\theta$.
+The binning rule itself turns out not to matter --- equal-count and
+equal-width bins trace the same curve --- so this is the axis, not the
+aggregation. The formal test in the table above was already run on the
+measure's own scale, so only the picture was affected; but the picture is
+what carried the claim.
+
+\textbf{The vertical scale, which matters more.} In-patient stays run at
+$8.2\%$, and the logistic curve is convex everywhere below one half. A
+relationship that is exactly \emph{linear in the log-odds} therefore appears
+convex when plotted as a probability. Panel (b) draws a logistic with no
+quadratic term at all against the observed decile means: it reproduces the
+curvature almost exactly. Panel (c) puts the same data on the log-odds scale,
+where it is close to a straight line.
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{fig_convexity_detail}
+\caption{In-patient stays against the physical GRM $\theta$. The fitted curve
+in (b) and (c) is a logistic with no quadratic term, so every departure from
+a straight line in (b) comes from the link function alone.}
+\label{fig:convexdetail}
+\end{figure}
+
+Re-running the quadratic test on both scales makes the point numerically:
+
+\begin{center}\small
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{probability scale} & \multicolumn{2}{c}{log-odds scale} \\
+Measure & $z^2$ coef & $t$ & $z^2$ coef & $t$ \\
+\midrule
+GRM physical, $\theta$ & $+.020$ & 44.7 & $+.051$ & 8.6 \\
+SF-6D utility & $+.021$ & 39.8 & $+.112$ & 18.1 \\
+UKHLS PCS & $+.011$ & 23.7 & $\mathbf{-.028}$ & $-4.8$ \\
+GRM physical, TCC scale & $+.009$ & 17.4 & $\mathbf{-.056}$ & $-10.2$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{On the probability scale every measure is emphatically convex; on the
+log-odds scale two of the four change sign.} The PCS and the TCC
+cardinalisation are mildly \emph{concave} in log-odds. Only $\theta$ and the
+SF-6D remain convex there, and $\theta$'s curvature is small against its
+linear slope of $-0.71$ per standard deviation.
+
+\textbf{What this means for the framework.} The framework asks whether the
+return to preventing a unit of health loss is larger for the already-unwell,
+which is a question about the second derivative of a structural relationship
+--- and a second derivative is not invariant to how either axis is
+cardinalised. Three choices have to be made explicit before the question has
+an answer: the health scale ($\theta$, its TCC transform, and the PCS rank
+people almost identically but disagree about curvature), the outcome scale
+(probability, log-odds, or eventually cost), and, if cost is the target, the
+fact that we observe utilisation counts rather than spend at all. The honest
+summary of \S\ref{sec:convexity} is therefore narrower than it first
+appeared: \emph{utilisation falls steeply with health among the unwell and
+flattens among the healthy, and on the natural multiplicative scale for a
+risk that relationship is close to log-linear.} A convexity claim strong
+enough to carry a policy conclusion needs a cost outcome and a defended
+cardinalisation, neither of which UKHLS supplies on its own.
+
 \section{Towards a multidimensional model}
 \label{sec:multidim}
 

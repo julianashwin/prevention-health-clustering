@@ -1,0 +1,74 @@
+1) Intro 
+
+
+2) Conceptual framework
+
+- Setup: 
+	* deterministic "type"
+	* stochastic "noise"
+	* linear approximation/illustration
+
+- Policy:
+	* Health/Healthcare
+	* Prevention - uniform and targeted. 
+	* Some propositions, loosely speaking:
+		- P(i) -> Var(h)
+		- P(ii) -> Var(d) 
+		- P(iii) -> Cov(H,d)
+	* Linear approx/illustration
+
+- Identification:
+	* Variance/diagonal -> Var(d) + noise - I(i)
+	* Covariance/row -> Cov(H,d) + persistent noise - I(ii)
+	* Linear approx/illustration here as well. 
+
+
+3) Data and motivating descriptives. 
+
+- Data + Health measures
+Max 1 page on the physical health measure, keep it transparent and clean 
+	* PHYS -> \sum_k \lambda_k h_k where k \in \{PCS-MCS, FUNC, CC\}
+	* Some comparison/alternative metrics: PCS itself, CC, MCS
+	* Map PHYS to mortality and utilisation (also look at whether this mapping is heterogeneous by age)
+
+- 3 panel Figure (Exhibit 1) which links back to P(i), P(ii) and the timing issue. 
+	* Insights from the structural break:
+	* Mean - accelerates down -> intervene late as E(d) increases with age
+	* Variance - flattens off -> interventions early as V(d) decreases with age
+	* Divergence vs convergence -> intervene early and target low early in life, but high later in life as C(H,d) decreases with age
+
+- Figure (Exhibit 2) of barchart/linear approximation on real data, which links back to I(ii) 
+
+
+4) Lifecycle Types
+
+- Transition/motivation section: why and how?
+	Why:
+	* Literature focuses on old
+	* Motivation to focus on young 
+	* Prevention framework tells us we need to focus on the lifecycle
+	* Limited data - either focuses on older people or short window
+	* The prevention framework tells us the H_55 or something like that is an outcome, not an input - it depends on dynamics earlier in life
+	* Furthermore, the data tell us that the dynamics are potentially quite different across the lifecycle, so just starting in late middle age will miss important things
+	How: 
+	* Overlapping cohort clusters - first non parametric and then parametric, 
+	* Already mention here that we tackle 4 challenges: 
+		- power/type categorisation
+		- mortality
+		- cohort effects
+		- units/bounds
+
+- Overlapping cohorts clusters. 
+	* Address this in three ways: (A) non-parametric, (B) parametric and (C) observables
+
+(A) Non-parametric -> partial K-meanrs
+- This focuses on means, as these are most policy relevant and link to our theory (interventions might be able to affect variances, but we focus on interventions that affect means)
+- Non-parametric trajectory
+"Equal penalty" in that every person*wave observation is punished equally 
+	+ Neutral wrt transitory or persistent nature of the stochastic process (whether it is across or within types) [is this true though, as we do require a person to be only one cluster?]
+	- balance the stochastic process across types 
+
+Can we do some sort of cohort adjustment within the non-parametric?
+
+
+
