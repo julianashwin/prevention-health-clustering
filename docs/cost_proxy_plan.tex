@@ -133,6 +133,100 @@ the shape change, or only the level?
 $31.9\times$ to $52.7\times$; carry both through.
 \end{itemize}
 
+\section{What stages 1--3 actually found}
+
+Stages 1--3 are built (\code{data\_cleaning/09\_build\_cost\_proxy.py},
+\code{descriptives/15\_cost\_validation.py}). The utilisation sample is
+$301{,}390$ person-waves on $59{,}750$ people, waves 7--15; the validation
+restricts to ages 20--90, $283{,}852$ person-waves.
+
+\textbf{A third tier appeared.} The plan assumed two tiers of contact. There
+are three: \code{hl2gp} is ``Visited GP in last 12 months'' and \code{hl2hop}
+is ``Hosp or clinic out-patient last 12 months'', both banded $0$--$4$ across
+waves 7--15. An earlier draft of the companion note had these two swapped and
+asserted that the mainstage carried no GP-visit count; the labels were
+re-checked directly in waves g, j and o and the note is corrected.
+
+\textbf{Stage 1.} At indicative unit costs the flat index averages
+$\pounds539$ per person-year: $\pounds243$ in-patient, $\pounds182$
+out-patient, $\pounds114$ GP.
+
+\textbf{Stage 2.} Condition attribution reaches $18.0\%$ of admissions
+pooled over waves 7--15 --- below the $29\%$ measured on wave 15 alone,
+because \code{hospcp}/\code{hospdcp} only begin at wave 11. Weighting nights
+by condition moves the mean to $\pounds566$, about $6\%$. More useful is what
+it does \emph{not} do: the imputed condition weight is nearly flat across
+deciles of physical health, $1.16$ to $1.32$. Sicker people are not admitted
+for systematically more expensive conditions --- they are admitted more often
+and for longer. Condition weighting is a level adjustment, not a shape one,
+which answers one of Stage 4's sensitivity questions in advance.
+
+\subsection*{Stage 3: two checks pass, one strains}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_cost_validation}
+\caption{Validation of the flat-rate index against what is independently
+known about NHS spending. Panel (a) gives the age profile of the whole index
+and of each tier, relative to the 50s, against the published all-care ratio;
+(b) the share of each age band top-coded at ``more than ten'' contacts, with
+the top-band sensitivity; (c) the concentration curve against the published
+top-decile share; (d) the gradient in physical health, the quantity the proxy
+is actually for.}
+\label{fig:costval}
+\end{figure}
+
+\emph{Concentration passes.} The top $1\%$ of person-waves hold $25.2\%$ of
+the total, the top $5\%$ hold $48.5\%$ and the top decile $65.6\%$, against a
+published benchmark of more than half. If anything we are over-concentrated,
+which is expected: $22.7\%$ of person-waves are exactly zero on an index that
+carries no prescribing, A\&E or community contact, and those are the
+components that would give almost everyone a small positive amount.
+
+\emph{Level undershoots, as predicted.} $\pounds539$ per person-year against
+NHS spend per head of roughly $\pounds3{,}000$. This was expected and is not
+informative --- three tiers of contact priced at national averages cannot add
+to the national total.
+
+\emph{The age profile is the one that strains.} The whole index puts the
+$80+$ band at $2.5\times$ the 50s, against a published all-care ratio near
+$7\times$. Decomposed by tier the picture is sharper: in-patient $3.9\times$,
+out-patient $1.7\times$, GP $1.4\times$. The one tier measured as a true
+count is the one with a credible gradient; the two banded tiers are nearly
+flat in age.
+
+\textbf{But the bands are not the reason.} Top-coding does rise with age
+($7.4\%$ of the $80+$ band at ``more than ten'' GP visits against $4.9\%$ of
+the 50s), so it was the natural suspect. Scoring the top band at 30 contacts
+rather than 15 moves the whole-index ratio from $2.47\times$ to
+$2.38\times$ --- the wrong way, because it loads more weight onto the two
+tiers that are flat in age. The censoring is real and too small to matter.
+
+The binding limitation is the other one: we hold \emph{cost per contact}
+fixed. An out-patient attendance for an 85-year-old and one for a
+30-year-old enter at the same $\pounds120$, when the real cost differs by
+specialty and complexity. UKHLS gives us contact counts and no case mix
+outside the $18\%$ of admissions with an attributed condition. The flat unit
+cost, not the banded instrument, is what flattens the age profile --- and it
+is exactly what linkage would fix.
+
+\subsection*{Verdict}
+
+Usable for what it is for, with one stated caveat. The proxy's purpose is the
+gradient in \emph{health}, and there it is strong and robust: $13.2\times$
+between the least and most healthy decile on the whole index, $32.3\times$ on
+the in-patient tier, against an age gradient of $2.5\times$. Age is a poor
+proxy for the health that drives cost, which is the substantive point the
+conceptual framework rests on.
+
+The caveat is that the age profile is understated by roughly a factor of
+three, so the proxy should not be used for anything whose answer depends on
+the age gradient --- lifetime cost projections, discounting, or the timing of
+prevention returns. For those, either report the in-patient tier alone, or
+wait for linkage. Results should carry the in-patient tier separately
+throughout, since it is the only component with both a true count and a
+credible profile.
+
 \section{What this cannot do}
 
 Primary care, prescribing, A\&E and community services are absent entirely,
@@ -147,8 +241,9 @@ and should be named that way in anything we write rather than called a cost.
 
 \section{The decision this sets up}
 
-If Stage 3 shows the proxy reproducing the published age profile and
-concentration, and Stage 4 shows the convexity conclusion stable across the
+Stage 3 has now run: concentration reproduces, the age profile does not,
+and the diagnosis is flat unit costs rather than the banded instrument. If
+Stage 4 shows the convexity conclusion stable across the
 spell and outlier assumptions, then UKHLS alone supports the framework's
 empirical claim and linkage is a refinement rather than a precondition.
 
