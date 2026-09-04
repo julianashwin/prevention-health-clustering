@@ -30,6 +30,7 @@ Max 1 page on the physical health measure, keep it transparent and clean
 	* PHYS -> \sum_k \lambda_k h_k where k \in \{PCS-MCS, FUNC, CC\}
 	* Some comparison/alternative metrics: PCS itself, CC, MCS
 	* Map PHYS to mortality and utilisation (also look at whether this mapping is heterogeneous by age)
+	* On convexity - both present what we have but also 
 
 - 3 panel Figure (Exhibit 1) which links back to P(i), P(ii) and the timing issue. 
 	* Insights from the structural break:
@@ -86,7 +87,14 @@ This will help to address some of the four challenges:
 
 (C) Observational 
 - Figure 8: plot health trajectories by income and education (mostly to show that this is far inferior to clustering by health)
-- 
+- Figure 9: Predictive value (for h(t_+1), mortality(t+1) and utilisation(t+1) of types, observables and alternative models. Presumably showing that types are much more predictive than observables across a range of models (maybe multi-dim is more/less predictive?
+
+
+5) Prevention Exercises
+
+- Here we use the types to quantify the returns to prevention versus treatment in our sample, still need to work this out a bit depending on what results look like but something like: 
+- Prevention versus treatment comparison
+- Timing and targeting of prevention counterfactuals. 
 
 
 

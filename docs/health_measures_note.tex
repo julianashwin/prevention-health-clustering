@@ -1090,6 +1090,45 @@ a straight line in (b) comes from the link function alone.}
 \label{fig:convexdetail}
 \end{figure}
 
+\paragraph{Two axes, not one.} These are separate choices and it is easy to
+run them together. Convexity is $\partial^2 y / \partial x^2$, so it depends
+on how \emph{both} axes are cardinalised, and the two questions are
+independent:
+
+\begin{center}\small
+\begin{tabular}{lll}
+\toprule
+ & what is being chosen & options here \\
+\midrule
+horizontal & the health measure & $\theta$, \code{grmh}, PCS, SF-6D \\
+vertical & the link for the outcome & probability, log-odds \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The $\theta$ versus \code{grmh} distinction is horizontal: two
+cardinalisations of the same latent health. The probability versus log-odds
+distinction is vertical: two ways of writing the same risk. In the table
+below, differences \emph{down} a column are the horizontal effect and
+differences \emph{across} the columns are the vertical one.
+
+The cleanest demonstration that neither is innocuous is the pair $\theta$ and
+\code{grmh}. \code{grmh} is the test characteristic curve applied to
+$\theta$, a monotone transform, so the two rank every person identically ---
+their Spearman correlation is $1.000000$ to six decimal places. They differ
+only in spacing, and they differ a great deal: the bottom quarter of the
+distribution spans $1.12$ units of $\theta$ but only $0.33$ of \code{grmh},
+while the top quarter spans $0.77$ of $\theta$ and just $0.03$ of
+\code{grmh}, because the TCC runs into its ceiling. On the log-odds scale
+$\theta$ is convex ($+.051$) and \code{grmh} concave ($-.056$).
+
+\emph{Two measures that order people identically disagree about the sign of
+the curvature.} Convexity is therefore not a property of the health ordering
+at all; it is a joint property of the ordering and the units chosen to
+express it. That is the strongest form of the caution for the framework: no
+amount of better ranking, more items or finer measurement will settle a
+convexity question, because ranking is not what is at issue.
+
 Re-running the quadratic test on both scales makes the point numerically:
 
 \begin{center}\small
