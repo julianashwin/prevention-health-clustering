@@ -227,6 +227,39 @@ wait for linkage. Results should carry the in-patient tier separately
 throughout, since it is the only component with both a true count and a
 credible profile.
 
+\section{What stage 4 found}
+
+Built as \code{descriptives/16\_cost\_convexity.py} and
+\code{17\_cost\_age\_interaction.py}; reported in full in
+\code{health\_measures\_note.pdf} \S12.
+
+\textbf{The costing assumptions do not matter; the health scale does.} All
+twelve variants of the sensitivity grid --- one spell, two spells, one per
+five nights; maternity in or out; flat or condition-weighted; top band at 15
+or 30 --- are convex in levels and in logs, on the physical GRM $\theta$.
+Winsorising at the 99th percentile halves the magnitude and changes nothing
+else. The spell ambiguity, which looked like the most damaging gap in the
+data, is not binding. What does bind is the horizontal scale: with pounds on
+the vertical axis, $\theta$ gives a log-scale quadratic of $+.086$ and its own
+TCC gives $-.111$ on identical people with an identical ranking. Fixing the
+vertical axis was necessary and is not sufficient.
+
+\textbf{The health--cost relationship is close to age-invariant.} At a fixed
+$\theta$ the cost index is nearly flat in age, shallow-U-shaped with a midlife
+minimum: the sickest tenth costs $\pounds2{,}138$ at 20--34 and
+$\pounds2{,}112$ at 75--90. The sickest-to-healthiest ratio is $10$--$14\times$
+at every age. The absolute gradient does rise, $\pounds350$ to $\pounds734$
+per SD, but on the common support every band populates it runs $\pounds438$ to
+$\pounds555$, and the proportional gradient is flat ($0.907$ to $0.882$ log
+points). The $\theta \times$ age interaction is insignificant in pounds
+($t = 1.2$). Ageing raises cost by moving people down a fixed curve --- $2.3\%$
+of the 20--34 band sits in the sickest pooled tenth against $24.9\%$ of the
+75--90 band --- not by changing its shape.
+
+This is the result the whole proxy was built to get at, and it is one the
+stage 3 weakness does not undermine: the age profile is understated, but the
+finding is precisely that health rather than age is what carries cost.
+
 \section{What this cannot do}
 
 Primary care, prescribing, A\&E and community services are absent entirely,
@@ -241,9 +274,10 @@ and should be named that way in anything we write rather than called a cost.
 
 \section{The decision this sets up}
 
-Stage 3 has now run: concentration reproduces, the age profile does not,
-and the diagnosis is flat unit costs rather than the banded instrument. If
-Stage 4 shows the convexity conclusion stable across the
+Stages 3 and 4 have now run: concentration reproduces, the age profile does
+not, the diagnosis is flat unit costs rather than the banded instrument, and
+the convexity conclusion is stable across every costing assumption while
+remaining sensitive to the health scale. Given that the convexity survives the
 spell and outlier assumptions, then UKHLS alone supports the framework's
 empirical claim and linkage is a refinement rather than a precondition.
 

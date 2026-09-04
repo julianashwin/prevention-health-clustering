@@ -1752,6 +1752,151 @@ mixture on the training people. In-sample and out-of-sample figures are
 nonetheless close throughout --- often the out-of-sample number is the higher
 of the two --- so there is little sign of the outcome models overfitting.
 
+\section{A cost proxy, and whether health matters more with age}
+\label{sec:costproxy}
+
+\S\ref{sec:convexity} could not put pounds on the vertical axis, and said so.
+A staged plan for a cost proxy built from UKHLS alone is set out in
+\code{cost\_proxy\_plan.pdf}; stages 1--3 are built and validated there. This
+section uses it for the two questions the plan was for.
+
+The index prices three tiers of self-reported contact --- in-patient spells
+and excess bed days from \code{hosp}/\code{hospd}, out-patient attendances
+from \code{hl2hop}, GP visits from \code{hl2gp} --- at indicative national
+average unit costs, maternity separable. It averages $\pounds539$ per
+person-year against NHS spend per head near $\pounds3{,}000$, because it
+carries no prescribing, A\&E, community or social care. It reproduces the
+published concentration of spending (top decile $65.6\%$ against a published
+benchmark above half) and understates the age profile roughly threefold, for
+reasons diagnosed in the plan: unit cost per contact is held fixed. It is a
+bed-day-weighted index in pounds, not a cost, and is named that way
+throughout.
+
+\subsection{Convexity when the vertical axis is money}
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{fig_cost_convexity}
+\caption{Cost index against five health measures, in levels and in logs, and
+the sensitivity of the log-scale convexity to every costing assumption the
+index rests on. Measures oriented so higher means better health. Panel (c)
+varies the spell rule, maternity treatment, condition weighting and top-band
+value, each with a winsorised-at-the-99th-percentile twin.}
+\label{fig:costconvex}
+\end{figure}
+
+\begin{center}\small
+\begin{tabular}{lccccc}
+\toprule
+Measure & quad, levels ($t$) & quad, logs & bottom decile & top decile & ratio \\
+\midrule
+P-FULL $\theta$   & $+205$ (67) & $+.086$ & $\pounds1{,}888$ & $\pounds143$ & $13.2\times$ \\
+P-FULL TCC (\code{grmh}) & $+125$ (38) & $\mathbf{-.111}$ & $\pounds1{,}888$ & $\pounds143$ & $13.2\times$ \\
+UKHLS PCS         & $+129$ (40) & $+.002$ & $\pounds1{,}830$ & $\pounds220$ & $8.3\times$ \\
+SF-6D utility     & $+207$ (57) & $+.116$ & $\pounds1{,}665$ & $\pounds207$ & $8.0\times$ \\
+MENT $\theta$     & $+89$ (30)  & $+.079$ & $\pounds1{,}184$ & $\pounds302$ & $3.9\times$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{In pounds, every measure is convex} --- $t = 30$ to $67$ --- and the
+bottom decile costs $8$ to $13$ times the top on the physical measures.
+
+\textbf{But the scale problem of \S\ref{sec:convexity} does not go away.} The
+worry there was that a binary outcome has no natural vertical scale. Pounds
+supply one, and the horizontal cardinalisation still decides the sign: on the
+log scale P-FULL $\theta$ gives $+.086$ and its own TCC gives $\mathbf{-.111}$
+on identical people with an identical ranking, while the PCS gives $+.002$,
+which is nothing. Fixing the vertical axis was necessary and is not
+sufficient. A claim that healthcare costs are convex in health remains a
+claim about the health ruler, and the honest statement is the conditional one:
+convex in $\theta$, flat in PCS units, concave in \code{grmh}.
+
+\textbf{The costing assumptions, by contrast, do not matter.} All twelve
+variants in panel (c) --- one spell, two spells, one per five nights;
+maternity in or out; flat or condition-weighted; top band at 15 or 30
+contacts; each with and without winsorising --- are convex in levels and in
+logs. Winsorising at the 99th percentile roughly halves the magnitude
+($+.086$ to $+.050$) and changes nothing else, and the health ratio stays
+between $8.3\times$ and $14.6\times$. The spell ambiguity, which looked like
+the most damaging gap in the data, is not binding for this conclusion.
+
+\subsection{Does the health--cost relationship change with age?}
+
+The framework's question is what a unit of health improvement is worth and
+whether that depends on when in life it happens. This is only askable because
+the GRM is fitted multigroup by single year of age against a pooled $N(0,1)$:
+a $\theta$ of $-1$ means the same latent health at 30 as at 80. An
+age-standardised measure would build the answer in.
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{fig_cost_age_interaction}
+\caption{The cost index against physical health $\theta$ within age bands.
+Panel (a) plots cost across pooled $\theta$ bins, one line per age band;
+(b) the same table read down the other way; (c) the ratio of the sickest to
+the healthiest tenth; (d) the linear gradient over the full range and over the
+common support every band populates; (e) the same gradient in logs; (f) the
+share of each band falling in the sickest pooled tenth.}
+\label{fig:costage}
+\end{figure}
+
+\begin{center}\small
+\begin{tabular}{lcccccc}
+\toprule
+$\theta$ bin & 20--34 & 35--44 & 45--54 & 55--64 & 65--74 & 75--90 \\
+\midrule
+p0--10   & 2138 & 1899 & 1648 & 1754 & 1902 & 2112 \\
+p10--25  & 868 & 806 & 735 & 734 & 736 & 849 \\
+p25--50  & 447 & 410 & 371 & 407 & 456 & 522 \\
+p50--75  & 265 & 235 & 239 & 252 & 295 & 356 \\
+p75--90  & 206 & 175 & 162 & 183 & 220 & 278 \\
+p90--100 & 149 & 142 & 132 & 135 & 140 & 210 \\
+\midrule
+sickest/healthiest & $14.3\times$ & $13.3\times$ & $12.5\times$ & $13.0\times$ & $13.6\times$ & $10.1\times$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{The answer is that it barely changes, and the raw table is the
+clearest way to see it.} Read along the top row: a person in the sickest tenth
+of the health distribution costs $\pounds2{,}138$ at 20--34 and $\pounds2{,}112$
+at 75--90, with a shallow minimum of $\pounds1{,}648$ in midlife. A very sick
+25-year-old and a very sick 85-year-old cost the index about the same. The
+sickest-to-healthiest ratio is $10$--$14\times$ at every age and if anything
+narrows.
+
+\textbf{The absolute gradient does rise, and it is mostly composition.} The
+linear slope goes from $\pounds350$ per SD at 20--34 to $\pounds734$ at
+75--90, a $2.1\times$ rise. But the cost--health curve is convex, so a linear
+slope depends on where the mass sits, and the mass moves: $2.3\%$ of the
+20--34 band falls in the sickest pooled tenth against $24.9\%$ of the 75--90
+band, an elevenfold shift. Restricting to the common support
+$z \in [-2, 1]$, which every band populates, the slope runs $\pounds438$ to
+$\pounds555$ --- a $1.27\times$ rise, non-monotone, with a midlife minimum.
+The proportional gradient is flatter still, $0.907$ log points per SD at
+20--34 against $0.882$ at 75--90, hump-shaped with a peak of $1.077$ at
+45--54. Formally, with age in decades centred at 50 and standard errors
+clustered on the person, the $\theta \times$ age interaction is
+$+9.48$ $(t = 1.2)$ in pounds --- indistinguishable from zero --- and
+$+0.0196$ $(t = 4.0)$ in logs, statistically present and economically about
+two percent per decade.
+
+\textbf{What this means for the framework.} The return to preventing a unit
+of ill-health is close to age-invariant in proportional terms. Older cohorts
+cost more because more of them are ill, not because illness is more expensive
+when you are old. That is a substantive claim and it cuts against the
+intuition that late-life prevention has mechanically larger returns: on this
+index it does not, once you condition on health rather than age. It also
+raises the value of preventing ill-health early, since a young person in poor
+health is already carrying close to the full cost.
+
+Two cautions. The index understates the age profile threefold
+(\code{cost\_proxy\_plan.pdf} \S Stage 3), and although that shortfall is
+diagnosed as flat unit costs rather than anything about health, a measure
+that recovered the true age profile could tilt these gradients. And UKHLS
+attrits and does not follow people into care homes, so the sickest old are
+under-represented in a way the sickest young are not; both cautions push in
+the direction of understating late-life cost.
+
 \section{Recommendations}
 
 \begin{enumerate}\itemsep2pt
@@ -1787,7 +1932,7 @@ $10^{-5}$ on all 498{,}424 person-waves \\
 coverage; $\ge$ EIT count on 100.000\% of rows \\
 \code{data\_cleaning/06\_build\_grm2.py} & all GRM-2 specs; Q3, EAP
 identity, invariance, recency weights \\
-\code{descriptives/01--15} & measure panel, correlations, every figure, the
+\code{descriptives/01--17} & measure panel, correlations, every figure, the
 ceiling/floor, convexity, class-composition, outcome-prediction and
 cost-validation tables \\
 \code{clustering/run\_fit.py}, \code{runs/overnight\_queue.py} & the
@@ -1801,6 +1946,10 @@ per-channel held-out decomposition \\
 \code{cost\_proxy\_plan.pdf}, stages 1--3: flat-rate and condition-weighted
 indices, and validation against published age, concentration and level
 profiles \\
+\code{descriptives/16\_cost\_convexity.py},
+\code{17\_cost\_age\_interaction.py} & \S\ref{sec:costproxy}: convexity with
+pounds on the vertical axis, the twelve-variant costing sensitivity, and the
+age interaction with person-clustered standard errors \\
 \bottomrule
 \end{tabular}
 \end{center}
