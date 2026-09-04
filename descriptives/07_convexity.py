@@ -5,12 +5,14 @@ the healthy — and does each metric's cardinalisation carry that shape?
 Follows the sandbox's convexity test (quadratic in the standardised measure;
 slope asymmetry; binned shapes) extended to the full metric suite.
 
-Outcomes (waves 7-15): P(in-patient stay, last 12 months) from ``hosp``;
-out-patient visit band 0-4 from ``hl2gp``. NOTE the UKDA label: ``hl2gp`` is
-"Hosp or clinic OUT-PATIENT last 12 months" — the sandbox's "GP band" name
-was wrong. UKHLS mainstage has no GP-visit count; the closest is
-``servuse1`` ("service use: your local doctor", yes/no, waves 4/6/10/14/15),
-included as a supplementary outcome.
+Outcomes (waves 7-15), three tiers of contact: P(in-patient stay, last 12
+months) from ``hosp``; GP visit band 0-4 from ``hl2gp`` ("Visited GP in last
+12 months"); out-patient attendance band 0-4 from ``hl2hop`` ("Hosp or
+clinic out-patient last 12 months"). An earlier version of this script had
+the first two of those swapped, on a bad dictionary parse; the UKDA labels
+were re-checked directly in waves g, j and o. ``servuse1`` ("service use:
+your local doctor", yes/no, waves 4/6/10/14/15) is kept as a supplementary
+binary.
 
 All metrics are oriented so higher = better health (GHQ flipped), so on a
 declining relationship a POSITIVE quadratic term = convex.
@@ -79,7 +81,7 @@ def extract_utilisation() -> pd.DataFrame:
     for wi, w in enumerate("abcdefghijklmno", start=1):
         path = UKHLS_PANEL_DIR / f"{w}_indresp.tab"
         header = set(pd.read_csv(path, sep="\t", nrows=0).columns)
-        cols = {f"{w}_{s}": s for s in ("hl2gp", "hosp", "hospd", "hospch", "servuse1")
+        cols = {f"{w}_{s}": s for s in ("hl2gp", "hl2hop", "hosp", "hospd", "hospch", "servuse1")
                 if f"{w}_{s}" in header}
         if not cols:
             continue
@@ -111,7 +113,8 @@ def main() -> int:
 
     complete = d[list(MEASURES)].notna().all(axis=1)
     OUTCOMES = {"inpatient": "P(in-patient stay)",
-                "hl2gp": "out-patient band (0-4)",
+                "hl2gp": "GP visits (band 0-4)",
+                "hl2hop": "out-patient attendance (band 0-4)",
                 "gp_used": "P(GP used, 5 waves)"}
     rows = []
     for out, oname in OUTCOMES.items():
@@ -152,7 +155,7 @@ def main() -> int:
     # ---- figure ------------------------------------------------------------
     fig, axes = plt.subplots(1, 4, figsize=(16.4, 3.9))
     for ax, out, oname in ((axes[0], "inpatient", "P(in-patient stay)"),
-                           (axes[1], "hl2gp", "out-patient band (0-4)")):
+                           (axes[1], "hl2gp", "GP visits (band 0-4)")):
         s = d[complete & d[out].notna()]
         for m in HEADLINE:
             r = s[m].rank(pct=True)
@@ -177,7 +180,7 @@ def main() -> int:
     ax = axes[3]
     yy = np.arange(len(PAIRS))[::-1]
     for k, (oc, col, lab) in enumerate((("inpatient", "#12395B", "in-patient"),
-                                        ("hl2gp", "#CC5500", "out-patient"))):
+                                        ("hl2gp", "#CC5500", "GP"))):
         t = tab[tab["outcome"] == oc].set_index("measure")["quadratic"]
         off = 0.19 * (1 - 2 * k)
         ax.barh(yy + off, [t[a] for a, _, _ in PAIRS], height=0.34,
@@ -195,8 +198,8 @@ def main() -> int:
                  "(waves 7–15, common sample)", fontweight="bold", y=1.02)
     fig.text(0.01, -0.01,
              "Measures are oriented so higher = better; on a declining relationship a positive quadratic\n"
-             "means convex. UKHLS records utilisation, not expenditure, and hl2gp is out-patient\n"
-             "attendance \u2014 the survey carries no GP-visit count.",
+             "means convex. UKHLS records utilisation, not expenditure: hl2gp is the GP visit band and hl2hop the\n"
+             "out-patient attendance band, both 0\u20134 and top-coded at 'more than ten'.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout()
     figpath = ROOT_DIR / "docs" / "figures" / "fig_convexity.png"

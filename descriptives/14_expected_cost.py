@@ -10,7 +10,7 @@ honest.
 
 UKHLS carries no spend, but it carries the physical quantities that spend is
 bought with: nights as an in-patient (hospd) and out-patient attendance bands
-(hl2gp), waves 7-15. With unit costs that do NOT vary with health, expected
+(hl2hop), waves 7-15. With unit costs that do NOT vary with health, expected
 cost is a fixed linear combination of expected nights and expected
 attendances, so the SHAPE can be studied in physical units without inventing
 prices -- multiplying by a constant cannot change convexity.
@@ -48,7 +48,7 @@ def main() -> int:
     panel = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "measure_panel.parquet",
                             columns=["pidp", "wave", "age", MEASURE, "grmh_phys_full"])
     util = pd.read_parquet(INTERIM_DATA_DIR / "utilisation_long.parquet")
-    d = panel.merge(util[["pidp", "wave", "hosp", "hospd", "hospch", "hl2gp"]],
+    d = panel.merge(util[["pidp", "wave", "hosp", "hospd", "hospch", "hl2hop"]],
                     on=["pidp", "wave"], how="inner")
     d = d[d["hosp"].notna() & d[MEASURE].notna()].copy()
     # nights is asked only of those admitted; a non-admission is zero nights
@@ -71,7 +71,7 @@ def main() -> int:
     g = d.groupby("bin").agg(z=("z", "mean"), p_adm=("admitted", "mean"),
                              nights=("nights", "mean"),
                              nights_if=("nights", lambda x: x[x > 0].mean()),
-                             op=("hl2gp", "mean"), n=("z", "size")).reset_index()
+                             op=("hl2hop", "mean"), n=("z", "size")).reset_index()
     gnb = d.groupby("bin").agg(nights=("nights_nb", "mean"),
                                p_adm=("admitted_nb", "mean")).reset_index()
     g["nights_nb"] = gnb["nights"]
@@ -103,7 +103,7 @@ def main() -> int:
     rows = []
     for name, y in (("expected nights", d["nights"].to_numpy()),
                     ("P(admitted)", d["admitted"].to_numpy()),
-                    ("out-patient band", d["hl2gp"].fillna(0).to_numpy())):
+                    ("out-patient band", d["hl2hop"].fillna(0).to_numpy())):
         z = d["z"].to_numpy()
         X = np.column_stack([np.ones(len(z)), z, z**2])
         b, *_ = np.linalg.lstsq(X, y, rcond=None)

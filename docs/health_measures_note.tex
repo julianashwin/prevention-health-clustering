@@ -1,6 +1,6 @@
 \documentclass[11pt]{article}
 \usepackage[margin=2.6cm]{geometry}
-\usepackage{graphicx,booktabs,amsmath,microtype}
+\usepackage{graphicx,booktabs,amsmath,microtype,array}
 \usepackage{float}   % [H]: figures stay where they are written
 \usepackage[hidelinks]{hyperref}
 \usepackage[dvipsnames]{xcolor}
@@ -45,7 +45,7 @@ Long-standing illness (\code{health}) & all 15 & gate for \code{disdif}; descrip
 Diagnosed conditions (\code{hcond*} families, codes 1--17) & all 15 (\S2) & condition items; sensitivities \\
 Health satisfaction (\code{sclfsat1}) & all 15 & validation outcome only \\
 SWEMWBS; ADL module; loneliness & 1/4/7/10/13; 7/9/11/13; 9--15 & excluded: fail the every-wave rule \\
-Hospital out- and in-patient attendance (\code{hl2gp}, \code{hosp}; \S\ref{sec:convexity} on the absent GP count) & 7--15 & criterion-validity outcomes \\
+GP visits, out-patient attendance, in-patient stays (\code{hl2gp}, \code{hl2hop}, \code{hosp}/\code{hospd}) & 7--15 & criterion-validity outcomes \\
 Height/weight (self-report) & wave 1 only & excluded (biomarkers are UKDA-7251, not held) \\
 \bottomrule
 \end{tabular}
@@ -697,14 +697,22 @@ among the healthy --- and does each metric's cardinalisation carry that
 shape? Following the construction-note convexity exercise, each outcome is
 regressed on the standardised measure and its square on a common sample
 (waves 7--15, all fifteen
-measures observed; $n = 209{,}042$ in-patient, $208{,}936$ out-patient), with
-measures oriented so higher = better: on a declining relationship, a
-positive quadratic = convex. One data correction first: UKHLS mainstage has
-\emph{no GP-visit count}. \code{hl2gp}, despite its name, is labelled
-``hosp or clinic \emph{out-patient} last 12 months'' (the sandbox's ``GP
-band'' was a mislabel, corrected here); the only GP variable is
-\code{servuse1} (``service use: your local doctor'', yes/no, five waves),
-included as a supplementary outcome.
+measures observed; $n = 209{,}042$ in-patient, $208{,}936$ GP,
+$208{,}951$ out-patient), with measures oriented so higher = better: on a
+declining relationship, a positive quadratic = convex.
+
+One data correction first, and it runs the other way from the one recorded in
+an earlier draft of this note. UKHLS gives \emph{three} tiers of contact, not
+two: \code{hl2gp} is ``Visited GP in last 12 months'' and \code{hl2hop} is
+``Hosp or clinic out-patient last 12 months'', both banded $0$--$4$ and both
+running waves 7--15. An earlier draft asserted the opposite --- that
+\code{hl2gp} was the out-patient item and that the mainstage carried no
+GP-visit count --- on a faulty dictionary parse that matched an adjacent
+variable block. The UKDA labels were re-checked directly in waves g, j and o.
+Everything previously reported here as ``out-patient'' was in fact GP visits;
+the table below separates the two, and the genuine out-patient column is new.
+\code{servuse1} (``service use: your local doctor'', yes/no, five waves) is
+kept as a supplementary binary.
 
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_convexity}
@@ -714,38 +722,41 @@ are tested (Table above); the seven plotted in the first two panels are
 UKHLS PCS, SF-6D utility, the original GRM, P-FUNC, P-FULL, the mental GRM
 and the combined GRM, each oriented so higher means better health. The
 fourth panel sets each bank's $\theta$ (solid) against its TCC (hatched) for
-both outcomes: identical people, identical ranking, different units.}
+in-patient stays and GP visits: identical people, identical ranking,
+different units. Note that \code{hl2gp} is the GP visit band and
+\code{hl2hop} the out-patient band; an earlier draft had these swapped.}
 \label{fig:convexity}
 \end{figure}
 
 \begin{center}\small
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
- & \multicolumn{2}{c}{quadratic term ($t$)} &
+ & \multicolumn{3}{c}{quadratic term ($t$)} &
 \multicolumn{2}{c}{$P(\text{in-patient})$} \\
-Measure & in-patient & out-patient & bottom 1\% & top 1\% \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}
+Measure & in-patient & GP & out-patient & bottom 1\% & top 1\% \\
 \midrule
-UKHLS PCS & $+.011$ (24) & $+.032$ (18) & .312 & .042 \\
-UKHLS MCS & $+.004$ (8) & $+.038$ (22) & .128 & .134 \\
-Physical-only composite & $+.011$ (22) & $+.002$ (1) & .331 & .033 \\
-SF-6D utility & $+.021$ (40) & $+.119$ (61) & .289 & .039 \\
-GHQ-12 (flipped) & $+.003$ (8) & $+.007$ (5) & .189 & .059 \\
+UKHLS PCS & $+.011$ (24) & $+.032$ (18) & $+.032$ (20) & .312 & .042 \\
+UKHLS MCS & $+.004$ (8) & $+.038$ (22) & $+.020$ (13) & .128 & .134 \\
+Physical-only composite & $+.011$ (22) & $+.002$ (1) & $+.025$ (14) & .331 & .033 \\
+SF-6D utility & $+.021$ (40) & $+.119$ (61) & $+.111$ (60) & .289 & .039 \\
+GHQ-12 (flipped) & $+.003$ (8) & $+.007$ (5) & $+.004$ (3) & .189 & .059 \\
 \midrule
-\multicolumn{5}{@{}l}{\emph{each bank on both rulers}} \\
-GRM original, $\theta$ & $+.020$ (43) & $+.070$ (42) & .331 & .033 \\
-GRM original, TCC & $+.012$ (23) & $+.003$ (2) & .331 & .033 \\
+\multicolumn{6}{@{}l}{\emph{each bank on both rulers}} \\
+GRM original, $\theta$ & $+.020$ (43) & $+.070$ (42) & $+.081$ (52) & .331 & .033 \\
+GRM original, TCC & $+.012$ (23) & $+.003$ (2) & $+.023$ (13) & .331 & .033 \\
 \addlinespace
-P-FUNC $\theta$ & $+.019$ (42) & $+.069$ (42) & .322 & .033 \\
-P-FUNC, TCC & $+.008$ (17) & $\mathbf{-.017}$ $(-9)$ & .322 & .033 \\
+P-FUNC $\theta$ & $+.019$ (42) & $+.069$ (42) & $+.083$ (54) & .322 & .033 \\
+P-FUNC, TCC & $+.008$ (17) & $\mathbf{-.017}$ $(-9)$ & $+.007$ (4) & .322 & .033 \\
 \addlinespace
-P-FULL $\theta$ & $+.020$ (45) & $+.067$ (40) & \textbf{.349} & \textbf{.033} \\
-P-FULL, TCC & $+.009$ (17) & $\mathbf{-.026}$ $(-15)$ & \textbf{.349} & \textbf{.033} \\
+P-FULL $\theta$ & $+.020$ (45) & $+.067$ (40) & $+.083$ (54) & \textbf{.349} & \textbf{.033} \\
+P-FULL, TCC & $+.009$ (17) & $\mathbf{-.026}$ $(-15)$ & $+.001$ (0) & \textbf{.349} & \textbf{.033} \\
 \addlinespace
-MENT $\theta$ & $+.008$ (19) & $+.062$ (37) & .206 & .056 \\
-MENT, TCC & $+.004$ (10) & $+.018$ (12) & .206 & .056 \\
+MENT $\theta$ & $+.008$ (19) & $+.062$ (37) & $+.039$ (25) & .206 & .056 \\
+MENT, TCC & $+.004$ (10) & $+.018$ (12) & $+.014$ (9) & .206 & .056 \\
 \addlinespace
-COMBINED $\theta$ & $+.018$ (44) & $+.072$ (49) & .331 & .032 \\
-COMBINED, TCC & $+.010$ (24) & $+.001$ (0) & .331 & .032 \\
+COMBINED $\theta$ & $+.018$ (44) & $+.072$ (49) & $+.078$ (56) & .331 & .032 \\
+COMBINED, TCC & $+.010$ (24) & $+.001$ (0) & $+.023$ (16) & .331 & .032 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -764,20 +775,30 @@ GRM thetas. The gradient concentrates exactly where \S\ref{sec:ceiling}'s
 floor analysis lives: the region in which measures differ in resolution is
 the region that carries the utilisation risk.
 
-\textbf{Cardinalisation, not construct, drives the convexity --- and the two
-outcomes part company.} Each $\theta$/TCC pair ranks people identically, so
-every difference below is units and nothing else.
+\textbf{Cardinalisation, not construct, drives the convexity --- and the
+three tiers part company.} Each $\theta$/TCC pair ranks people identically,
+so every difference below is units and nothing else.
 
 \emph{In-patient admission is convex on both rulers.} Every TCC row keeps a
 $t$ between 10 and 24, roughly half the $\theta$ magnitude. Re-ruling moves
-the size of the effect and not the conclusion.
+the size of the effect and not the conclusion. This is the tier to trust:
+it is also the only one measured as a true count rather than a band.
 
-\emph{Out-patient attendance is where the ruler decides the answer.} On
-$\theta$ every bank is strongly convex, $t = 37$--49. On the TCC the same
-banks give $+.003$ $(t=2)$ for the original, $+.001$ $(t=0)$ for COMBINED and
-$+.018$ $(t=12)$ for MENT --- and turn \emph{concave} for both physical banks,
-$-.017$ $(t=-9)$ for P-FUNC and $-.026$ $(t=-15)$ for P-FULL. A $t$ of $-15$
-is not a null result; it is a confident statement of the opposite shape.
+\emph{GP visits are where the ruler decides the answer.} On $\theta$ every
+bank is strongly convex, $t = 37$--49. On the TCC the same banks give $+.003$
+$(t=2)$ for the original, $+.001$ $(t=0)$ for COMBINED and $+.018$ $(t=12)$
+for MENT --- and turn \emph{concave} for both physical banks, $-.017$ $(t=-9)$
+for P-FUNC and $-.026$ $(t=-15)$ for P-FULL. A $t$ of $-15$ is not a null
+result; it is a confident statement of the opposite shape.
+
+\emph{Out-patient attendance sits between the two.} On $\theta$ it is the
+most convex of the three tiers ($t = 52$--56 for the physical and combined
+banks). On the TCC it attenuates hard --- to $+.007$ $(t=4)$ for P-FUNC and
+$+.001$ $(t=0)$ for P-FULL --- but it does \emph{not} change sign. So the
+outright reversal is specific to GP contact, the tier whose gradient is
+shallowest and whose top band saturates soonest; for out-patient care the
+honest summary is that re-ruling collapses the curvature to nothing rather
+than inverting it.
 
 Convexity is therefore a property of the chosen units, and a ``convex health
 effects'' claim means nothing until the scale is fixed. Conversely
@@ -792,14 +813,16 @@ PCS: the diagnosis items isolate a genuinely sicker extreme tail, the
 outcome-side counterpart of \S\ref{sec:ceiling}'s 575-fold floor
 de-clumping.
 
-\textbf{The GP-use binary is uninformative about shape.} At a 77.8\% base
-rate ($n = 23{,}953$ on its five waves) it saturates: the $\theta$ quadratics
-are $\approx 0$ for every bank. The TCC rows are uniformly negative and
-significantly so ($t = -5$ to $-8$), which is the same units effect as
-out-patient use rather than anything about GP visits. Bottom-1\% GP use is
+\textbf{The supplementary GP binary is uninformative about shape.} The
+\code{servuse1} yes/no item adds nothing over the \code{hl2gp} band. At a
+77.8\% base rate ($n = 23{,}953$ on its five waves) it saturates: the $\theta$
+quadratics are $\approx 0$ for every bank. The TCC rows are uniformly negative
+and significantly so ($t = -5$ to $-8$), the same units effect seen in the
+banded tiers. Bottom-1\% GP use is
 $\sim$97\% against 56--74\% at the top, by measure --- a gradient, but the outcome's
-own ceiling swamps any curvature. A true visit count would need linked
-administrative data.
+own ceiling swamps any curvature. The banded \code{hl2gp} count is the more
+informative of the two; an exact visit count would need linked administrative
+data.
 
 \section{Latent-class trajectories under AR(1) persistence}
 \label{sec:ar1}
@@ -1231,7 +1254,7 @@ $\theta$. Unit costs that do not vary with health only rescale these curves.}
 
 \textbf{And the curvature survives the log.} On the decile means the
 quadratic in $\log E[\text{nights}]$ is $+0.175$, against $+0.087$ for
-$\log P(\text{admitted})$ and $+0.002$ for out-patient bands. So where the
+$\log P(\text{admitted})$ and $+0.016$ for out-patient bands. So where the
 binary outcome was close to log-linear --- and flipped sign under other
 cardinalisations --- expected bed days is convex \emph{even in logs}, because
 the two margins compound. The out-patient channel is log-linear and
@@ -1281,7 +1304,7 @@ Variable & Waves & Coverage \\
 \code{hospc}/\code{hospdc} new condition & 2--15 & $21\%$ of admissions \\
 \code{hospcp}/\code{hospdcp} prior condition & 11--15 & $11\%$ of admissions \\
 \quad either attribution & & $29\%$ of admissions, $65\%$ of nights \\
-\code{hl2gp}, \code{hl2hop} out-patient & 7--15 & all respondents, banded 0--4 \\
+\code{hl2gp} GP, \code{hl2hop} out-patient & 7--15 & all respondents, banded 0--4 \\
 \code{servuse1/2} doctor, hospital & 4, 6, 10, 14, 15 & five waves, binary \\
 \bottomrule
 \end{tabular}
@@ -1647,7 +1670,7 @@ this is criterion validity, and it is the comparison that decides whether the
 typology is useful beyond describing its own inputs.
 
 Three outcomes: death during the panel (person-level), any in-patient stay in
-the last twelve months, and the out-patient attendance band $0$--$4$ (both
+the last twelve months, and the GP visit band $0$--$4$ (\code{hl2gp}; both
 person-wave, waves 7--15). Three predictor sets, each also carrying a
 quadratic in age so that what is measured is what each adds to age alone:
 age only; age plus the two free class posteriors; and age plus the model's
@@ -1666,7 +1689,7 @@ and it is the gains, not the levels, that compare across rows.}
 \begin{center}\small
 \begin{tabular}{lccc}
 \toprule
- & mortality & in-patient & out-patient \\
+ & mortality & in-patient & GP visits \\
  & \multicolumn{2}{c}{AUC, in / out} & $R^2$, in / out \\
 \midrule
 \multicolumn{4}{l}{\emph{age only}} \\
@@ -1689,7 +1712,7 @@ and it is the gains, not the levels, that compare across rows.}
 \end{center}
 
 \textbf{The continuous measure beats the classes on every outcome, in every
-fit, in and out of sample.} For out-patient attendance the gap is large:
+fit, in and out of sample.} For GP visits the gap is large:
 $R^2$ of $.194$ against $.166$, so discretising into three classes throws
 away about a sixth of what the measure knows. For in-patient stays it is
 $.710$ against $.681$ in AUC. This is the sharpest statement of a theme
@@ -1703,7 +1726,7 @@ age-only AUC is $.83$, and the best class specification reaches $.861$ --- a
 gain of about $.027$. Health measured in mid-life is a weak marginal
 predictor of death once age is known, at least at this horizon. Utilisation
 is the opposite: age alone gives AUC $.59$ for in-patient stays and
-$R^2 = .01$ for out-patient bands, and health does the overwhelming majority
+$R^2 = .01$ for GP visit bands, and health does the overwhelming majority
 of the work. Prevention targeted on these measures should expect to move
 utilisation far more readily than mortality.
 
@@ -1711,7 +1734,7 @@ utilisation far more readily than mortality.
 at this, and are slightly worse.} On gain over age they are comparable for
 mortality ($+.026$ against $+.027$ for P-FULL baseline) but behind on both
 utilisation outcomes ($+.077$ against $+.100$ AUC for in-patient; $+.141$
-against $+.154$ $R^2$ for out-patient). Adding channels bought stability and
+against $+.154$ $R^2$ for GP visits). Adding channels bought stability and
 interpretation (\S\ref{sec:multifit}), not external predictive power. Note
 the samples differ, so only the gains are comparable, and the multidim
 measure column is P-FUNC where the univariate is P-FULL.
@@ -1753,7 +1776,7 @@ cardinalisation is substantive, not cosmetic.
 \section{Reproducibility}
 
 \begin{center}\small
-\begin{tabular}{lp{6.4cm}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{6.1cm}>{\raggedright\arraybackslash}p{8.0cm}@{}}
 \toprule
 \code{data\_cleaning/03\_build\_measures.py} & SF-12/SF-6D layer; validates
 against the construction note (max err 0.0054, 528{,}485 rows, the 6.6-pt
@@ -1764,14 +1787,20 @@ $10^{-5}$ on all 498{,}424 person-waves \\
 coverage; $\ge$ EIT count on 100.000\% of rows \\
 \code{data\_cleaning/06\_build\_grm2.py} & all GRM-2 specs; Q3, EAP
 identity, invariance, recency weights \\
-\code{descriptives/01--12} & measure panel, correlations, every figure, the
-ceiling/floor, convexity, class-composition and outcome-prediction tables \\
+\code{descriptives/01--15} & measure panel, correlations, every figure, the
+ceiling/floor, convexity, class-composition, outcome-prediction and
+cost-validation tables \\
 \code{clustering/run\_fit.py}, \code{runs/overnight\_queue.py} & the
 \S\ref{sec:ar1} batch: generic registry fits, last-two-observations holdout,
 per-person held-out densities \\
 \code{clustering/run\_multidim.py}, \code{runs/multidim\_queue.py},
 \code{multidim\_channel\_decomp.py} & the \S\ref{sec:multifit} batch and its
 per-channel held-out decomposition \\
+\code{data\_cleaning/09\_build\_cost\_proxy.py},
+\code{descriptives/15\_cost\_validation.py} & the cost proxy of
+\code{cost\_proxy\_plan.pdf}, stages 1--3: flat-rate and condition-weighted
+indices, and validation against published age, concentration and level
+profiles \\
 \bottomrule
 \end{tabular}
 \end{center}

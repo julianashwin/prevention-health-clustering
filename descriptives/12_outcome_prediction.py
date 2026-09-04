@@ -7,7 +7,8 @@ class posterior, how well can we predict outcomes the model never saw?
 Outcomes
   mortality    person-level: died during the panel (dcsedfl_dv == 1)
   in-patient   person-wave: any in-patient stay in the last 12 months
-  out-patient  person-wave: attendance band 0-4 (hl2gp; UKHLS has no GP count)
+  GP visits    person-wave: visit band 0-4 (hl2gp, 'Visited GP in last 12
+               months'); out-patient is hl2hop, a separate band
 
 Predictor sets, each also carrying a quadratic in age so the comparison is
 against what age alone already gives:
@@ -18,7 +19,7 @@ against what age alone already gives:
 
 Evaluation splits PEOPLE 70/30 on a fixed hash, so in-sample and
 out-of-sample differ in who is scored, not in which waves. Binary outcomes
-report AUC and log-loss; the out-patient band reports RMSE and R-squared.
+report AUC and log-loss; the GP visit band reports RMSE and R-squared.
 
 IMPORTANT CAVEAT, recorded in the note: the class posteriors come from
 mixtures fitted on all people, so the split tests the class-to-outcome
@@ -163,7 +164,7 @@ def main() -> int:
     fig, axes = plt.subplots(1, 3, figsize=(13.6, 4.6))
     titles = {"died": "mortality\n(AUC gain over age)",
               "inpatient": "in-patient stay\n(AUC gain over age)",
-              "hl2gp": "out-patient band\n($R^2$ gain over age)"}
+              "hl2gp": "GP visit band\n($R^2$ gain over age)"}
     order = [f for f in tab["fit"].unique()]
     for ax, oc in zip(axes, titles):
         sub = tab[tab["outcome"] == oc]
