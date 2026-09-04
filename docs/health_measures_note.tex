@@ -1167,6 +1167,89 @@ risk that relationship is close to log-linear.} A convexity claim strong
 enough to carry a policy conclusion needs a cost outcome and a defended
 cardinalisation, neither of which UKHLS supplies on its own.
 
+\subsection{If the object is expected cost}
+\label{sec:expcost}
+
+The binary outcome is part of the problem but not the whole of it, and
+naming which part matters. A binary outcome forces a \emph{bounded} vertical
+scale, and on a bounded scale curvature is partly mechanical: below one half
+the logistic is convex whatever the data do. That is the vertical half of
+\S\ref{sec:convexdetail}. The horizontal half is untouched by it --- $\theta$
+and \code{grmh} rank people identically and still disagree about the sign of
+the curvature, and no change of outcome fixes that.
+
+But if the motivation is \emph{an individual's expected cost to the health
+service}, the vertical problem largely dissolves. Money is a ratio quantity
+with a meaningful zero and a meaningful unit, so ``convex in pounds'' is a
+substantive claim rather than a convention. Probability and log-odds are two
+conventions for writing the same risk and neither is privileged; pounds are
+what the system actually spends.
+
+UKHLS carries no spend, but it carries what spend buys: nights as an
+in-patient (\code{hospd}) and out-patient attendance bands, waves 7--15. Unit
+costs that do not themselves vary with health only rescale the curves, so the
+\emph{shape} of expected cost can be studied in physical units without
+inventing prices.
+
+\textbf{The decomposition that matters.} Expected nights is
+$P(\text{admitted}) \times E[\text{nights} \mid \text{admitted}]$, and
+\S\ref{sec:convexity} measured only the first factor. Both move with health:
+
+\begin{center}\small
+\begin{tabular}{lrrr}
+\toprule
+Decile of $\theta$ & $P$(admitted) & nights if admitted & expected nights \\
+\midrule
+1 (least healthy) & .240 & 13.7 & 3.28 \\
+5 & .062 & 4.9 & 0.30 \\
+10 (healthiest) & .032 & 3.3 & 0.10 \\
+\midrule
+bottom vs top & $7.4\times$ & $4.2\times$ & $\mathbf{31.9\times}$ \\
+share of the log gap & 58\% & 41\% & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The least healthy decile is admitted seven times as often \emph{and} stays
+four times as long, so it consumes about \textbf{thirty-two times} the bed
+days of the healthiest. The intensive margin contributes $41\%$ of the
+gradient and was invisible to the binary analysis.
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{fig_expected_cost}
+\caption{In-patient nights and out-patient bands against the physical GRM
+$\theta$. Unit costs that do not vary with health only rescale these curves.}
+\label{fig:expcost}
+\end{figure}
+
+\textbf{And the curvature survives the log.} On the decile means the
+quadratic in $\log E[\text{nights}]$ is $+0.175$, against $+0.087$ for
+$\log P(\text{admitted})$ and $+0.002$ for out-patient bands. So where the
+binary outcome was close to log-linear --- and flipped sign under other
+cardinalisations --- expected bed days is convex \emph{even in logs}, because
+the two margins compound. The out-patient channel is log-linear and
+contributes none of it; the entire result comes from in-patient nights.
+
+\textbf{So the answer to ``what would make sense'' is threefold.} Use
+expected cost, not a binary event: it fixes the vertical axis on a scale that
+means something, and it is the quantity the framework is actually about.
+Model both margins, because the intensive one carries $41\%$ of the gradient
+and a probability model discards it. And define the intervention in units
+that survive re-cardinalisation --- a condition prevented, an admission
+averted, a year of health --- rather than ``a standard deviation of
+$\theta$'', because that is the one problem a better outcome variable cannot
+solve. On that footing the framework's convexity assumption looks defensible
+in a way \S\ref{sec:convexdetail} alone would not suggest: a factor of
+thirty-two, with curvature that survives logging, is a large and robust
+gradient.
+
+\textbf{What would still be needed.} Nights are a proxy for cost with fixed
+prices per night, which understates the cost of complex admissions and
+ignores primary and community care and prescribing entirely. Linked HES cost
+data would settle it. And \S\ref{sec:convexlit} applies here too: some of
+this gradient is proximity to death rather than health level, which needs
+mortality in the model to separate.
+
 \subsection{What the literature actually establishes}
 \label{sec:convexlit}
 

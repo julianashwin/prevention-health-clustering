@@ -79,7 +79,7 @@ def extract_utilisation() -> pd.DataFrame:
     for wi, w in enumerate("abcdefghijklmno", start=1):
         path = UKHLS_PANEL_DIR / f"{w}_indresp.tab"
         header = set(pd.read_csv(path, sep="\t", nrows=0).columns)
-        cols = {f"{w}_{s}": s for s in ("hl2gp", "hosp", "servuse1")
+        cols = {f"{w}_{s}": s for s in ("hl2gp", "hosp", "hospd", "servuse1")
                 if f"{w}_{s}" in header}
         if not cols:
             continue
