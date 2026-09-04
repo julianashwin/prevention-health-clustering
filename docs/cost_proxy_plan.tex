@@ -1,0 +1,170 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{graphicx,booktabs,amsmath,microtype,float}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
+\title{A healthcare cost proxy from UKHLS alone\\[2pt]
+\large What is buildable now, how to validate it, and when linkage becomes worth it}
+\author{Julian Ashwin}
+\date{September 2026}
+
+\begin{document}
+\maketitle
+
+\noindent Companion to \code{health\_measures\_note.pdf} \S8. That section
+established that expected cost, not a binary event, is the right outcome for
+the framework's convexity question, and that UKHLS carries the physical
+quantities cost is bought with. This is the plan for turning those quantities
+into a defensible cost proxy without linkage.
+
+\section{What we are building}
+
+A per-person-wave estimate of annual NHS secondary-care cost, in a fixed
+price year, for waves 7--15. It will be wrong in level and, we hope, roughly
+right in \emph{shape} --- which is all the framework needs, since every
+question we are asking is about how cost varies with health, not about its
+absolute size.
+
+The one-line target:
+\[
+  \widehat{C}_{it} \;=\;
+  \underbrace{c_{\text{spell}}(k) + c_{\text{bed}} \cdot (\text{nights}_{it} - \bar{L})^{+}}_{\text{in-patient}}
+  \;+\;
+  \underbrace{c_{\text{op}} \cdot \widehat{n}^{\text{op}}_{it}}_{\text{out-patient}}
+\]
+with $k$ the attributed condition where we have one, and everything indexed
+to a single price year.
+
+\section{Ingredients we already hold}
+
+\begin{center}\small
+\begin{tabular}{llp{6.4cm}}
+\toprule
+Quantity & Source & Status \\
+\midrule
+Any admission & \code{hosp}, waves 7--15 & complete for respondents \\
+Nights & \code{hospd} & all admitted; median 3, mean 7.5, max 300 \\
+Maternity flag & \code{hospch} & 12.7\% of admissions, mean age 31.7 \\
+Nights by new condition & \code{hospdc}$i$, waves 2--15 & 21\% of admissions \\
+Nights by prior condition & \code{hospdcp}$i$, waves 11--15 & 11\% of admissions \\
+\quad either & & 29\% of admissions, \textbf{65\% of nights} \\
+Out-patient band & \code{hl2gp}, \code{hl2hop} & banded 0/1--2/3--5/6--10/$>$10 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Unit costs come from the NHS National Cost Collection, which publishes
+national average unit costs annually and free, at both aggregate and
+HRG level. Indicative recent figures: non-elective in-patient episode
+$\approx\pounds1{,}590$, elective $\approx\pounds3{,}684$, day case
+$\approx\pounds738$, excess bed day $\approx\pounds313$, out-patient
+attendance $\approx\pounds120$.
+
+\section{Four stages}
+
+\subsection*{Stage 1 --- a flat-rate baseline (half a day)}
+
+Cost each admission at the non-elective episode rate plus excess bed days
+beyond the average inclusive length of stay, and each out-patient attendance
+at the flat rate, with band midpoints $0, 1.5, 4, 8, 15$. Exclude maternity.
+This is deliberately crude and exists to give every later stage something to
+be compared against.
+
+\textbf{The one real modelling decision here.} UKHLS gives total nights but
+\emph{not the number of spells}, so a person with 20 nights might have had one
+long admission or four short ones, which differ in cost by a factor of about
+three. Stage 1 assumes one spell. Stage 4 tests how much that matters; if the
+answer is ``a lot'', it becomes the main argument for linkage, because HES
+would resolve it exactly.
+
+\subsection*{Stage 2 --- condition weighting (one to two days)}
+
+For the $65\%$ of nights carrying an attribution, replace the flat rate with
+a condition-specific one. The mapping is UKHLS condition code $\rightarrow$
+NCC HRG chapter $\rightarrow$ average cost, at chapter level rather than
+individual HRG, since the survey identifies a condition and not a procedure.
+The attributed nights concentrate in stroke, COPD, asthma, osteoarthritis,
+MI, congestive heart failure and chronic kidney disease, which span a wide
+cost range, so this is where the proxy should improve most.
+
+Unattributed nights take the case-mix-weighted average of the attributed
+ones \emph{within the same health decile}, rather than a global average ---
+otherwise the imputation flattens exactly the gradient we are trying to
+measure.
+
+\subsection*{Stage 3 --- validation against published profiles (one day)}
+
+This is the stage that decides whether the proxy is usable, and it is the
+reason to prefer building it here rather than assuming a shape.
+
+\begin{enumerate}\itemsep2pt
+\item \textbf{The age profile.} The CHE reference tables give average annual
+NHS spend by age, sex and deprivation, and the IFS has published hospital
+spending profiles from NHS administrative records. Our proxy should reproduce
+the shape --- flat to about 50, rising steeply after 70 --- without having
+been fitted to it. A proxy that misses the age profile cannot be trusted on
+the health profile.
+\item \textbf{The concentration.} Published figures put the top decile of
+spenders at more than half of expenditure. Ours should land near that. Too
+little concentration means the intensive margin is being under-weighted; too
+much means outliers are running the estimate.
+\item \textbf{The level.} Per-capita secondary care spend implied by the
+proxy against national totals. We expect to \emph{undershoot}, because
+UKHLS misses A\&E, and self-reported nights are known to be under-recalled;
+the size of the shortfall is itself informative.
+\end{enumerate}
+
+\subsection*{Stage 4 --- use it, and test what it rests on (one to two days)}
+
+Redo \S8's convexity analysis with $\pounds$ on the vertical axis, and
+\S11's outcome prediction with cost as the outcome. Then the sensitivity
+analysis that matters:
+
+\begin{itemize}\itemsep2pt
+\item \textbf{Spells.} Re-run assuming one spell, two spells, and
+nights$/\bar{L}$ spells. If the convexity conclusion is stable across these,
+the spell ambiguity is not binding and linkage buys less than it looks.
+\item \textbf{Outlier handling.} The 300-night maximum will dominate any
+mean. Winsorise at the 99th percentile and re-run.
+\item \textbf{Condition weights.} Flat rate against condition-weighted: does
+the shape change, or only the level?
+\item \textbf{Maternity.} Already known to move the gradient from
+$31.9\times$ to $52.7\times$; carry both through.
+\end{itemize}
+
+\section{What this cannot do}
+
+Primary care, prescribing, A\&E and community services are absent entirely,
+and they are not a small share of NHS spend. Out-patient use is a four-band
+count, so its intensive margin is crude. Elective and emergency admissions
+are indistinguishable, though they differ in cost by more than a factor of
+two. And every quantity is self-reported over a twelve-month recall window,
+against wave spacing that is not exactly twelve months.
+
+The proxy is therefore a \emph{secondary-care bed-day-weighted cost index},
+and should be named that way in anything we write rather than called a cost.
+
+\section{The decision this sets up}
+
+If Stage 3 shows the proxy reproducing the published age profile and
+concentration, and Stage 4 shows the convexity conclusion stable across the
+spell and outlier assumptions, then UKHLS alone supports the framework's
+empirical claim and linkage is a refinement rather than a precondition.
+
+If instead the shape moves with the spell assumption, or the proxy misses
+the published profiles, then the case for UK LLC linkage becomes concrete
+and specific --- and we would know exactly which quantity we needed it for,
+which is a much stronger application than asking for HES in general. The
+binding risk there remains sample size: roughly $8{,}000$ consented
+participants against the $84{,}679$ in our current sample, with an extension
+to all participants stated but needing verification.
+
+\section*{Effort}
+
+Three to five days end to end, entirely on data already on disk, with no new
+permissions. Stages 1 and 3 are the ones worth doing even if we stop there:
+a validated flat-rate index would already replace the physical-units analysis
+of \S8 with something denominated in pounds.
+
+\end{document}
