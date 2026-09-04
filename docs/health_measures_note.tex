@@ -1128,6 +1128,76 @@ risk that relationship is close to log-linear.} A convexity claim strong
 enough to carry a policy conclusion needs a cost outcome and a defended
 cardinalisation, neither of which UKHLS supplies on its own.
 
+\subsection{What the literature actually establishes}
+\label{sec:convexlit}
+
+Convexity of healthcare costs in health is widely assumed in prevention
+arguments, so it is worth separating what is \emph{accepted}, what is
+\emph{measured}, and what is actually \emph{known} about the functional form.
+The three come apart.
+
+\textbf{Firmly measured, and about the distribution rather than the shape.}
+Spending is extremely concentrated: the top decile of spenders accounts for
+more than half of total expenditure, and about a third of them are still in
+the top decile a year later. This is robust and uncontroversial, but it is a
+fact about the \emph{marginal distribution of spending}, not about the
+derivative of cost with respect to health. A concentrated outcome is
+consistent with many shapes, including a linear one applied to a skewed
+health distribution.
+
+\textbf{Firmly measured, and genuinely about shape --- but on the count
+scale.} The multimorbidity literature reports a ``near-exponential''
+relationship between the number of chronic conditions and cost, with
+expenditure roughly doubling per additional condition and specific
+combinations costing more than the sum of their parts (superadditivity).
+Here the scale is defensible in a way ours is not: ``one more condition'' has
+a meaning that ``one more standard deviation of $\theta$'' does not. But note
+what the finding \emph{is}: exponential in the count is exactly linear in log
+cost. The headline result of that literature is a multiplicative model, which
+is the same shape \S\ref{sec:convexdetail} found in our data --- not evidence
+of curvature beyond multiplicative.
+
+\textbf{Assumed by the standard specification, and therefore weakly tested.}
+The default model for healthcare costs in health economics is a GLM with a
+log link (Manning \& Mullahy 2001; Jones 2010), under which covariates act
+multiplicatively by construction. A log-link model is convex in levels
+automatically, whatever the data say. So a large share of the empirical
+literature cannot be evidence \emph{for} convexity in levels, because it
+imposes it; the interesting question --- is there curvature on the log scale?
+--- is rarely posed. We found none of the reviewed work testing convexity
+against a continuous health measure as a functional-form question.
+
+\textbf{A rival explanation for the shape.} The ``red herring'' literature
+(Zweifel, Felder \& Meiers 1999, and the twenty-year reappraisals) argues
+that costs track \emph{proximity to death} rather than age or health level,
+with spending tripling in the final quarters of life. If most of the
+steepness at the bottom of the health distribution is people close to death,
+then the apparent convexity in health is partly a survival gradient wearing a
+health costume --- which our data cannot separate, because \S\ref{sec:multifit}
+left mortality out of the fitted models.
+
+\textbf{And a caution about the policy inference.} Even granting convexity,
+Rose's prevention paradox (1981, 1985) blocks the automatic move from ``the
+return per person is highest at the bottom'' to ``target the bottom'': most
+cases arise from the large moderate-risk middle rather than the small extreme
+tail, so aggregate returns can favour population-wide action even when
+individual returns are convex. Convexity in the individual return function
+and optimality of targeting are different claims.
+
+\textbf{Where this leaves us.} The proposition that costs rise steeply as
+health deteriorates is well measured and not in doubt. The stronger
+proposition the framework needs --- that the second derivative is positive on
+a defended scale, so that a unit of prevention is worth more to the already
+unwell --- is much less established than its ubiquity suggests: it is usually
+assumed through a log link, demonstrated on a count scale where it amounts to
+log-linearity, or inferred from concentration statistics that do not identify
+a shape. Our own finding of near-log-linearity
+(\S\ref{sec:convexdetail}) sits comfortably within the literature rather than
+against it. Testing the framework's version of the claim needs a cost outcome
+rather than utilisation counts, a health scale defended on grounds other than
+convenience, and mortality in the model so that proximity to death is not
+doing the work.
+
 \section{Towards a multidimensional model}
 \label{sec:multidim}
 
@@ -1518,7 +1588,9 @@ Goldberg et al.\ (1997) \emph{Psychol Med} 27:191--7.
 Graetz (1991) \emph{Soc Psychiatry Psychiatr Epidemiol} 26:132--8.
 Hankins (2008) \emph{Clin Pract Epidemiol Ment Health} 4:10.
 Johnston, Propper \& Shields (2009) \emph{J Health Econ} 28:540--52.
+Jones (2010) \emph{Models for health care}, HEDG WP 10/01.
 Kelly et al.\ (2024) \emph{Pharmacoepidemiol Drug Saf} 33:e5701.
+Manning \& Mullahy (2001) \emph{J Health Econ} 20:461--94.
 Kriegsman et al.\ (1996) \emph{J Clin Epidemiol} 49:1407--17.
 Mitnitski, Mogilner \& Rockwood (2001) \emph{ScientificWorldJournal} 1:323--36.
 Preen et al.\ (2006) \emph{J Clin Epidemiol} 59:940--6.
@@ -1528,6 +1600,8 @@ Sylvestre \& Abrahamowicz (2009) \emph{Stat Med} 28:3437--53.
 Wainer \& Kiely (1987) \emph{J Educ Meas} 24:185--201.
 Ware, Kosinski \& Keller (1996) \emph{Med Care} 34:220--33.
 Yen (1993) \emph{J Educ Meas} 30:187--213.
+Rose (1981) \emph{BMJ} 282:1847--51; (1985) \emph{Int J Epidemiol} 14:32--8.
+Zweifel, Felder \& Meiers (1999) \emph{Health Econ} 8:485--96.
 }
 
 \end{document}

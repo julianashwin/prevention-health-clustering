@@ -59,6 +59,10 @@ Max 1 page on the physical health measure, keep it transparent and clean
 		- units/bounds
 
 - Overlapping cohorts clusters. 
+
+This will help to address some of the four challenges:
+	* power/type categorisation with function forms, stochastic structure and multiple
+
 	* Address this in three ways: (A) non-parametric, (B) parametric and (C) observables
 
 (A) Non-parametric -> partial K-meanrs
@@ -67,8 +71,23 @@ Max 1 page on the physical health measure, keep it transparent and clean
 "Equal penalty" in that every person*wave observation is punished equally 
 	+ Neutral wrt transitory or persistent nature of the stochastic process (whether it is across or within types) [is this true though, as we do require a person to be only one cluster?]
 	- balance the stochastic process across types 
+- Can we do some sort of cohort adjustment within the non-parametric? Like demean across cohorts where we observe people at the same age but for different cohorts?
+- What we want is cohort independent types, but we can have cohort dependent shares. 
+- Figure 3 - K=3, show trajectory, class shares and maybe something that illustrates the stochastic stuff
+- Figure 4 - Between versus within variation for the clusters Var(h) vs Var(E(h|j)), var(E(d|j) and Cov(E(H|j), E(d|j). I think this is kind of the clustering version of the three panel figure... 
 
-Can we do some sort of cohort adjustment within the non-parametric?
+(B) Parametric
+- Figure 5 - K=3 + persistent noise + measurement error
+- Appendix with robustness here that includes cohort, specification, bounded?
+- Figure 6 - some extensions, like the K = 4 and K = 5 cases, multiple dimensions 
+- Multidimensional model would include PHI, MH, CC and Mortality
+- The mortality dimension here opens the door for a discussion of survivor bias
+- Figure 7 - look at the clustering over limited windows and also with a backwards expanding window. 
+
+(C) Observational 
+- Figure 8: plot health trajectories by income and education (mostly to show that this is far inferior to clustering by health)
+- 
+
 
 
 

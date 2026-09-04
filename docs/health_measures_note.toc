@@ -16,8 +16,9 @@
 \contentsline {section}{\numberline {8}Convexity against healthcare use}{16}{section.8}%
 \contentsline {section}{\numberline {9}Latent-class trajectories under AR(1) persistence}{18}{section.9}%
 \contentsline {subsection}{\numberline {9.1}How much of that convexity is real?}{22}{subsection.9.1}%
-\contentsline {section}{\numberline {10}Towards a multidimensional model}{23}{section.10}%
-\contentsline {section}{\numberline {11}The multidimensional model}{25}{section.11}%
-\contentsline {section}{\numberline {12}Predicting outcomes the models never saw}{28}{section.12}%
-\contentsline {section}{\numberline {13}Recommendations}{30}{section.13}%
-\contentsline {section}{\numberline {14}Reproducibility}{30}{section.14}%
+\contentsline {subsection}{\numberline {9.2}What the literature actually establishes}{23}{subsection.9.2}%
+\contentsline {section}{\numberline {10}Towards a multidimensional model}{25}{section.10}%
+\contentsline {section}{\numberline {11}The multidimensional model}{26}{section.11}%
+\contentsline {section}{\numberline {12}Predicting outcomes the models never saw}{29}{section.12}%
+\contentsline {section}{\numberline {13}Recommendations}{31}{section.13}%
+\contentsline {section}{\numberline {14}Reproducibility}{31}{section.14}%
