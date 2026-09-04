@@ -34,7 +34,7 @@ class ModelSpec:
     channels: tuple[str, ...] = ("sf12pcs_dv",)
     anchor_channel: str = "sf12pcs_dv"
     design: str = "quadratic"          # quadratic | linear
-    ar_mode: int = 0                   # 0 none | 1 AR(1) on the class residual
+    ar_mode: int = 0                   # 0 none | 1 AR(1) | 2 AR(1) + meas. error
     homosigma: bool = True
     cohort: str = "none"               # none | decade
     cohort_by_class: bool = False
@@ -50,6 +50,11 @@ class ModelSpec:
     cohort_prior_scale: float = 0.15
     rho_prior_alpha: float = 2.0
     rho_prior_beta: float = 2.0
+    # Half-normal on the measurement-error scale; read only when ar_mode == 2.
+    # Centred well below the residual scale: the default should be that most
+    # variation is signal, and the data have to argue for noise.
+    sigma_meas_prior_location: float = 0.0
+    sigma_meas_prior_scale: float = 0.4
 
     # Sampling
     chains: int = 4
@@ -210,6 +215,54 @@ JOINT_AR1_COHORT = ModelSpec(
     cohort="decade",
 )
 
+# ---------------------------------------------------------------------------
+# AR(1) state plus one-period measurement error (ar_mode = 2)
+#
+# Under ar_mode 1 the observation is the state, so rho absorbs both true
+# persistence and any transient noise, and is biased towards zero whenever the
+# instrument is noisy. Separating them asks how much of the year-to-year
+# movement in a GRM score is real change in health and how much is the
+# measurement. These three fits put the same question to the original GRM and
+# to both physical variants.
+# ---------------------------------------------------------------------------
+
+GRM_SSM = ModelSpec(
+    name="grm-ssm",
+    stan_file=GAUSSIAN_PANEL,
+    description=(
+        "Original GRM theta, K=3 quadratic growth mixture, AR(1) latent state "
+        "plus i.i.d. measurement error, marginalised by Kalman filter."
+    ),
+    channels=("grm_theta",),
+    anchor_channel="grm_theta",
+    ar_mode=2,
+)
+
+PHYSGRM_FUNC_SSM = ModelSpec(
+    name="physgrm-func-ssm",
+    stan_file=GAUSSIAN_PANEL,
+    description=(
+        "P-FUNC theta (functioning items only), K=3, AR(1) state plus "
+        "measurement error."
+    ),
+    channels=("theta_phys_func",),
+    anchor_channel="theta_phys_func",
+    ar_mode=2,
+)
+
+PHYSGRM_FULL_SSM = ModelSpec(
+    name="physgrm-full-ssm",
+    stan_file=GAUSSIAN_PANEL,
+    description=(
+        "P-FULL theta (functioning plus diagnosed conditions), K=3, AR(1) "
+        "state plus measurement error."
+    ),
+    channels=("theta_phys_full",),
+    anchor_channel="theta_phys_full",
+    ar_mode=2,
+)
+
+
 REGISTRY: dict[str, ModelSpec] = {
     spec.name: spec
     for spec in (
@@ -224,6 +277,9 @@ REGISTRY: dict[str, ModelSpec] = {
         PCS_COHORT,
         JOINT_AR1_COHORT,
         MIXED_HEALTH,
+        GRM_SSM,
+        PHYSGRM_FUNC_SSM,
+        PHYSGRM_FULL_SSM,
     )
 }
 

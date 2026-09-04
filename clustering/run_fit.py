@@ -91,14 +91,19 @@ def main(argv=None) -> int:
 
     # -- structural diagnostics without touching person-level columns --------
     k, c = spec.n_classes, spec.n_channels
-    rho_names = [f"rho[{i}]" for i in range(1, k + 1)] if d["ar_mode"] == 1 else []
+    rho_names = ([f"rho[{i}]" for i in range(1, k + 1)]
+                 if d["ar_mode"] != 0 else [])
+    # ar_mode 2 adds one measurement-error scale per channel.
+    meas_names = ([f"sigma_meas[{ci}]" for ci in range(1, c + 1)]
+                  if d["ar_mode"] == 2 else [])
     names = ([f"theta[{i}]" for i in range(1, k + 1)]
              + [f"coef[{ci},{i},{p}]" for ci in range(1, c + 1)
                 for i in range(1, k + 1) for p in range(1, 4)]
              + [f"sigma[1,{ci}]" for ci in range(1, c + 1)]
-             + rho_names + ["lp__"])
+             + rho_names + meas_names + ["lp__"])
     draws = fit.draws_pd(vars=["theta", "coef", "sigma", "lp__"]
-                         + (["rho"] if d["ar_mode"] == 1 else []))
+                         + (["rho"] if d["ar_mode"] != 0 else [])
+                         + (["sigma_meas"] if d["ar_mode"] == 2 else []))
     n_chain, n_draw = args.chains, args.sampling
     summary = {}
     worst_rhat, worst_name = 0.0, ""
@@ -112,9 +117,21 @@ def main(argv=None) -> int:
     print(f"  max structural R-hat {worst_rhat:.4f} ({worst_name})", flush=True)
     print("  theta " + " ".join(
         f"{summary[f'theta[{i}]']['mean']:.3f}" for i in range(1, k + 1)))
-    if d["ar_mode"] == 1:
+    if d["ar_mode"] != 0:
         print("  rho " + " ".join(
             f"{summary[n]['mean']:.3f}" for n in rho_names))
+    if d["ar_mode"] == 2:
+        print("  sigma_meas " + " ".join(
+            f"{summary[n]['mean']:.3f}" for n in meas_names))
+        # How much of the observed year-to-year variance is persistent signal
+        # rather than measurement noise, per class. This is the number the
+        # specification exists to produce.
+        sig = summary[f"sigma[1,1]"]["mean"]
+        mea = summary[meas_names[0]]["mean"]
+        shares = [(sig ** 2 / (1 - summary[n]["mean"] ** 2))
+                  / (sig ** 2 / (1 - summary[n]["mean"] ** 2) + mea ** 2)
+                  for n in rho_names]
+        print("  signal share " + " ".join(f"{x:.3f}" for x in shares))
 
     result = {
         "model": args.model, "contract": str(args.contract),

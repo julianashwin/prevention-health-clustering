@@ -173,7 +173,10 @@ def build_contract(spec: ContractSpec, panel: pd.DataFrame) -> ContractResult:
 
     long["pidp"] = long["pidp"].round().astype("int64")
     long["wave"] = long["wave"].round().astype("Int64")
-    long["birthy"] = long["birthy"].round().astype("Int64")
+    # groupby.agg with a python lambda can hand back object dtype even when
+    # every value is numeric, so coerce before rounding.
+    long["birthy"] = (pd.to_numeric(long["birthy"], errors="coerce")
+                      .round().astype("Int64"))
     long["age_c"] = long["age"] - spec.age_center
     long = long.loc[:, ["pidp", "age", "age_c", "wave", "birthy", *spec.metrics]]
 

@@ -202,6 +202,8 @@ def build_payload(
         "cohort_prior_scale": float(spec.cohort_prior_scale),
         "rho_prior_alpha": float(spec.rho_prior_alpha),
         "rho_prior_beta": float(spec.rho_prior_beta),
+        "sigma_meas_prior_location": float(spec.sigma_meas_prior_location),
+        "sigma_meas_prior_scale": float(spec.sigma_meas_prior_scale),
         "emit_person_quantities": int(emit_person_quantities),
         # not read by Stan; carried for provenance
         "_dropped_no_history": dropped_no_history,
@@ -293,6 +295,12 @@ def build_inits(
         }
         if spec.ar_mode != 0:
             init["rho"] = np.full(k, 0.3)
+        if spec.ar_mode == 2:
+            # Open at a modest signal-to-noise split rather than at either
+            # boundary: rho and sigma_meas trade off along a ridge, and
+            # starting on the ridge rather than at an end of it keeps the
+            # chains from setting off in opposite directions.
+            init["sigma_meas"] = np.full(c, 0.35)
         # Omitted entirely when there are no cohort effects: a zero-length
         # container's declared shape differs between model variants, and Stan
         # rejects a shape mismatch even when the parameter is empty.
@@ -398,6 +406,12 @@ def assignment_inits(
             )
         if spec.ar_mode != 0:
             init["rho"] = np.full(k, 0.3)
+        if spec.ar_mode == 2:
+            # Open at a modest signal-to-noise split rather than at either
+            # boundary: rho and sigma_meas trade off along a ridge, and
+            # starting on the ridge rather than at an end of it keeps the
+            # chains from setting off in opposite directions.
+            init["sigma_meas"] = np.full(c, 0.35)
         n_cohort = payload.data["N_cohort"]
         if n_cohort > 1:
             rows_ = k if spec.cohort_by_class else 1
