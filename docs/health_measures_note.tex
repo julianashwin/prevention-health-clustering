@@ -1215,6 +1215,13 @@ four times as long, so it consumes about \textbf{thirty-two times} the bed
 days of the healthiest. The intensive margin contributes $41\%$ of the
 gradient and was invisible to the binary analysis.
 
+That $31.9\times$ is itself an understatement, because $12.7\%$ of admissions
+are childbirth (\code{hospch}), at a mean age of $31.7$ against $57.9$ for
+every other admission. Maternity is not health deterioration, and it lands
+almost entirely on healthy people in their early thirties, so it inflates the
+denominator. Excluding it the ratio is \textbf{$52.7\times$}. Any costing of
+these data should separate maternity first.
+
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_expected_cost}
 \caption{In-patient nights and out-patient bands against the physical GRM
@@ -1249,6 +1256,77 @@ ignores primary and community care and prescribing entirely. Linked HES cost
 data would settle it. And \S\ref{sec:convexlit} applies here too: some of
 this gradient is proximity to death rather than health level, which needs
 mortality in the model to separate.
+
+\subsection{How far UKHLS can go, and what linkage would add}
+\label{sec:utilceiling}
+
+\textbf{There is more in UKHLS than nights.} Beyond \code{hosp} (any
+admission) and \code{hospd} (nights), waves 7--15 carry \code{hospch}, a
+childbirth flag, and from wave 2 onwards a condition-level breakdown:
+\code{hospc}$i$ / \code{hospdc}$i$ record whether an admission and how many
+of its nights were due to each \emph{newly reported} condition, and from wave
+11 \code{hospcp}$i$ / \code{hospdcp}$i$ do the same for \emph{previously
+diagnosed} ones. The condition list runs to about forty codes in the later
+waves, well beyond the seventeen of \S\ref{sec:groups} --- COPD, chronic
+kidney disease, dementia, the individual cancers and the individual mental
+health conditions all appear separately.
+
+\begin{center}\small
+\begin{tabular}{llr}
+\toprule
+Variable & Waves & Coverage \\
+\midrule
+\code{hosp}, \code{hospd} & 7--15 & all respondents; nights for all admitted \\
+\code{hospch} childbirth & 7--15 & $12.7\%$ of admissions \\
+\code{hospc}/\code{hospdc} new condition & 2--15 & $21\%$ of admissions \\
+\code{hospcp}/\code{hospdcp} prior condition & 11--15 & $11\%$ of admissions \\
+\quad either attribution & & $29\%$ of admissions, $65\%$ of nights \\
+\code{hl2gp}, \code{hl2hop} out-patient & 7--15 & all respondents, banded 0--4 \\
+\code{servuse1/2} doctor, hospital & 4, 6, 10, 14, 15 & five waves, binary \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+So the ceiling for UKHLS alone is: expected bed days, with maternity
+separable, and with roughly two-thirds of nights attributable to a named
+condition. That is enough to weight nights by condition using published
+reference costs and to build a considerably better cost proxy than the flat
+per-night figure of \S\ref{sec:expcost} --- the attributed nights concentrate
+in stroke, COPD, asthma, osteoarthritis, MI and chronic kidney disease, which
+have very different unit costs. It is not enough for real costing. Primary
+care, prescribing, A\&E attendance, elective versus emergency status and
+procedure codes are all absent, and out-patient use is only a four-band
+count.
+
+\textbf{Linkage is feasible, with real conditions.} Understanding Society
+participates in the UK Longitudinal Linkage Collaboration (UK LLC), which
+links consenting participants to NHS primary and secondary care records,
+including HES, and holds them in a Trusted Research Environment at Swansea.
+Access is free to UK-based researchers for public-good, non-commercial work,
+but requires ONS Accredited Researcher status (or enrolment on the Safe
+Researcher training), an expression of interest followed by a full
+application, and --- the practical constraint for us --- analysis inside the
+TRE rather than locally. Nothing in the current pipeline could be run on a
+laptop any more.
+
+The binding question is sample size. Linkage covers only consenting
+participants: the COVID-19 study contributed roughly $8{,}000$, against the
+$84{,}679$ people in our P-FUNC sample, and Understanding Society has stated
+an intention to extend linkage to all main-survey participants --- worth
+checking the current position before planning around either figure. At
+$8{,}000$ the latent-variable machinery in this note would be badly
+underpowered; at full coverage it would be transformative, since HES supplies
+exactly what is missing: every admission with its diagnosis and procedure
+codes, elective versus emergency, and a route to HRG-based costs rather than
+proxies.
+
+\textbf{The sensible order.} Exhaust UKHLS first --- separate maternity,
+weight the attributable two-thirds of nights by condition, and see whether
+the $52.7\times$ gradient and the log-scale curvature survive a better cost
+proxy. That is a few days' work on data already on disk, and it would tell us
+whether linkage is worth the overhead. If it is, the linkage application is a
+months-long process whose main risk is the consented sample being too small
+for this kind of model.
 
 \subsection{What the literature actually establishes}
 \label{sec:convexlit}

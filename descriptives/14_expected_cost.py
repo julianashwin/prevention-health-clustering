@@ -48,13 +48,19 @@ def main() -> int:
     panel = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "measure_panel.parquet",
                             columns=["pidp", "wave", "age", MEASURE, "grmh_phys_full"])
     util = pd.read_parquet(INTERIM_DATA_DIR / "utilisation_long.parquet")
-    d = panel.merge(util[["pidp", "wave", "hosp", "hospd", "hl2gp"]],
+    d = panel.merge(util[["pidp", "wave", "hosp", "hospd", "hospch", "hl2gp"]],
                     on=["pidp", "wave"], how="inner")
     d = d[d["hosp"].notna() & d[MEASURE].notna()].copy()
     # nights is asked only of those admitted; a non-admission is zero nights
     d["nights"] = np.where(d["hosp"] == 1, d["hospd"], 0.0)
     d["admitted"] = (d["hosp"] == 1).astype(float)
     d = d[d["nights"].notna()]
+    # Maternity is not health deterioration, and it sits among healthy people
+    # in their early thirties, so leaving it in flatters the healthy end and
+    # understates the gradient. Reported both ways.
+    d["birth"] = (d["hospch"] == 1)
+    d["nights_nb"] = np.where(d["birth"], 0.0, d["nights"])
+    d["admitted_nb"] = np.where(d["birth"], 0.0, d["admitted"])
     d["z"] = (d[MEASURE] - d[MEASURE].mean()) / d[MEASURE].std()
     print(f"sample {len(d):,} person-waves; admitted {d['admitted'].mean():.3f}; "
           f"mean nights {d['nights'].mean():.3f}; "
@@ -66,7 +72,18 @@ def main() -> int:
                              nights=("nights", "mean"),
                              nights_if=("nights", lambda x: x[x > 0].mean()),
                              op=("hl2gp", "mean"), n=("z", "size")).reset_index()
+    gnb = d.groupby("bin").agg(nights=("nights_nb", "mean"),
+                               p_adm=("admitted_nb", "mean")).reset_index()
+    g["nights_nb"] = gnb["nights"]
     g["ratio_to_best"] = g["nights"] / g["nights"].iloc[-1]
+    g["ratio_nb"] = g["nights_nb"] / g["nights_nb"].iloc[-1]
+    print(f"\nchildbirth: {d['birth'].sum():,} admissions "
+          f"({d['birth'].sum() / (d['admitted'] == 1).sum():.1%} of all), "
+          f"mean age {d.loc[d.birth, 'age'].mean():.1f} against "
+          f"{d.loc[(d.admitted == 1) & ~d.birth, 'age'].mean():.1f} for the rest")
+    print(f"  bottom/top decile ratio in expected nights: "
+          f"{g['ratio_to_best'].iloc[0]:.1f}x with maternity, "
+          f"{g['ratio_nb'].iloc[0]:.1f}x without")
     print("\nby decile of health (10 = healthiest):")
     print(g.round(3).to_string(index=False))
 
