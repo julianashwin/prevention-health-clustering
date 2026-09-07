@@ -1022,12 +1022,38 @@ $\sigma_{\text{meas}}$ is $.466$ for the original GRM, $.442$ for P-FUNC and
 $.418$ for P-FULL. The first comparison is clean: the original GRM and P-FUNC
 run on essentially the same sample (50,042 and 50,001 people), so the GRM-2
 item work bought a real reduction in measurement noise, not just a
-re-scaling. The second is \emph{not} clean and should not be read as one:
-P-FULL drops the BHPS entrants who never receive the condition inventory
-(\S\ref{sec:chronic}), so its lower noise is confounded with a different
-sample. It is consistent with the diagnosis items anchoring the score ---
-conditions are stable and reported consistently --- but refitting P-FUNC on
-the P-FULL roster is what would establish it.
+re-scaling. The second runs on a different sample and so is not clean, but
+the nature of the difference can be pinned down exactly, and it does not
+point the way the caveat would suggest.
+
+P-FULL's roster is a strict \emph{subset} of P-FUNC's: nobody is in P-FULL
+and not in P-FUNC. The loss is $11{,}038$ whole people, which accounts for
+$99.8\%$ of the $101{,}454$ missing rows; window truncation is negligible, as
+$99.9\%$ of the retained people keep an identical observation window (mean
+$8.58$ waves under both). So this is a person-selection difference, not a
+shorter panel. The mechanism is the one anticipated in \S\ref{sec:chronic}:
+$75.7\%$ of the dropped people are first observed at wave 2 against $0.1\%$
+of the retained, i.e. they are the BHPS entrants who never receive the
+condition inventory.
+
+On every quantity that ought to matter they are the same people. Mean
+$\theta_{\text{P-FUNC}}$ is $+0.004$ against $-0.001$ for the retained, with
+standard deviations of $0.908$ and $0.902$; mean age $51.7$ against $50.8$;
+mean birth year 1964 against 1965. Two differences are real and both cut
+\emph{against} reading the noise gap as a sample artefact. Their mean absolute
+year-to-year change in $\theta_{\text{P-FUNC}}$ is $0.4349$ against $0.4491$,
+so they are slightly \emph{less} volatile than the people P-FULL keeps ---
+removing them should if anything raise the measured noise, not lower it. And
+they are observed \emph{more} often ($9.17$ waves against $8.58$), so their
+removal mildly weakens the identification that separates state from noise.
+
+None of this is a substitute for the direct test, which is to refit P-FUNC on
+the P-FULL roster; that fit has not been run. But the difference is a clean
+person-level selection on survey entry rather than on health or on panel
+length, and the incidental differences push the wrong way to manufacture the
+result. The reading that the diagnosis items anchor the score --- conditions
+are stable and reported consistently --- survives the check it could most
+easily have failed.
 
 \textbf{The typology itself changes, not just the persistence.} Class shares
 become markedly more balanced, close to $.26 / .49 / .26$ on all three
