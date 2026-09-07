@@ -52,6 +52,7 @@ Height/weight (self-report) & wave 1 only & excluded (biomarkers are UKDA-7251, 
 \end{center}
 
 \section{Chronic conditions}
+\label{sec:chronic}
 
 \subsection{Construction}
 UKHLS asks the full ``ever diagnosed'' inventory (\code{hcond1..17}) at a
@@ -829,13 +830,17 @@ data.
 
 The measures feed the Bayesian clustering layer: $K=3$ quadratic growth
 mixtures (the consolidated Stan model, partition inits with jitter, 4 chains
-$\times$ 1000+1000) on each channel's frozen lifecycle contract, in three
-specifications --- no AR term, AR(1) persistence in the class residual, and
-AR(1) with \emph{within-person holdout}: each person's last two observations
+$\times$ 1000+1000) on each channel's frozen lifecycle contract, in four
+specifications --- no AR term; AR(1) persistence in the class residual; AR(1)
+with \emph{within-person holdout}, where each person's last two observations
 are excluded from the likelihood and scored as a conditional predictive
-density, with the sample restricted to people observed at least five times.
-Class 1 is worst health throughout (the anchor convention). All eight fits
-converged; the batch took 15.9 h on two workers.
+density, with the sample restricted to people observed at least five times;
+and a state-space specification in which an AR(1) latent health state carries
+the persistence and each observation adds an independent one-period
+\emph{measurement error} on top (\S\ref{sec:meas}). Class 1 is worst health
+throughout (the anchor convention). All eleven fits converged; the first
+batch of eight took 15.9 h and the three state-space fits 14.9 h, both on two
+workers.
 
 \begin{center}\small
 \begin{tabular}{llrlllr}
@@ -862,7 +867,10 @@ shocks to the least healthy class decay several times more slowly than
 shocks elsewhere, and the ordering is identical across three different
 instruments. This is the mixture-model counterpart of the EIT note's
 persistent-layer anatomy, estimated jointly with the class structure rather
-than imposed.
+than imposed. It is also, as \S\ref{sec:meas} shows, a statement about an
+\emph{attenuated} parameter: once a one-period measurement error is allowed,
+the ordering survives but the grading largely does not, and every $\rho$ here
+should be read with that section in view.
 
 \textbf{The AR term, not the scale, redistributes the classes.} The interim
 reading of these fits was that the GRM channels produce near-even class
@@ -885,11 +893,16 @@ finely enough for the boundary to move.
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{fig_trajectory_comparison}
 \caption{Fitted class mean trajectories $\alpha_k + \beta_k a + \gamma_k
-a^2$ (with $a = (\text{age}-55)/10$) for all eight fits, on each channel's
+a^2$ (with $a = (\text{age}-55)/10$) for all eleven fits, on each channel's
 standardised scale. Channels: the UKHLS PCS, the physical GRM in its P-FULL
 specification (\code{theta\_phys\_full}: functioning plus diagnosis groups),
-and the combined seventeen-item GRM (\code{theta\_combined}). Line width is
-proportional to the class share.}
+the combined seventeen-item GRM (\code{theta\_combined}), the original GRM
+(\code{grm\_theta}) and the functioning-only physical GRM
+(\code{theta\_phys\_func}). Line width is proportional to the class share.
+``ME'' in the last three titles marks the state-space specification of
+\S\ref{sec:meas}: an AR(1) latent state plus an independent one-period
+measurement error. The strip beneath each panel is the class composition of
+the person-waves observed at each age.}
 \label{fig:trajectories}
 \end{figure}
 
@@ -897,8 +910,9 @@ Figure~\ref{fig:trajectories} puts every fit on one standardised axis. Three
 regularities hold everywhere: the three classes are ordered in level at
 every age and never cross; all three decline; and the worst class declines
 \emph{fastest}, so the classes fan apart over the life course. The gap
-between the best and worst class widens from $1.2$--$1.9$ sd at age 30 to
-$1.8$--$2.2$ sd at age 80.
+between the best and worst class widens from $0.9$--$1.9$ sd at age 30 to
+$1.8$--$2.2$ sd at age 80, with the narrowest age-30 gaps and the widest
+fanning in the three state-space fits (\S\ref{sec:meas}).
 
 \begin{center}\small
 \begin{tabular}{lrrrrr}
@@ -915,6 +929,10 @@ GRM phys, AR(1) + holdout & .313 & 1.22 & 1.79 & $-1.32$ & $-0.75$ \\
 GRM comb, baseline & .163 & 1.86 & 2.19 & $-0.90$ & $-0.57$ \\
 GRM comb, AR(1) & .290 & 1.38 & 1.95 & $-1.12$ & $-0.56$ \\
 GRM comb, AR(1) + holdout & .271 & 1.41 & 1.91 & $-0.96$ & $-0.46$ \\
+\addlinespace
+GRM original, AR(1) + meas. err. & .267 & 0.98 & 1.92 & $-1.47$ & $-0.53$ \\
+GRM phys P-FUNC, AR(1) + meas. err. & .254 & 0.97 & 1.94 & $-1.52$ & $-0.55$ \\
+GRM phys P-FULL, AR(1) + meas. err. & .261 & \textbf{0.91} & 1.90 & $\mathbf{-1.69}$ & $-0.70$ \\
 \bottomrule
 \end{tabular}
 
@@ -938,6 +956,112 @@ The holdout fits track their full-sample siblings closely on every one of
 these quantities (shares within $.02$, level gaps within $.11$ sd, declines
 within $.18$ sd), so the restriction to people with five or more
 observations changes the estimated typology very little.
+
+\subsection*{Separating persistence from measurement error}
+\label{sec:meas}
+
+Under the AR(1) specification the observation \emph{is} the state, so $\rho$
+has to absorb both genuine persistence and any transient noise in the
+instrument. If a GRM score wobbles year to year for reasons that have nothing
+to do with health --- a different interviewer, a bad week, the coarseness of a
+five-point item --- that wobble enters as a fast-decaying shock and drags
+$\rho$ towards zero. The state-space specification separates them: a latent
+health state follows the AR(1), and each observation adds independent noise
+that does not persist. In reduced form this is ARMA(1,1). Identification comes
+from the autocorrelation function, since $\text{corr}(k) = \rho^k \times
+\text{signal share}$ for $k \ge 1$, so $\rho$ is fixed by the \emph{ratio} of
+successive autocorrelations and the signal share by their \emph{level}. The
+state is marginalised by a Kalman filter rather than sampled, so no latent
+series enters the parameter vector. Measurement error is one scale per
+channel, shared across classes: it is a property of the instrument, not of the
+person's class.
+
+\textbf{The specification was validated on simulated data first.} On 1,500
+simulated people with $\rho = 0.75$, $\sigma_{\text{state}} = 0.45$ and
+$\sigma_{\text{meas}} = 0.35$, the state-space fit recovers $\rho = 0.738$,
+$\sigma_{\text{state}} = 0.384$ and $\sigma_{\text{meas}} = 0.280$ against
+truths of $0.750$, $0.375$ and $0.292$ on the standardised scale. Fitting
+AR(1) to the \emph{same} simulated panel returns $\rho = 0.564$, an
+attenuation of $24.7\%$, and inflates $\sigma$ from $0.375$ to $0.505$. The
+misspecification the model exists to fix is visible in the recovery exercise
+before it is asserted of the data.
+
+\textbf{In the real data the attenuation is far larger than that.} Comparing
+P-FULL under the two specifications on the \emph{identical} sample --- the
+same 38,963 people and 334,194 person-waves, one specification change:
+
+\begin{center}\small
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{3}{c}{$\rho$ by class} & \\
+Specification & 1 & 2 & 3 & $\sigma$ \\
+\midrule
+AR(1) & .780 & .274 & .390 & .532 \\
+AR(1) + measurement error & \textbf{.954} & \textbf{.902} & \textbf{.862} &
+.229 \ (+\,.418 meas.) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Classes 2 and 3 move from looking close to transient to being nearly as
+persistent as class 1. What the AR(1) fits read as health rebounding quickly
+was largely the instrument.
+
+\textbf{The variance is reallocated, not invented.} This is the check that
+matters, because a model that simply added a free noise parameter could
+manufacture persistence. Total implied observation sd is preserved to
+$2$--$3\%$: $0.850 \to 0.871$ for class 1 and $0.577 \to 0.616$ for class 3.
+The innovation sd of $0.532$ splits into a state innovation of $0.229$ and a
+measurement scale of $0.418$. In signal-share terms --- the fraction of
+observation variance that is persistent state --- the physical GRM runs
+$.77 / .62 / .54$ across classes. \emph{Between a quarter and a half of the
+year-to-year movement in these scores is measurement.}
+
+\textbf{The instruments differ, and in the expected direction.}
+$\sigma_{\text{meas}}$ is $.466$ for the original GRM, $.442$ for P-FUNC and
+$.418$ for P-FULL. The first comparison is clean: the original GRM and P-FUNC
+run on essentially the same sample (50,042 and 50,001 people), so the GRM-2
+item work bought a real reduction in measurement noise, not just a
+re-scaling. The second is \emph{not} clean and should not be read as one:
+P-FULL drops the BHPS entrants who never receive the condition inventory
+(\S\ref{sec:chronic}), so its lower noise is confounded with a different
+sample. It is consistent with the diagnosis items anchoring the score ---
+conditions are stable and reported consistently --- but refitting P-FUNC on
+the P-FULL roster is what would establish it.
+
+\textbf{The typology itself changes, not just the persistence.} Class shares
+become markedly more balanced, close to $.26 / .49 / .26$ on all three
+channels, against the AR(1) fits' $.29$--$.33$ in the worst class and the
+baselines' $.16$. More interesting is \emph{how} the worst class is now
+identified. Its age-30 gap to the best class is the narrowest of all eleven
+fits ($0.91$ sd on P-FULL, against $1.21$ under AR(1) and $1.74$ at
+baseline), while its decline is the steepest ($-1.69$ sd from 30 to 80,
+against $-1.44$ and $-1.22$). The fanning ratio --- the age-80 gap over the
+age-30 gap --- is $2.1\times$, the largest in the table. Once transient noise
+is removed the worst class is defined by its \emph{trajectory} rather than by
+sitting low throughout: these are people who start close to everyone else and
+fall away.
+
+\textbf{And the composition strips reverse direction.} Under AR(1) the
+worst class's share among person-waves observed at each age drifts
+\emph{upward} with age ($.298$ at 30 to $.323$ at 85 on P-FULL). Under the
+state-space specification it falls, and substantially: $.279$ at 30 to
+$.177$ at 85. This is what a fast-declining worst class should look like in
+an unbalanced panel that loses people --- the class is progressively thinned
+by attrition and death --- and it is a consequence of the reclassification
+above rather than an independent finding.
+
+\textbf{What this costs the earlier results.} The class-graded persistence
+claim above --- $\rho_1 = 0.67$--$0.78$ against $0.26$--$0.44$ elsewhere ---
+is a statement about an attenuated parameter. The \emph{ordering} survives
+(class 1 remains the most persistent on all three state-space fits) but the
+\emph{grading} largely does not: $.95 / .89 / .81$ is a far flatter profile
+than $.78 / .27 / .39$. Anything downstream that used $\rho$ as a
+substantive quantity rather than a nuisance parameter --- including the
+AR-conditional held-out densities below --- should be read as conditional on
+the AR(1) specification. The state-space fits were run without holdout, so
+whether separating the noise actually improves out-of-sample prediction is
+not yet established; that is the obvious next fit.
 
 \subsection*{Out-of-sample prediction}
 

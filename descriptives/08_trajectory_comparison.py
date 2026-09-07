@@ -1,8 +1,8 @@
-"""Fitted class trajectories and shares across the eight overnight fits.
+"""Fitted class trajectories and shares across the eleven univariate fits.
 
 Each latent class implies a mean trajectory alpha_k + beta_k a + gamma_k a^2
 in the channel's standardised units, with a = (age - 55)/10. Plotting all
-eight fits on the same standardised axis makes the specifications directly
+eleven fits on the same standardised axis makes the specifications directly
 comparable: the classes' levels, slopes and curvature, and the share each
 class carries.
 
@@ -33,23 +33,27 @@ from prevention_health_clustering.config import ARTIFACTS_DIR, ROOT_DIR
 AGES = np.arange(20, 91)
 A = (AGES - 55) / 10.0
 
+# (tag, label, artifacts subdirectory)
 FITS = [
-    ("pcs-ar1", "UKHLS PCS · AR(1)"),
-    ("pcs-ar1-ho", "UKHLS PCS · AR(1) + holdout"),
-    ("physgrm-base", "GRM physical (P-FULL) · baseline"),
-    ("physgrm-ar1", "GRM physical (P-FULL) · AR(1)"),
-    ("physgrm-ar1-ho", "GRM physical (P-FULL) · AR(1) + holdout"),
-    ("combgrm-base", "GRM combined (17 items) · baseline"),
-    ("combgrm-ar1", "GRM combined (17 items) · AR(1)"),
-    ("combgrm-ar1-ho", "GRM combined (17 items) · AR(1) + holdout"),
+    ("pcs-ar1", "UKHLS PCS · AR(1)", "overnight"),
+    ("pcs-ar1-ho", "UKHLS PCS · AR(1) + holdout", "overnight"),
+    ("physgrm-base", "GRM physical (P-FULL) · baseline", "overnight"),
+    ("physgrm-ar1", "GRM physical (P-FULL) · AR(1)", "overnight"),
+    ("physgrm-ar1-ho", "GRM physical (P-FULL) · AR(1) + holdout", "overnight"),
+    ("combgrm-base", "GRM combined (17 items) · baseline", "overnight"),
+    ("combgrm-ar1", "GRM combined (17 items) · AR(1)", "overnight"),
+    ("combgrm-ar1-ho", "GRM combined (17 items) · AR(1) + holdout", "overnight"),
+    ("grm-ssm", "GRM original · AR(1)+ME", "ssm"),
+    ("physfunc-ssm", "GRM phys (P-FUNC) · AR(1)+ME", "ssm"),
+    ("physfull-ssm", "GRM phys (P-FULL) · AR(1)+ME", "ssm"),
 ]
 
 
 def main() -> int:
     apply_style()
     rows, curves = [], {}
-    for tag, label in FITS:
-        r = json.loads((ARTIFACTS_DIR / "overnight" / tag /
+    for tag, label, subdir in FITS:
+        r = json.loads((ARTIFACTS_DIR / subdir / tag /
                         "run_summary.json").read_text())
         p = r["params"]
         theta = np.array([p[f"theta[{k}]"]["mean"] for k in (1, 2, 3)])
@@ -68,6 +72,8 @@ def main() -> int:
                 "drop_30_80": (curves[tag][1][AGES == 80, k][0]
                                - curves[tag][1][AGES == 30, k][0]),
                 "rho": p.get(f"rho[{k+1}]", {}).get("mean", np.nan),
+                "sigma": p["sigma[1,1]"]["mean"],
+                "sigma_meas": p.get("sigma_meas[1]", {}).get("mean", np.nan),
             })
     tab = pd.DataFrame(rows)
     out_dir = ARTIFACTS_DIR / "descriptives"
@@ -76,7 +82,7 @@ def main() -> int:
     # How much more steeply does the worst class decline than the best?
     # (ratio of 30->80 drops) -- the trajectory-level counterpart of fanning.
     spread = []
-    for tag, label in FITS:
+    for tag, label, _ in FITS:
         d = tab[tab["fit"] == tag].set_index("class")
         spread.append({"fit": tag, "label": label,
                        "share_worst": d.loc[1, "share"],
@@ -92,10 +98,12 @@ def main() -> int:
 
     comp = pd.read_csv(ARTIFACTS_DIR / "descriptives"
                        / "class_composition_by_age.csv")
-    fig = plt.figure(figsize=(13.4, 7.6))
-    gs = fig.add_gridspec(4, 4, height_ratios=[3.2, 0.7, 3.2, 0.7],
-                          hspace=0.38, wspace=0.22)
-    for i, (tag, label) in enumerate(FITS):
+    n_row = (len(FITS) + 3) // 4
+    fig = plt.figure(figsize=(13.4, 3.8 * n_row))
+    gs = fig.add_gridspec(2 * n_row, 4,
+                          height_ratios=[3.2, 0.7] * n_row,
+                          hspace=0.42, wspace=0.22)
+    for i, (tag, label, _) in enumerate(FITS):
         r, c = divmod(i, 4)
         ax = fig.add_subplot(gs[2 * r, c])
         axc = fig.add_subplot(gs[2 * r + 1, c], sharex=ax)
@@ -105,7 +113,7 @@ def main() -> int:
                     lw=0.8 + 4.0 * theta[k],
                     label=f"class {k+1}: {theta[k]:.0%}")
         ax.axhline(0, color="#cccccc", lw=0.7, ls=":")
-        ax.set_title(label, fontsize=8.6)
+        ax.set_title(label, fontsize=8.0)
         ax.legend(fontsize=6.4, loc="lower left")
         ax.grid(True, axis="y")
         ax.tick_params(labelbottom=False)
@@ -116,16 +124,17 @@ def main() -> int:
                       colors=CLUSTER, alpha=0.9)
         axc.set_ylim(0, 1); axc.set_yticks([]); axc.set_xlim(20, 90)
         axc.spines["left"].set_visible(False)
-        if r == 1:
+        if r == n_row - 1 or i + 4 >= len(FITS):
             axc.set_xlabel("age")
-    fig.suptitle("Fitted class trajectories and shares across the eight fits",
-                 fontweight="bold", y=1.0)
+    fig.suptitle("Fitted class trajectories and shares across the eleven "
+                 "univariate fits", fontweight="bold", y=1.0)
     fig.text(0.01, -0.006,
              "Line width is proportional to the class share. All channels are standardised (mean 0, sd 1 over\n"
              "the fitted sample), so levels are comparable across panels; class 1 is worst health by the\n"
              "anchor convention. The strip beneath each panel is the model's class composition of the\n"
              "person-waves OBSERVED at each age: theta is a lifetime constant, but who is in the sample\n"
-             "is not.",
+             "is not. ME marks the state-space specification of the last three panels: an AR(1) latent health\n"
+             "state carrying the persistence, with an independent one-period measurement error on top.",
              fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
     out = ROOT_DIR / "docs" / "figures" / "fig_trajectory_comparison.png"

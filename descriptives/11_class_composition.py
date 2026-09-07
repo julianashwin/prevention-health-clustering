@@ -35,15 +35,20 @@ K = 3
 LOG2PI = float(np.log(2 * np.pi))
 CONTRACTS = PROCESSED_DATA_DIR / "contracts"
 
+# (tag, model, contract, holdout_last_k, artifacts subdirectory)
 UNIVARIATE = [
-    ("pcs-ar1", "pcs-ar1", "pcs_lifecycle_20_89_minobs3_v1", None),
-    ("pcs-ar1-ho", "pcs-ar1", "pcs_lifecycle_20_89_minobs3_v1", 2),
-    ("physgrm-base", "physgrm-headline", "physgrm_lifecycle_20_89_minobs3_v1", None),
-    ("physgrm-ar1", "physgrm-ar1", "physgrm_lifecycle_20_89_minobs3_v1", None),
-    ("physgrm-ar1-ho", "physgrm-ar1", "physgrm_lifecycle_20_89_minobs3_v1", 2),
-    ("combgrm-base", "combgrm-headline", "combgrm_lifecycle_20_89_minobs3_v1", None),
-    ("combgrm-ar1", "combgrm-ar1", "combgrm_lifecycle_20_89_minobs3_v1", None),
-    ("combgrm-ar1-ho", "combgrm-ar1", "combgrm_lifecycle_20_89_minobs3_v1", 2),
+    ("pcs-ar1", "pcs-ar1", "pcs_lifecycle_20_89_minobs3_v1", None, "overnight"),
+    ("pcs-ar1-ho", "pcs-ar1", "pcs_lifecycle_20_89_minobs3_v1", 2, "overnight"),
+    ("physgrm-base", "physgrm-headline", "physgrm_lifecycle_20_89_minobs3_v1", None, "overnight"),
+    ("physgrm-ar1", "physgrm-ar1", "physgrm_lifecycle_20_89_minobs3_v1", None, "overnight"),
+    ("physgrm-ar1-ho", "physgrm-ar1", "physgrm_lifecycle_20_89_minobs3_v1", 2, "overnight"),
+    ("combgrm-base", "combgrm-headline", "combgrm_lifecycle_20_89_minobs3_v1", None, "overnight"),
+    ("combgrm-ar1", "combgrm-ar1", "combgrm_lifecycle_20_89_minobs3_v1", None, "overnight"),
+    ("combgrm-ar1-ho", "combgrm-ar1", "combgrm_lifecycle_20_89_minobs3_v1", 2, "overnight"),
+    # AR(1) state plus one-period measurement error
+    ("grm-ssm", "grm-ssm", "grm_lifecycle_20_89_minobs3_v1", None, "ssm"),
+    ("physfunc-ssm", "physgrm-func-ssm", "physfunc_lifecycle_20_89_minobs3_v1", None, "ssm"),
+    ("physfull-ssm", "physgrm-full-ssm", "physgrm_lifecycle_20_89_minobs3_v1", None, "ssm"),
 ]
 MULTIDIM = [("baseline", 0, False), ("holdout", 0, True),
             ("ar1", 1, False), ("ar1-holdout", 1, True)]
@@ -79,6 +84,51 @@ def gauss_rows(Y, X, coef, sigma, rho, gap, wstart, ar):
     return out
 
 
+def kalman_person_lp(Y, X, coef, sigma, sigma_meas, rho, gap, fs, fe,
+                     n_person):
+    """(persons, K) total log density under an AR(1) state plus i.i.d. noise.
+
+    Mirrors the ar_mode 2 branch of the Stan program. The state is
+    marginalised, so unlike the ar_mode 1 case the per-row densities are not
+    separable and the recursion has to be run in observation order. It is
+    vectorised over people and classes and looped over the within-person
+    time index, which is at most fifteen.
+    """
+    lens = fe - fs + 1
+    T = int(lens.max())
+    idx = np.full((n_person, T), -1, dtype=np.int64)
+    for i in range(n_person):
+        idx[i, :lens[i]] = np.arange(fs[i] - 1, fe[i])
+    mask = idx >= 0
+    safe = np.where(mask, idx, 0)
+
+    mu_all = X @ coef.T                       # (rows, K)
+    mu = mu_all[safe]                         # (persons, T, K)
+    Yp = Y[safe]
+    gp = gap[safe]
+
+    v_stat = sigma ** 2 / (1 - rho ** 2)      # (K,)
+    var_meas = sigma_meas ** 2
+    a = np.zeros((n_person, K))
+    Pv = np.tile(v_stat, (n_person, 1))
+    total = np.zeros((n_person, K))
+    for t in range(T):
+        m = mask[:, t][:, None]
+        if t > 0:
+            g = gp[:, t][:, None]
+            rg = rho[None, :] ** g
+            a = rg * a
+            Pv = rg ** 2 * Pv + v_stat[None, :] * np.maximum(
+                1 - rho[None, :] ** (2 * g), 1e-9)
+        F = Pv + var_meas
+        v = Yp[:, t][:, None] - mu[:, t, :] - a
+        total += np.where(m, -0.5 * (np.log(2 * np.pi * F) + v ** 2 / F), 0.0)
+        Kg = Pv / F
+        a = np.where(m, a + Kg * v, a)
+        Pv = np.where(m, Pv - Kg * Pv, Pv)
+    return total
+
+
 def composition(ages, person, fit_lp, theta, n_person, pids=None):
     """Posterior class shares among the person-waves observed at each age.
 
@@ -99,21 +149,22 @@ def composition(ages, person, fit_lp, theta, n_person, pids=None):
     return g.reset_index(), post
 
 
-def univariate_fit(tag, model, contract, hold_k):
+def univariate_fit(tag, model, contract, hold_k, subdir="overnight"):
     spec = get_model(model)
     long = pd.read_csv(CONTRACTS / contract / "long.csv")
     kw = dict(holdout_last_k=hold_k, holdout_min_person_obs=5) if hold_k else {}
     pl = build_payload(spec, long, **kw)
     d = pl.data
-    p = json.loads((ARTIFACTS_DIR / "overnight" / tag
+    p = json.loads((ARTIFACTS_DIR / subdir / tag
                     / "run_summary.json").read_text())["params"]
     theta = np.array([p[f"theta[{k}]"]["mean"] for k in range(1, K + 1)])
     coef = np.array([[p[f"coef[1,{k},{j}]"]["mean"] for j in (1, 2, 3)]
                      for k in range(1, K + 1)])
     sigma = p["sigma[1,1]"]["mean"]
-    ar = d["ar_mode"] == 1
+    ar_mode = d["ar_mode"]
+    ar = ar_mode == 1
     rho = (np.array([p[f"rho[{k}]"]["mean"] for k in range(1, K + 1)])
-           if ar else np.zeros(K))
+           if ar_mode != 0 else np.zeros(K))
     X = np.asarray(d["X"]); Y = np.asarray(d["y"][0])
     fs, fe = np.asarray(d["fit_start"]), np.asarray(d["fit_end"])
     n_person = d["N_person"]
@@ -124,10 +175,16 @@ def univariate_fit(tag, model, contract, hold_k):
     fitted = np.zeros(d["N_obs"], bool)
     for i in range(n_person):
         fitted[fs[i] - 1:fe[i]] = True
-    lp = gauss_rows(Y, X, coef, sigma, rho, np.asarray(
-        d["age_gap"]) if ar else np.zeros(d["N_obs"]), wstart, ar)
-    fit_lp = np.zeros((n_person, K))
-    np.add.at(fit_lp, person[fitted], lp[fitted])
+    gap = (np.asarray(d["age_gap"]) if ar_mode != 0
+           else np.zeros(d["N_obs"]))
+    if ar_mode == 2:
+        fit_lp = kalman_person_lp(Y, X, coef, sigma,
+                                  p["sigma_meas[1]"]["mean"], rho, gap,
+                                  fs, fe, n_person)
+    else:
+        lp = gauss_rows(Y, X, coef, sigma, rho, gap, wstart, ar)
+        fit_lp = np.zeros((n_person, K))
+        np.add.at(fit_lp, person[fitted], lp[fitted])
     ages = np.round(X[:, 1] * 10 + 55).astype(int)
     return composition(ages, person, fit_lp, theta, n_person, pl.person_ids)
 
@@ -177,8 +234,8 @@ def main(argv=None) -> int:
     ap.add_argument("--validate", action="store_true")
     args = ap.parse_args(argv)
     out, posts = [], []
-    for tag, model, contract, hk in UNIVARIATE:
-        g, post = univariate_fit(tag, model, contract, hk)
+    for tag, model, contract, hk, subdir in UNIVARIATE:
+        g, post = univariate_fit(tag, model, contract, hk, subdir)
         g.insert(0, "fit", tag); g.insert(1, "family", "univariate")
         out.append(g)
         post.insert(0, "fit", tag); posts.append(post)
