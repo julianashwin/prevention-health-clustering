@@ -20,3 +20,7 @@ docs/*.aux
 docs/*.log
 docs/*.out
 docs/*.toc
+
+# Compiled Stan binaries (cmdstanpy rebuilds these; platform-specific)
+src/prevention_health_clustering/models/stan/*
+!src/prevention_health_clustering/models/stan/*.stan
