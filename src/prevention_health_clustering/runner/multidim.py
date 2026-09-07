@@ -131,7 +131,7 @@ def build_multidim_payload(
         "ar_mode": int(ar_mode),
         "age_gap": (np.concatenate([[0.0], np.maximum(
             np.diff(frame["age"].to_numpy()), 1.0)]).tolist()
-            if ar_mode == 1 else []),
+            if ar_mode != 0 else []),
         "use_mortality": int(bool(use_mortality)),
         "chronic_obs": chronic_obs.tolist(),
         "chronic_y": chronic_y.tolist(),
@@ -148,6 +148,10 @@ def build_multidim_payload(
         "theta_prior_concentration": 1.5,
         "rho_prior_alpha": 2.0,
         "rho_prior_beta": 2.0,
+        # Centred well below the residual scale: the default is that most
+        # variation is signal and the data have to argue for noise.
+        "sigma_meas_prior_location": 0.0,
+        "sigma_meas_prior_scale": 0.4,
         "chronic_log_mean": chronic_log_mean,
         "mort_logit_mean": mort_logit_mean,
         "emit_person_quantities": int(emit_person_quantities),
@@ -228,9 +232,20 @@ def multidim_inits(payload: MultidimPayload, *, jitter: float = 0.15,
         if d["use_mortality"] == 1:
             init["coef_mort_raw"] = [[j(0.3)] + [j(0.2)] * (P - 1)
                                      for _ in range(K)]
-        if d["ar_mode"] == 1:
-            init["rho"] = [float(np.clip(0.5 + j(0.1), 0.05, 0.95))
+        if d["ar_mode"] != 0:
+            # Under ar_mode 2 the persistence posterior sits near 0.95, not
+            # 0.5: once transient noise is taken out of the residual, what is
+            # left is highly persistent. Starting at 0.5 leaves a long climb
+            # that chains finish at different points, which shows up as a
+            # large rho R-hat even though the model is identified.
+            centre = 0.90 if d["ar_mode"] == 2 else 0.5
+            init["rho"] = [float(np.clip(centre + j(0.05), 0.05, 0.97))
                            for _ in range(K)]
+        if d["ar_mode"] == 2:
+            # Open on the rho/sigma_meas ridge rather than at either end of
+            # it, so chains do not set off in opposite directions.
+            init["sigma_meas"] = [float(np.clip(0.35 + j(0.05), 0.05, 1.0))
+                                  for _ in range(d["C"])]
         inits.append(init)
     return inits
 

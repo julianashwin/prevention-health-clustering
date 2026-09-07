@@ -39,6 +39,10 @@ VARIANTS = {
     "holdout":     dict(ar_mode=0, holdout=True),
     "ar1":         dict(ar_mode=1, holdout=False),
     "ar1-holdout": dict(ar_mode=1, holdout=True),
+    # AR(1) latent state plus one-period measurement error on the Gaussian
+    # channels; the chronic count and mortality hazard are unaffected.
+    "ssm":         dict(ar_mode=2, holdout=False),
+    "ssm-holdout": dict(ar_mode=2, holdout=True),
 }
 
 
@@ -115,11 +119,14 @@ def main(argv=None) -> int:
              + ([f"coef_mort[{k},{p}]" for k in range(1, K + 1)
                  for p in range(1, P + 1)] if d["use_mortality"] else [])
              + ([f"rho[{k}]" for k in range(1, K + 1)] if d["ar_mode"] else [])
+             + ([f"sigma_meas[{c}]" for c in range(1, C + 1)]
+                if d["ar_mode"] == 2 else [])
              + ["lp__"])
     draws = fit.draws_pd(vars=["theta", "coef", "sigma", "coef_chronic",
                                "phi_chronic", "lp__"]
                          + (["coef_mort"] if d["use_mortality"] else [])
-                         + (["rho"] if d["ar_mode"] else []))
+                         + (["rho"] if d["ar_mode"] else [])
+                         + (["sigma_meas"] if d["ar_mode"] == 2 else []))
     summary, worst, worst_name = {}, 0.0, ""
     for n in names:
         col = draws[n].to_numpy().reshape(args.chains, args.sampling)
@@ -140,6 +147,20 @@ def main(argv=None) -> int:
     if d["ar_mode"]:
         print("  rho " + " ".join(f"{summary[f'rho[{k}]']['mean']:.3f}"
                                   for k in range(1, K + 1)))
+    if d["ar_mode"] == 2:
+        print("  sigma_meas " + " ".join(
+            f"{summary[f'sigma_meas[{c}]']['mean']:.3f}"
+            for c in range(1, C + 1)))
+        # Share of each Gaussian channel's observation variance that is
+        # persistent state rather than measurement noise, per class.
+        for c in range(1, C + 1):
+            sig = summary[f"sigma[1,{c}]"]["mean"]
+            mea = summary[f"sigma_meas[{c}]"]["mean"]
+            shares = [(sig ** 2 / (1 - summary[f"rho[{k}]"]["mean"] ** 2))
+                      / (sig ** 2 / (1 - summary[f"rho[{k}]"]["mean"] ** 2)
+                         + mea ** 2) for k in range(1, K + 1)]
+            print(f"  signal share, channel {c} ({GAUSS_CHANNELS[c - 1]}): "
+                  + " ".join(f"{x:.3f}" for x in shares))
 
     result = {"variant": args.variant, "n_person": int(d["N_person"]),
               "n_obs": int(d["N_obs"]), "held_rows": int(n_held),

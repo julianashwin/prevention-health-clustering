@@ -4,6 +4,8 @@
  * Channels, all on one shared person-wave row set:
  *   1..C   Gaussian    the GRM thetas (physical, mental), standardised,
  *                      with optional AR(1) persistence in the class residual
+ *                      (ar_mode 1) or an AR(1) latent state plus i.i.d.
+ *                      measurement error (ar_mode 2, Kalman-filtered)
  *   chronic  count     cumulated chronic-condition count, negative binomial,
  *                      log link; masked, because the condition inventory is
  *                      not asked of the BHPS entrants
@@ -20,22 +22,33 @@
  * IDENTIFICATION. As in the Gaussian model: an ordered intercept on the
  * anchor Gaussian channel, which must carry likelihood weight.
  *
+ * AR_MODE 2 applies to the GAUSSIAN CHANNELS ONLY. The chronic count and the
+ * mortality hazard have no measurement-error analogue here: a condition count
+ * is a report of an accumulated stock rather than a noisy read of a
+ * continuous state, and mortality is administrative. So sigma_meas is length
+ * C, one scale per Gaussian channel, shared across classes as in the
+ * univariate model.
+ *
  * The per-person class log-likelihood is defined once in the functions block
  * and reused by the sampler and the gated generated quantities.
  */
 functions {
   /**
    * Windowed channels: the Gaussian block and the chronic count.
-   * `prev_row` anchors the AR(1) recursion -- 0 opens the window at the
+   * `prev_row` anchors the ar_mode 1 recursion -- 0 opens the window at the
    * stationary variance, a row index carries that row's deviation forward.
+   * `filter_start` does the same job for ar_mode 2, where one noisy last
+   * value is not sufficient to condition on: rows from filter_start up to
+   * row_start are filtered but not scored.
    */
   vector person_window_loglik(
       int row_start, int row_end, int include_log_weight, int prev_row,
+      int filter_start,
       int K, int C, int P,
       array[] vector y, matrix X,
       int ar_mode, vector age_gap,
       vector log_weight,
-      array[] matrix coef, matrix sigma, vector rho,
+      array[] matrix coef, matrix sigma, vector rho, vector sigma_meas,
       array[] int chronic_obs, array[] int chronic_y,
       matrix coef_chronic, real phi_chronic,
       vector channel_weight) {
@@ -53,7 +66,7 @@ functions {
             part += normal_lpdf(y[c][n] | dot_product(X[n], coef[c][k]),
                                 sigma[k, c]);
           }
-        } else {
+        } else if (ar_mode == 1) {
           real mu_prev = 0;
           for (n in row_start:row_end) {
             real mu = dot_product(X[n], coef[c][k]);
@@ -72,6 +85,33 @@ functions {
                                   sigma[k, c] * sqrt(fmax(var_mult, 1e-9)));
             }
             mu_prev = mu;
+          }
+        } else {
+          // AR(1) latent state plus i.i.d. measurement error, marginalised
+          // by a Kalman filter; identical arithmetic to the univariate model.
+          real rho_k = rho[k];
+          real v_stat = square(sigma[k, c]) / (1 - square(rho_k));
+          real var_meas = square(sigma_meas[c]);
+          int f0 = filter_start == 0 ? row_start : filter_start;
+          real a = 0;
+          real Pv = v_stat;
+          for (n in f0:row_end) {
+            real mu = dot_product(X[n], coef[c][k]);
+            if (n > f0) {
+              real gap = age_gap[n];
+              real rho_gap = pow(rho_k, gap);
+              a = rho_gap * a;
+              Pv = square(rho_gap) * Pv
+                   + v_stat * fmax(1 - pow(rho_k, 2 * gap), 1e-9);
+            }
+            real F = Pv + var_meas;
+            real v = y[c][n] - mu - a;
+            if (n >= row_start) {
+              part += -0.5 * (log(2 * pi() * F) + square(v) / F);
+            }
+            real Kg = Pv / F;
+            a += Kg * v;
+            Pv -= Kg * Pv;
           }
         }
         total += channel_weight[c] * part;
@@ -118,7 +158,7 @@ functions {
       array[] vector y, matrix X,
       int ar_mode, vector age_gap,
       vector log_weight,
-      array[] matrix coef, matrix sigma, vector rho,
+      array[] matrix coef, matrix sigma, vector rho, vector sigma_meas,
       array[] int chronic_obs, array[] int chronic_y,
       matrix coef_chronic, real phi_chronic,
       int use_mortality,
@@ -130,9 +170,9 @@ functions {
     for (i in 1:size(person_slice)) {
       int idx = person_slice[i];
       vector[K] class_lp = person_window_loglik(
-          fit_start[idx], fit_end[idx], 1, 0, K, C, P, y, X, ar_mode, age_gap,
-          log_weight, coef, sigma, rho, chronic_obs, chronic_y,
-          coef_chronic, phi_chronic, channel_weight);
+          fit_start[idx], fit_end[idx], 1, 0, fit_start[idx], K, C, P, y, X,
+          ar_mode, age_gap, log_weight, coef, sigma, rho, sigma_meas,
+          chronic_obs, chronic_y, coef_chronic, phi_chronic, channel_weight);
       if (use_mortality == 1) {
         class_lp += person_mort_loglik(
             fit_start[idx], full_end[idx], K, X, mort_obs, mort_y, coef_mort,
@@ -160,7 +200,7 @@ data {
   array[N_person] int<lower=0, upper=N_obs> hold_end;
   array[N_person] int<lower=1, upper=N_obs> full_end;
 
-  int<lower=0, upper=1> ar_mode;
+  int<lower=0, upper=2> ar_mode;
   vector<lower=0>[ar_mode == 0 ? 0 : N_obs] age_gap;
 
   array[N_obs] int<lower=0, upper=1> chronic_obs;
@@ -181,6 +221,9 @@ data {
   real<lower=0> theta_prior_concentration;
   real<lower=0> rho_prior_alpha;
   real<lower=0> rho_prior_beta;
+  // Half-normal on the measurement-error scale; read only when ar_mode == 2.
+  real<lower=0> sigma_meas_prior_location;
+  real<lower=0> sigma_meas_prior_scale;
   real chronic_log_mean;
   real mort_logit_mean;
 
@@ -206,6 +249,8 @@ parameters {
   array[C] matrix[K, P - 1] slope;
   matrix<lower=0.05>[homosigma == 1 ? 1 : K, C] sigma_raw;
   vector<lower=0, upper=0.99>[ar_mode == 0 ? 0 : K] rho;
+  // One measurement-error scale per Gaussian channel, shared across classes.
+  vector<lower=0.01>[ar_mode == 2 ? C : 0] sigma_meas;
 
   matrix[K, P] coef_chronic_raw;
   real<lower=0> phi_chronic;
@@ -250,8 +295,11 @@ model {
     }
   }
   to_vector(sigma_raw) ~ lognormal(log(sigma_prior_location), sigma_prior_scale);
-  if (ar_mode == 1) {
+  if (ar_mode != 0) {
     rho ~ beta(rho_prior_alpha, rho_prior_beta);
+  }
+  if (ar_mode == 2) {
+    sigma_meas ~ normal(sigma_meas_prior_location, sigma_meas_prior_scale);
   }
   col(coef_chronic_raw, 1) ~ normal(0, 1);
   for (p in 2:P) {
@@ -268,7 +316,7 @@ model {
   target += reduce_sum(
       partial_sum_lpmf, person_index, grainsize,
       K, C, P, y, X, ar_mode, age_gap, log_weight, coef, sigma, rho,
-      chronic_obs, chronic_y, coef_chronic, phi_chronic,
+      sigma_meas, chronic_obs, chronic_y, coef_chronic, phi_chronic,
       use_mortality, mort_obs, mort_y, coef_mort, channel_weight,
       fit_start, fit_end, full_end);
 }
@@ -283,9 +331,9 @@ generated quantities {
   if (emit_person_quantities == 1) {
     for (i in 1:N_person) {
       vector[K] fitted_lp = person_window_loglik(
-          fit_start[i], fit_end[i], 1, 0, K, C, P, y, X, ar_mode, age_gap,
-          log_weight, coef, sigma, rho, chronic_obs, chronic_y,
-          coef_chronic, phi_chronic, channel_weight);
+          fit_start[i], fit_end[i], 1, 0, fit_start[i], K, C, P, y, X,
+          ar_mode, age_gap, log_weight, coef, sigma, rho, sigma_meas,
+          chronic_obs, chronic_y, coef_chronic, phi_chronic, channel_weight);
       if (use_mortality == 1) {
         fitted_lp += person_mort_loglik(
             fit_start[i], full_end[i], K, X, mort_obs, mort_y, coef_mort,
@@ -298,13 +346,13 @@ generated quantities {
 
       if (hold_start[i] > 0) {
         vector[K] hold_lp = person_window_loglik(
-            hold_start[i], hold_end[i], 0, fit_end[i], K, C, P, y, X, ar_mode,
-            age_gap, log_weight, coef, sigma, rho, chronic_obs, chronic_y,
-            coef_chronic, phi_chronic, channel_weight);
+            hold_start[i], hold_end[i], 0, fit_end[i], fit_start[i], K, C, P,
+            y, X, ar_mode, age_gap, log_weight, coef, sigma, rho, sigma_meas,
+            chronic_obs, chronic_y, coef_chronic, phi_chronic, channel_weight);
         vector[K] hold_lp_marg = person_window_loglik(
-            hold_start[i], hold_end[i], 0, 0, K, C, P, y, X, ar_mode,
-            age_gap, log_weight, coef, sigma, rho, chronic_obs, chronic_y,
-            coef_chronic, phi_chronic, channel_weight);
+            hold_start[i], hold_end[i], 0, 0, 0, K, C, P, y, X, ar_mode,
+            age_gap, log_weight, coef, sigma, rho, sigma_meas,
+            chronic_obs, chronic_y, coef_chronic, phi_chronic, channel_weight);
         log_lik_heldout[i] = log_sum_exp(fitted_lp + hold_lp) - log_lik[i];
         log_lik_heldout_marginal[i] =
             log_sum_exp(fitted_lp + hold_lp_marg) - log_lik[i];
