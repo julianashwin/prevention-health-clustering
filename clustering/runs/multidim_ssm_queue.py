@@ -40,10 +40,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "artifacts" / "multidim-ssm"
 
-# (tag, variant, extra args) - longest expected first
+# (tag, variant, extra args). Run one at a time, in the order the results
+# are wanted: the state-space spec first, then the mortality channel on top
+# of it, then mortality on the iid baseline as the no-persistence contrast.
 JOBS = [
-    ("ssm-mort", "ssm", ["--with-mortality"]),
     ("ssm", "ssm", []),
+    ("ssm-mort", "ssm", ["--with-mortality"]),
     ("baseline-mort", "baseline", ["--with-mortality"]),
 ]
 
@@ -86,11 +88,11 @@ def summarise(tag):
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--chains", type=int, default=4)
     ap.add_argument("--warmup", type=int, default=1000)
     ap.add_argument("--sampling", type=int, default=1000)
-    ap.add_argument("--threads-per-chain", type=int, default=3)
+    ap.add_argument("--threads-per-chain", type=int, default=1)
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
     settings = ["--chains", str(a.chains), "--warmup", str(a.warmup),
