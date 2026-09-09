@@ -53,6 +53,9 @@ def main(argv=None) -> int:
     parser.add_argument("--warmup", type=int, default=1000)
     parser.add_argument("--sampling", type=int, default=1000)
     parser.add_argument("--threads-per-chain", type=int, default=3)
+    parser.add_argument("--parallel-chains", type=int, default=0,
+                        help="Chains to run at once; 0 means all of them. "
+                             "Use to cap the CPU footprint on a shared machine.")
     parser.add_argument("--init-jitter", type=float, default=0.15)
     parser.add_argument("--holdout-last-k", type=int, default=None)
     parser.add_argument("--holdout-min-obs", type=int, default=None)
@@ -85,6 +88,8 @@ def main(argv=None) -> int:
         chains=args.chains, iter_warmup=args.warmup,
         iter_sampling=args.sampling,
         threads_per_chain=args.threads_per_chain,
+        **({"parallel_chains": args.parallel_chains}
+           if args.parallel_chains > 0 else {}),
     )
     wall = time.time() - t0
     print(f"  sampling done in {wall / 3600:.2f} h", flush=True)

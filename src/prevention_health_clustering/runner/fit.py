@@ -294,7 +294,11 @@ def build_inits(
             "sigma_raw": np.full((1 if spec.homosigma else k, c), within),
         }
         if spec.ar_mode != 0:
-            init["rho"] = np.full(k, 0.3)
+            # Under ar_mode 2 the persistence posterior sits near 0.95: once
+            # transient noise is out of the residual, what remains is highly
+            # persistent. Starting at 0.3 leaves a long climb that chains can
+            # finish at different points, which shows up as a large rho R-hat.
+            init["rho"] = np.full(k, 0.9 if spec.ar_mode == 2 else 0.3)
         if spec.ar_mode == 2:
             # Open at a modest signal-to-noise split rather than at either
             # boundary: rho and sigma_meas trade off along a ridge, and
@@ -405,7 +409,11 @@ def assignment_inits(
                 [cj[ch, :, 0] for ch in range(c) if ch != anchor]
             )
         if spec.ar_mode != 0:
-            init["rho"] = np.full(k, 0.3)
+            # Under ar_mode 2 the persistence posterior sits near 0.95: once
+            # transient noise is out of the residual, what remains is highly
+            # persistent. Starting at 0.3 leaves a long climb that chains can
+            # finish at different points, which shows up as a large rho R-hat.
+            init["rho"] = np.full(k, 0.9 if spec.ar_mode == 2 else 0.3)
         if spec.ar_mode == 2:
             # Open at a modest signal-to-noise split rather than at either
             # boundary: rho and sigma_meas trade off along a ridge, and

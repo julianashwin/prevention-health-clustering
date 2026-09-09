@@ -263,6 +263,33 @@ PHYSGRM_FULL_SSM = ModelSpec(
 )
 
 
+# K = 4 under the state-space specification. Everything else matches the K = 3
+# fits, so the only difference is the number of classes. More classes means
+# more adjacent pairs the ordered anchor intercept has to separate, which is
+# the configuration that produced a mode split in the multidim smoke, so
+# these are watched rather than assumed.
+
+PHYSGRM_FUNC_SSM_K4 = ModelSpec(
+    name="physgrm-func-ssm-k4",
+    stan_file=GAUSSIAN_PANEL,
+    description="P-FUNC theta, K=4, AR(1) state plus measurement error.",
+    channels=("theta_phys_func",),
+    anchor_channel="theta_phys_func",
+    ar_mode=2,
+    n_classes=4,
+)
+
+PHYSGRM_FULL_SSM_K4 = ModelSpec(
+    name="physgrm-full-ssm-k4",
+    stan_file=GAUSSIAN_PANEL,
+    description="P-FULL theta, K=4, AR(1) state plus measurement error.",
+    channels=("theta_phys_full",),
+    anchor_channel="theta_phys_full",
+    ar_mode=2,
+    n_classes=4,
+)
+
+
 REGISTRY: dict[str, ModelSpec] = {
     spec.name: spec
     for spec in (
@@ -280,6 +307,8 @@ REGISTRY: dict[str, ModelSpec] = {
         GRM_SSM,
         PHYSGRM_FUNC_SSM,
         PHYSGRM_FULL_SSM,
+        PHYSGRM_FUNC_SSM_K4,
+        PHYSGRM_FULL_SSM_K4,
     )
 }
 
