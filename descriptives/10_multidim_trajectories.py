@@ -12,7 +12,7 @@ The Gaussian channels are returned to their original GRM theta scale using
 the standardising moments recorded by the fit; the count channel is plotted
 as the implied mean number of conditions.
 
-Outputs: docs/figures/fig_multidim_trajectories.png,
+Outputs: docs/measurement/figures/fig_multidim_trajectories.png,
          artifacts/descriptives/multidim_trajectories.csv
 """
 
@@ -108,7 +108,7 @@ def main() -> int:
              "lifetime constants, but who is in the sample at each age is not.",
              fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "figures" / "fig_multidim_trajectories.png"
+    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_multidim_trajectories.png"
     fig.savefig(out)
     tab = pd.DataFrame(rows)
     tab.to_csv(ARTIFACTS_DIR / "descriptives" / "multidim_trajectories.csv",

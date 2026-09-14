@@ -116,7 +116,7 @@ def main() -> int:
              "reading of ceiling and floor.",
              fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "figures" / "fig_grm_information.png"
+    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_grm_information.png"
     fig.savefig(out)
     print(f"wrote {out}")
 

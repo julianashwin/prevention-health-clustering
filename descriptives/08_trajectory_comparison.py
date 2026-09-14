@@ -11,7 +11,7 @@ to the class share) and a stacked share bar. Channels are standardised, so
 one vertical axis serves all of them; the raw-scale conversion for each
 channel is printed.
 
-Outputs: docs/figures/fig_trajectory_comparison.png,
+Outputs: docs/measurement/figures/fig_trajectory_comparison.png,
          artifacts/descriptives/trajectory_comparison.csv
 """
 
@@ -137,7 +137,7 @@ def main() -> int:
              "state carrying the persistence, with an independent one-period measurement error on top.",
              fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "figures" / "fig_trajectory_comparison.png"
+    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_trajectory_comparison.png"
     fig.savefig(out)
     print(tab.round(3).to_string(index=False))
     print(f"\nwrote {out}")

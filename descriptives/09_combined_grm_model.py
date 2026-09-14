@@ -16,7 +16,7 @@ Four panels:
   (c) how one person's answers combine into a posterior
   (d) two people with the SAME summed score but different answers
 
-Outputs: docs/figures/fig_combined_grm_model.png
+Outputs: docs/measurement/figures/fig_combined_grm_model.png
 """
 
 from __future__ import annotations
@@ -173,7 +173,7 @@ def main() -> int:
              "the axis, which are weakly identified because so few people sit that low.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "figures" / "fig_combined_grm_model.png"
+    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_combined_grm_model.png"
     fig.savefig(out)
 
     print("COMBINED bank, items ordered by weight:")

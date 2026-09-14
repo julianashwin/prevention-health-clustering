@@ -21,7 +21,7 @@ This script separates the three:
   (c) the quadratic coefficient on the probability scale and on the logit
       scale, for several cardinalisations of the same underlying ranking
 
-Outputs: docs/figures/fig_convexity_detail.png,
+Outputs: docs/measurement/figures/fig_convexity_detail.png,
          artifacts/descriptives/convexity_detail.csv
 """
 
@@ -165,7 +165,7 @@ def main() -> int:
              "In (b) and (c) the curve is a logistic with NO quadratic term, so all curvature in (b) is the link.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "figures" / "fig_convexity_detail.png"
+    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_convexity_detail.png"
     fig.savefig(out)
     print(f"\nwrote {out}")
     return 0

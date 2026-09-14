@@ -27,7 +27,7 @@ relationship out of sample, not the whole pipeline. A fully clean version
 would refit each mixture on the training people.
 
 Outputs: artifacts/descriptives/outcome_prediction.csv,
-         docs/figures/fig_outcome_prediction.png
+         docs/measurement/figures/fig_outcome_prediction.png
 """
 
 from __future__ import annotations
@@ -193,7 +193,7 @@ def main() -> int:
              "so the age baselines differ and the gains, not the levels, are what compare across rows.",
              fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
-    figpath = Path(ARTIFACTS_DIR).parent / "docs" / "figures" / "fig_outcome_prediction.png"
+    figpath = Path(ARTIFACTS_DIR).parent / "docs" / "measurement" / "figures" / "fig_outcome_prediction.png"
     fig.savefig(figpath)
     print(f"\nwrote {out} and {figpath}")
     return 0

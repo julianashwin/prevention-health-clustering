@@ -21,7 +21,7 @@ because the two margins may both move with health. If they do, expected cost
 is more convex than the admission probability alone, which is all section 8
 measured.
 
-Outputs: docs/figures/fig_expected_cost.png,
+Outputs: docs/measurement/figures/fig_expected_cost.png,
          artifacts/descriptives/expected_cost.csv
 """
 
@@ -161,7 +161,7 @@ def main() -> int:
              "cost. Panel (b) is on a log axis, where a straight line is a constant proportional gradient.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "figures" / "fig_expected_cost.png"
+    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_expected_cost.png"
     fig.savefig(out)
     print(f"\nwrote {out}")
     return 0
