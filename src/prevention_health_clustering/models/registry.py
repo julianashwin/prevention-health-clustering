@@ -289,6 +289,19 @@ PHYSGRM_FULL_SSM_K4 = ModelSpec(
     n_classes=4,
 )
 
+# K = 5 for P-FUNC under the state-space specification. Identical to the K=4
+# fit apart from the class count, on the same contract and people.
+
+PHYSGRM_FUNC_SSM_K5 = ModelSpec(
+    name="physgrm-func-ssm-k5",
+    stan_file=GAUSSIAN_PANEL,
+    description="P-FUNC theta, K=5, AR(1) state plus measurement error.",
+    channels=("theta_phys_func",),
+    anchor_channel="theta_phys_func",
+    ar_mode=2,
+    n_classes=5,
+)
+
 
 REGISTRY: dict[str, ModelSpec] = {
     spec.name: spec
@@ -309,6 +322,7 @@ REGISTRY: dict[str, ModelSpec] = {
         PHYSGRM_FULL_SSM,
         PHYSGRM_FUNC_SSM_K4,
         PHYSGRM_FULL_SSM_K4,
+        PHYSGRM_FUNC_SSM_K5,
     )
 }
 
