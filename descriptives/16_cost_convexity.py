@@ -19,7 +19,7 @@ Two scales are still reported, and they mean different things:
 Then the sensitivities the plan set out, all on the headline physical GRM:
 spell rule, maternity, winsorising, condition weights and the top band.
 
-Outputs: docs/measurement/figures/fig_cost_convexity.png,
+Outputs: measuring_health/figures/fig_cost_convexity.png,
          artifacts/descriptives/cost_convexity.csv,
          artifacts/descriptives/cost_sensitivity.csv
 """
@@ -185,7 +185,7 @@ def main() -> int:
              "A positive bar means the proportional cost gradient steepens as health worsens.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_cost_convexity.png"
+    out = ROOT_DIR / "measuring_health" / "figures" / "fig_cost_convexity.png"
     fig.savefig(out, dpi=200, bbox_inches="tight")
     print(f"\nwrote {out}")
     return 0

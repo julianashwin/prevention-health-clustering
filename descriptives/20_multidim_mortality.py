@@ -30,7 +30,7 @@ should be moved onto the chronic channel before these fits are relied on.
 Mortality enters as a per-wave logit hazard with a quadratic in age, so the
 class intercept is the log-odds of dying in a wave at age 55.
 
-Outputs: docs/measurement/figures/fig_multidim_mortality.png
+Outputs: measuring_health/figures/fig_multidim_mortality.png
          artifacts/descriptives/multidim_mode_chains.csv
          artifacts/descriptives/multidim_mortality.csv
 """
@@ -50,7 +50,7 @@ from _style import CLUSTER, INK2, SURFACE, apply_style  # noqa: E402
 from prevention_health_clustering.config import ARTIFACTS_DIR, ROOT_DIR
 
 K = 3
-FIG = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_multidim_mortality.png"
+FIG = ROOT_DIR / "measuring_health" / "figures" / "fig_multidim_mortality.png"
 FITS = {
     "ssm": ARTIFACTS_DIR / "multidim-ssm" / "ssm",
     "ssm-mort": ARTIFACTS_DIR / "multidim-ssm" / "ssm-mort",

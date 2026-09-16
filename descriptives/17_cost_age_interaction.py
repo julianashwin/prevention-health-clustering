@@ -31,7 +31,7 @@ every age band has substantial mass.
 Standard errors are clustered on the person: the same people appear in up to
 nine waves.
 
-Outputs: docs/measurement/figures/fig_cost_age_interaction.png,
+Outputs: measuring_health/figures/fig_cost_age_interaction.png,
          artifacts/descriptives/cost_age_interaction.csv
 """
 
@@ -231,7 +231,7 @@ def main() -> int:
              "the mass sits; restricting to a range every age band populates removes most of the apparent steepening.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout(rect=[0, 0.045, 1, 1])
-    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_cost_age_interaction.png"
+    out = ROOT_DIR / "measuring_health" / "figures" / "fig_cost_age_interaction.png"
     fig.savefig(out, dpi=200, bbox_inches="tight")
     print(f"\nwrote {out}")
     return 0

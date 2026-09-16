@@ -6,7 +6,7 @@ references: (a) the standardised mean age path, (b) fanning of the dispersion,
 physical profile and the spread across 1945-65 birth cohorts at ages 50-59.
 Birth year comes from xwavedat (birthy, fallback doby_dv).
 
-Outputs: docs/measurement/figures/fig_grm_versions.png +
+Outputs: measuring_health/figures/fig_grm_versions.png +
          artifacts/descriptives/grm_versions_criteria.csv
 """
 
@@ -158,7 +158,7 @@ def main() -> int:
              "physical profile — negative for the mental measures by construction, since they should move.",
              fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_grm_versions.png"
+    out = ROOT_DIR / "measuring_health" / "figures" / "fig_grm_versions.png"
     fig.savefig(out)
     print(f"wrote {out}")
     return 0

@@ -17,7 +17,7 @@ binary.
 All metrics are oriented so higher = better health (GHQ flipped), so on a
 declining relationship a POSITIVE quadratic term = convex.
 
-Outputs: docs/measurement/figures/fig_convexity.png,
+Outputs: measuring_health/figures/fig_convexity.png,
          artifacts/descriptives/convexity_tests.csv
 """
 
@@ -202,7 +202,7 @@ def main() -> int:
              "out-patient attendance band, both 0\u20134 and top-coded at 'more than ten'.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout()
-    figpath = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_convexity.png"
+    figpath = ROOT_DIR / "measuring_health" / "figures" / "fig_convexity.png"
     fig.savefig(figpath)
     print(f"\nwrote {figpath}")
     return 0

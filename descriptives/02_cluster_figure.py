@@ -8,7 +8,7 @@ trajectories where a cluster has >= 25 people observed at that age, with a
 composition strip underneath; the agreement table records ARI/AMI against the
 baseline solution.
 
-Outputs: docs/measurement/figures/fig_cluster_trajectories.png,
+Outputs: measuring_health/figures/fig_cluster_trajectories.png,
          artifacts/descriptives/cluster_agreement.csv (+ labels parquet)
 """
 
@@ -157,7 +157,7 @@ def main() -> int:
              "Cluster curves are shown where ≥ 25 members are observed; the strip beneath each\n"
              "panel shows the cluster composition of the observed sample at each age.",
              fontsize=7.5, color=INK2, va="top")
-    fig_path = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_cluster_trajectories.png"
+    fig_path = ROOT_DIR / "measuring_health" / "figures" / "fig_cluster_trajectories.png"
     fig.savefig(fig_path)
     print(f"wrote {fig_path}")
     return 0

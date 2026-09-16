@@ -28,8 +28,8 @@ Kalman filter as the Stan ar_mode 2 branch. Everything here is K-general;
 11_class_composition.py hard-codes K=3 and feeds downstream scripts, so it is
 left alone.
 
-Outputs: docs/measurement/figures/fig_k4_trajectories.png
-         docs/measurement/figures/fig_k4_structure.png
+Outputs: measuring_health/figures/fig_k4_trajectories.png
+         measuring_health/figures/fig_k4_structure.png
          artifacts/descriptives/k4_classes.csv
          artifacts/descriptives/k4_fit.csv
          artifacts/descriptives/k4_correspondence.csv
@@ -55,7 +55,7 @@ from prevention_health_clustering.config import (
 from prevention_health_clustering.models.registry import get_model
 from prevention_health_clustering.runner.fit import build_payload
 
-FIG_DIR = ROOT_DIR / "docs" / "measurement" / "figures"
+FIG_DIR = ROOT_DIR / "measuring_health" / "figures"
 CONTRACTS = PROCESSED_DATA_DIR / "contracts"
 AGES = np.arange(20, 91)
 A = (AGES - 55) / 10.0

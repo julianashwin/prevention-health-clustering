@@ -12,7 +12,7 @@ accumulation of old diagnoses rather than current health:
       age of the person's oldest diagnosis, holding current functioning fixed
       by construction of the comparison.
 
-Outputs: docs/measurement/figures/fig_ever_sensitivity.png + printed summary numbers.
+Outputs: measuring_health/figures/fig_ever_sensitivity.png + printed summary numbers.
 """
 
 from __future__ import annotations
@@ -111,7 +111,7 @@ def main() -> int:
     print(prof_gap.round(3).to_string())
 
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_ever_sensitivity.png"
+    out = ROOT_DIR / "measuring_health" / "figures" / "fig_ever_sensitivity.png"
     fig.savefig(out)
     print(f"wrote {out}")
     return 0

@@ -10,7 +10,7 @@ no persistence information; it is included for the mean and variance reads.
 GHQ and the chronic count are negated (higher = better) so every panel reads
 the same way. Twelve measures, two banks of six.
 
-Outputs: docs/measurement/figures/fig_moments_grid.png
+Outputs: measuring_health/figures/fig_moments_grid.png
 """
 
 from __future__ import annotations
@@ -118,7 +118,7 @@ def main() -> int:
              "cannot rise), and its bottom row therefore carries no information about persistence.",
              fontsize=7.5, color=INK2, va="top")
     fig.tight_layout()
-    out = ROOT_DIR / "docs" / "measurement" / "figures" / "fig_moments_grid.png"
+    out = ROOT_DIR / "measuring_health" / "figures" / "fig_moments_grid.png"
     fig.savefig(out)
     print(f"wrote {out}")
     return 0
