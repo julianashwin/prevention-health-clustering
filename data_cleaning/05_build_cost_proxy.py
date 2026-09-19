@@ -10,7 +10,9 @@ admissions and two-thirds of nights. Unattributed admissions take the
 case-mix-weighted average of the attributed ones WITHIN the same decile of
 physical health, not globally: a global imputation would push every
 unattributed admission toward the population mean and flatten the very
-gradient the index exists to measure.
+gradient the index exists to measure. The deciles come from the project's
+health measure (04_build_health.py); they are rank-based, so theta and h give
+the same ones.
 
 Output: data/processed/measures/cost_index.parquet, one row per person-wave
 with the flat and condition-weighted variants and their components.
@@ -63,13 +65,19 @@ def main() -> int:
     ensure_runtime_directories()
     costs = UnitCosts()
     util = pd.read_parquet(INTERIM_DATA_DIR / "utilisation_long.parquet")
-    panel = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "measure_panel.parquet",
-                            columns=["pidp", "wave", "age", "theta_phys_full"])
-    d = panel.merge(util[["pidp", "wave", "hosp", "hospd", "hospch",
-                          "hl2gp", "hl2hop"]], on=["pidp", "wave"], how="inner")
-    d = d[d["hosp"].notna()].reset_index(drop=True)
+    # the index is a cost variable: every person-wave that answered the
+    # utilisation block gets one, whether or not it carries a health score.
+    age = pd.read_parquet(INTERIM_DATA_DIR / "sf12_items_long.parquet",
+                          columns=["pidp", "wave", "age"])
+    health = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "health_measure.parquet",
+                             columns=["pidp", "wave", "theta", "h"])
+    d = util[util["hosp"].notna()][["pidp", "wave", "hosp", "hospd", "hospch",
+                                    "hl2gp", "hl2hop"]].reset_index(drop=True)
+    d = d.merge(age, on=["pidp", "wave"], how="left").merge(
+        health, on=["pidp", "wave"], how="left")
     print(f"utilisation sample: {len(d):,} person-waves, "
-          f"{d['pidp'].nunique():,} people, waves {d['wave'].min()}-{d['wave'].max()}")
+          f"{d['pidp'].nunique():,} people, waves {d['wave'].min()}-{d['wave'].max()}; "
+          f"{d['theta'].notna().sum():,} carry a health score")
 
     # ---- stage 1: flat rate ------------------------------------------------
     flat = build_cost_index(d, costs, spell_rule="one")
@@ -96,7 +104,7 @@ def main() -> int:
           f"{admitted.sum():,} ({(d.loc[admitted,'cond_weight'].notna().mean()):.1%})")
 
     # impute the missing weights within decile of physical health
-    d["hdec"] = pd.qcut(d["theta_phys_full"], 10, labels=False, duplicates="drop")
+    d["hdec"] = pd.qcut(d["theta"], 10, labels=False, duplicates="drop")
     within = d[admitted].groupby("hdec")["cond_weight"].mean()
     overall = d.loc[admitted, "cond_weight"].mean()
     d["cond_weight_filled"] = d["cond_weight"].fillna(
@@ -112,7 +120,7 @@ def main() -> int:
           f"£{d['wtd_cost_total'].mean():,.0f} "
           f"(flat £{d['flat_cost_total'].mean():,.0f})")
 
-    keep = (["pidp", "wave", "age", "theta_phys_full", "hosp", "hospd",
+    keep = (["pidp", "wave", "age", "theta", "h", "hosp", "hospd",
              "hospch", "hl2gp", "hl2hop", "cond_weight", "cond_weight_filled"]
             + [c for c in d.columns if c.startswith(("flat_", "wtd_"))])
     out_path = PROCESSED_DATA_DIR / "measures" / "cost_index.parquet"

@@ -15,6 +15,9 @@ mask:
             so the last observed record is the survival-usable encoding.
 
 Output: data/processed/contracts/multidim_lifecycle_20_89_minobs3_v1/
+
+Archived with the banks it scores (06_build_grm2.py); kept runnable because
+the multidimensional fits in artifacts/ were estimated on this contract.
 """
 
 from __future__ import annotations

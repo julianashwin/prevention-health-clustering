@@ -18,6 +18,14 @@ partition-init recipe, computing structural diagnostics without touching
 person-level columns; `--holdout-last-k 2 --holdout-min-obs 5` holds out each
 person's last two observations (sample limited to people with at least five)
 and writes per-person held-out predictive densities.
+`runs/health_base_queue.py` (launched by `runs/health_base_launch.sh`)
+runs the three baseline K=3 fits on the paper's measure, theta / h / fi10, one
+at a time into `artifacts/health-base/`; `runs/health_ssm_queue.py` (launched by
+`runs/health_ssm_launch.sh`) the same three under the AR(1) plus measurement error specification
+into `artifacts/health-ssm/`; `runs/health_cohort_queue.py` (launched by
+`runs/health_cohort_launch.sh`, which waits for the AR(1) plus measurement error queue to finish)
+the same three with a shared birth-decade level shift, into
+`artifacts/health-ssm-cohort/`.
 `runs/overnight_queue.py` runs the eight-fit AR(1)/GRM batch, two at a time,
 longest first, and writes `artifacts/overnight/digest.json`.
 `oos_assessment.py` is the full out-of-sample assessment of the holdout

@@ -27,10 +27,10 @@
 
 - Data + Health measures
 Max 1 page on the physical health measure, keep it transparent and clean 
-	* PHYS -> \sum_k \lambda_k h_k where k \in \{PCS-MCS, FUNC, CC\}
+	* PHYS -> approximately \sum_k \lambda_k h_k where k \in \{PCS-MCS, FUNC, CC\}
 	* Some comparison/alternative metrics: PCS itself, CC, MCS
 	* Map PHYS to mortality and utilisation (also look at whether this mapping is heterogeneous by age)
-	* On convexity - both present what we have but also 
+	* On convexity - ideally showing that the mapping is at least somewhat consistent with age. 
 
 - 3 panel Figure (Exhibit 1) which links back to P(i), P(ii) and the timing issue. 
 	* Insights from the structural break:
@@ -48,7 +48,7 @@ Max 1 page on the physical health measure, keep it transparent and clean
 	* Literature focuses on old
 	* Motivation to focus on young 
 	* Prevention framework tells us we need to focus on the lifecycle
-	* Limited data - either focuses on older people or short window
+	* Limited data - either focuses on older people or short window (or in De Nardi work use PSID early in sample and HRS later, but then only really think about health for the older people). 
 	* The prevention framework tells us the H_55 or something like that is an outcome, not an input - it depends on dynamics earlier in life
 	* Furthermore, the data tell us that the dynamics are potentially quite different across the lifecycle, so just starting in late middle age will miss important things
 	How: 

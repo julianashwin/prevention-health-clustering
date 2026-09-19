@@ -1,9 +1,13 @@
 """Build the frozen sample contracts from the processed panel.
 
-    PYTHONPATH=src .venv/bin/python data_cleaning/02_build_contracts.py
+    PYTHONPATH=src .venv/bin/python data_cleaning/archive/02_build_contracts.py
 
 Validation target: PCS contract must reproduce 50,194 persons / 446,966 rows
 with PCS mean 49.1684050688419, matching the published six-fit-v1 bundle.
+
+Archived: the PCS-based clustering contracts, superseded by the health
+measure (data_cleaning/04_build_health.py). Kept runnable: the clustering
+fits in artifacts/ were estimated on these contracts.
 """
 
 import pandas as pd

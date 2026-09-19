@@ -11,6 +11,10 @@ Outputs (licensed-data derivatives, gitignored):
                                                grm_theta, grm_theta_sd, grmh
   data/processed/measures/grm_items.csv        item parameters
   data/processed/measures/grm_age_profile.csv  mu_a, sigma_a by single year
+
+Archived: the first graded-response measure, superseded by
+data_cleaning/04_build_health.py. Kept runnable: grm_scores.parquet is still
+read by several descriptives, and this script is the EIT-note replication.
 """
 
 from __future__ import annotations
@@ -55,7 +59,7 @@ def main(argv=None) -> int:
 
     items_path = INTERIM_DATA_DIR / "sf12_items_long.parquet"
     if not items_path.exists():
-        print("run data_cleaning/03_build_measures.py first (item extract missing)")
+        print("run data_cleaning/02_build_measures.py first (item extract missing)")
         return 1
     items = pd.read_parquet(items_path)
     d = build_testlets(items)

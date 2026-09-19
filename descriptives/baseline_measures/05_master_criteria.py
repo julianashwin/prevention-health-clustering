@@ -1,7 +1,7 @@
 """Every candidate measure, every quantitative criterion, one pass, common samples.
 
 The original 26 measures plus the limitation banks of
-data_cleaning/07_build_limitation_banks.py: P-LIM1, P-LIM, P-LIM4, P-LIM3 and
+data_cleaning/archive/07_build_limitation_banks.py: P-LIM1, P-LIM, P-LIM4, P-LIM3 and
 P-LIM3+O under the graded-response model, and all six banks (with P-FUNC)
 under the generalised partial credit model, each on the h and theta scales.
 The banks share P-FUNC's person-waves, so the common cost and mortality samples
@@ -38,6 +38,13 @@ for bank in ('P-FUNC', 'P-LIM', 'P-LIM3', 'P-LIM3+CC'):
 tw = pd.read_parquet(SCR / 'simple_twins.parquet', columns=['pidp', 'wave', *TWIN.values()])
 d = d.merge(tw.rename(columns={v: k for k, v in TWIN.items()}), on=['pidp', 'wave'], how='left')
 LIM.update(TWIN)
+# the frailty-index style variants of 14_frailty_style_variants.py
+FIV = {'FI area': 'fi_area', 'FI group': 'fi_group', 'FI testlet': 'fi_testlet',
+       'FI area+CC': 'fi_area_cc', 'FI group+CC': 'fi_group_cc', 'FI testlet+CC': 'fi_testlet_cc',
+       'FI area+CG': 'fi_area_cg', 'FI group+CG': 'fi_group_cg', 'FI testlet+CG': 'fi_testlet_cg'}
+fv = pd.read_parquet(SCR / 'frailty_variants.parquet', columns=['pidp', 'wave', *FIV.values()])
+d = d.merge(fv.rename(columns={v: k for k, v in FIV.items()}), on=['pidp', 'wave'], how='left')
+LIM.update(FIV)
 KEYS = ['PCS', 'PHYS-4', 'PHYS-4eq', 'GRM h', 'GRM theta', 'PC pearson SF', 'PC polychoric SF', 'FS pearson SF', 'FS polychoric SF',
         'PHYS+F', 'FI-15', 'P-FUNC h', 'P-FUNC theta', 'PC pearson SF+F', 'PC polychoric SF+F', 'FS pearson SF+F', 'FS polychoric SF+F',
         'PHYS+F+C', 'FI-31', 'P-FULL h', 'P-FULL theta', 'PC pearson SF+F+C', 'PC polychoric SF+F+C', 'FS pearson SF+F+C',

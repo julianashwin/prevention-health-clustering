@@ -16,6 +16,7 @@ against what age alone already gives:
   +class       age + the K-1 free class posteriors
   +measure     age + the model's own health measure (continuous), which is
                the fairer competitor: it is what the classes summarise
+  +class+measure  both: what the classes add once the measure is known
 
 Evaluation splits PEOPLE 70/30 on a fixed hash, so in-sample and
 out-of-sample differ in who is scored, not in which waves. Binary outcomes
@@ -51,6 +52,7 @@ MEASURE_OF = {
     "physgrm-ar1-ho": "theta_phys_full",
     "combgrm-base": "theta_combined", "combgrm-ar1": "theta_combined",
     "combgrm-ar1-ho": "theta_combined",
+    "grm-ssm": "grm_theta", "physfunc-ssm": "theta_phys_func", "physfull-ssm": "theta_phys_full",
     "multidim-baseline": "theta_phys_func", "multidim-holdout": "theta_phys_func",
     "multidim-ar1": "theta_phys_func", "multidim-ar1-holdout": "theta_phys_func",
 }
@@ -85,7 +87,7 @@ def main() -> int:
     panel = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "measure_panel.parquet",
                             columns=["pidp", "wave", "age", "sf12pcs_dv",
                                      "theta_phys_full", "theta_combined",
-                                     "theta_phys_func"])
+                                     "theta_phys_func", "grm_theta"])
     util = pd.read_parquet(INTERIM_DATA_DIR / "utilisation_long.parquet")
     xw = pd.read_csv(UKHLS_PANEL_DIR / "xwavedat.tab", sep="\t",
                      usecols=["pidp", "dcsedfl_dv"], low_memory=False)
@@ -127,6 +129,9 @@ def main() -> int:
                                            sub["class1"], sub["class2"]]),
                 "+measure": np.column_stack([one, sub["a"], sub["a"] ** 2,
                                              sub[measure]]),
+                "+class+measure": np.column_stack([one, sub["a"], sub["a"] ** 2,
+                                                   sub["class1"], sub["class2"],
+                                                   sub[measure]]),
             }
             tr, te = ~sub_test.to_numpy(), sub_test.to_numpy()
             for name, X in designs.items():
@@ -161,7 +166,7 @@ def main() -> int:
     tab.to_csv(out, index=False)
 
     # ---- figure: out-of-sample gain over the age-only baseline -------------
-    fig, axes = plt.subplots(1, 3, figsize=(13.6, 4.6))
+    fig, axes = plt.subplots(1, 3, figsize=(13.6, 5.6))
     titles = {"died": "mortality\n(AUC gain over age)",
               "inpatient": "in-patient stay\n(AUC gain over age)",
               "hl2gp": "GP visit band\n($R^2$ gain over age)"}
@@ -173,17 +178,18 @@ def main() -> int:
                 for f in order}
         x = np.arange(len(order))
         for j, (pred, colr) in enumerate((("+class", CLUSTER[0]),
-                                          ("+measure", "#CC5500"))):
+                                          ("+measure", "#CC5500"),
+                                          ("+class+measure", "#7B52AB"))):
             v = [sub[(sub.fit == f) & (sub.predictors == pred)][col].iloc[0]
                  - base[f] for f in order]
-            ax.barh(x + (j - 0.5) * 0.36, v, height=0.34, color=colr,
+            ax.barh(x + (j - 1) * 0.27, v, height=0.25, color=colr,
                     label=pred if oc == "died" else None)
         ax.set_yticks(x, [f"{f}  ({base[f]:.2f})" for f in order], fontsize=6.4)
         ax.set_title(titles[oc], fontsize=9.5)
         ax.axvline(0, color="#444444", lw=0.8)
         ax.grid(True, axis="x")
-        if oc == "died":
-            ax.legend(fontsize=7.5, loc="lower right")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncols=3, fontsize=8, bbox_to_anchor=(0.5, 0.96))
     fig.suptitle("Predicting outcomes the models never saw, out of sample",
                  fontweight="bold", y=1.0)
     fig.text(0.01, -0.01,

@@ -1,0 +1,15 @@
+\begin{tabular}{lrrrr}
+\toprule
+predictors at $t$ & $h_{t+1}$ ($R^2$) & death before $t+1$ (AUC) & in-patient stay, $t+1$ (AUC) & GP visits, $t+1$ ($R^2$) \\
+\midrule
+age & 0.115 & 0.858 & 0.586 & 0.012 \\
++ observables & 0.169 & 0.863 & 0.605 & 0.038 \\
++ K-means type & 0.687 & 0.881 & 0.678 & 0.156 \\
++ baseline class & 0.711 & 0.881 & 0.684 & 0.165 \\
++ AR(1)+ME class & 0.665 & 0.882 & 0.695 & 0.173 \\
++ h(t) & 0.724 & 0.901 & 0.700 & 0.163 \\
++ h(t), h(t-1) & 0.764 & 0.896 & 0.703 & 0.168 \\
++ AR(1)+ME class, h(t) & 0.771 & 0.901 & 0.705 & 0.187 \\
++ all & 0.771 & 0.903 & 0.707 & 0.192 \\
+\bottomrule
+\end{tabular}

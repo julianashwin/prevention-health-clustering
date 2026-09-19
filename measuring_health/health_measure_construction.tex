@@ -1,0 +1,506 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.6cm]{geometry}
+\usepackage{graphicx,booktabs,amsmath,microtype,array}
+\usepackage{float}   % [H]: figures stay where they are written
+\usepackage[hidelinks]{hyperref}
+\usepackage[dvipsnames]{xcolor}
+\graphicspath{{figures/}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
+\title{The prevention project's health measure\\[2pt]
+\large What it is made of, how it is built, and what it delivers}
+\author{Julian Ashwin}
+\date{September 2026}
+
+\begin{document}
+\maketitle
+
+\noindent Built by \code{data\_cleaning/04\_build\_health.py} over
+\code{measures/health.py}; the figures and the properties table by
+\code{descriptives/21\_health\_measure.py}. Every number below is printed by
+those two scripts. The search that chose this measure among 85 candidates is
+archived: \code{health\_measures\_note.tex} and
+\code{redo\_concepts/baseline\_measure\_comparison.xlsx}.
+
+\tableofcontents
+
+\section{The measure in one page}
+
+The project needs one number per person-wave saying how healthy someone is
+\emph{physically}, on a scale where being sicker costs more at an increasing
+rate, where the very unwell are not all bunched at a floor, and where the
+answer does not turn on how the scale happens to be cardinalised. That number
+is fitted to eight ordinal items from UKHLS:
+
+\begin{center}\small
+\begin{tabular}{llc}
+\toprule
+Item & What it records & Categories \\
+\midrule
+GH & self-rated general health (\code{sf1}) & 5 \\
+PF & moderate activities and climbing stairs (\code{sf2a}, \code{sf2b}) & 5 \\
+RP & accomplished less, limited in kind of work (\code{sf3a}, \code{sf3b}) & 9 \\
+BP & pain interference with normal work (\code{sf5}) & 5 \\
+LIM\_FL & functional limitations: mobility, lifting, dexterity, co-ordination & 5 \\
+LIM\_SELF & self-care: personal care, continence & 3 \\
+LIM\_SENS & sensory: hearing, sight & 3 \\
+COND & ever-diagnosed physical conditions, 0--5 and 6 or more & 7 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The first four are the SF-12 physical testlets already validated for this
+project; the next three count the UKHLS impairment areas, grouped; the last
+counts diagnoses. In the search's notation this bank is \textbf{P-LIM3+CC}.
+The sample is \textbf{387{,}599 person-waves} on \textbf{69{,}958 people},
+waves 1--15, ages 20--90, complete on all eight items --- 5.5 observations per
+person on average.
+
+A graded-response model turns the eight answers into a latent health score.
+The measure is reported three ways, all monotone in the same answers:
+
+\begin{center}\small
+\begin{tabular}{llp{8.4cm}}
+\toprule
+ & Scale & What it is \\
+\midrule
+$\theta$ & standard normal in the pool & the latent score, expected a posteriori \\
+$h$ & $[0,1]$, here $0.11$ to $0.98$ & $\theta$ through the expected-score curve: the share of the bank's total scale a person is expected to answer at \\
+\code{fi10} & $[0,1]$, $1$ = no deficits & a ten-deficit index: the six SF-12 physical items graded by response step, the three impairment groups as the share of their areas, and the condition count capped at six --- equal weights, computable by hand \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+They rank people almost identically (Spearman $0.991$ between $h$ and
+\code{fi10}) and they agree on every conclusion the paper draws, with one
+exception that matters and is set out in section~\ref{sec:invariance}: how much
+of the cost gradient's apparent age-invariance is a property of the scale
+rather than of the data. $\theta$ is the default; $h$ is the scale the
+framework's $[0,1]$ health variable maps to; \code{fi10} is the transparent
+version a reader can reconstruct from the questionnaire.
+
+\section{The variables and the coding rules}
+
+\subsection{The SF-12 physical testlets}
+
+Six SF-12 items enter as four testlets, the grouping validated in the archived
+note: the two physical-function items sum into PF, the two role-physical items
+sum into RP, and general health and pain enter alone. Summing the pairs is what
+removes the positive local dependence between them --- the two items in each
+pair share wording, and left separate their residual correlation would be read
+as evidence of a second dimension. Every item is coded so category 1 is worst
+health.
+
+\subsection{The impairment areas}
+
+UKHLS asks which of a list of areas a person's health limits them in. Eight are
+physical and used here, in three groups:
+
+\begin{center}\small
+\begin{tabular}{lll}
+\toprule
+Group & Areas (\code{disdif} codes) & Count \\
+\midrule
+LIM\_FL & mobility (1), lifting (2), dexterity (3), co-ordination (10) & 0--4 \\
+LIM\_SELF & continence (4), personal care (11) & 0--2 \\
+LIM\_SENS & hearing (5), sight (6) & 0--2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two coding rules hold throughout, and both are decisions rather than data.
+
+\textbf{The routing rule.} In the early waves the battery was asked only of
+people reporting a long-standing illness. Someone who reports none therefore
+has no answer, not a zero. We count them as having no limitation, in every
+wave, so that the variable means the same thing across the panel; someone who
+does report a long-standing illness but has no usable answer is missing. The
+alternative --- treating unrouted rows as missing --- would drop the healthy
+half of the sample, and with it the part of the distribution where prevention
+happens.
+
+\textbf{The merge rule.} A top count category holding less than $0.5\%$ of
+person-waves is merged into the one below, decided on the sample before any
+model is fitted. This is what fixes LIM\_FL at five categories (0, 1, 2, 3, 4+)
+and LIM\_SELF and LIM\_SENS at three. Categories thinner than that are
+estimated off a few hundred people and their thresholds wander.
+
+Two areas are deliberately left out. ``Recognising when in physical danger''
+loads with the mental items, and the whole point of this measure is that it
+carries no mental health. ``Other health problem or disability'' is
+non-specific: added as its own group (the search's P-LIM3+O) it changes
+nothing, and it is one more judgement call for no gain.
+
+\subsection{The condition count}
+
+COND counts the sixteen ever-diagnosed physical conditions in the UKHLS
+inventory, 0 to 5 and 6 or more, the top category set by the merge rule on the
+sample that has an inventory. It enters as one item, not as six clinical-group
+items. Both versions were fitted. As six items the conditions take
+$40\%$ of the weight in an unweighted index against $14.1\%$ in the model, so
+the model version and the by-hand version stop agreeing --- which defeats the
+purpose of having a by-hand version at all. As one count they take $6\%$ in the
+model and $10\%$ in \code{fi10}, and the three variants stay interchangeable.
+
+Requiring an inventory is what sets the sample: 387,599 person-waves rather
+than the 497,423 that have SF-12 and limitations. That restriction is shared
+with every condition-carrying candidate in the search, so it changes no
+comparison, and it leaves the cost and mortality samples intact.
+
+\subsection{Category use}
+
+\begin{center}\small
+\begin{tabular}{lr rrrrrrrrr}
+\toprule
+& $k$ & \multicolumn{9}{c}{share of person-waves, best category first (\%)} \\
+\cmidrule(l){3-11}
+GH & 5 & 13.29 & 33.33 & 31.71 & 15.58 & 6.10 & & & & \\
+PF & 5 & 65.13 & 11.66 & 11.82 & 4.60 & 6.79 & & & & \\
+RP & 9 & 52.18 & 6.85 & 12.77 & 4.55 & 11.57 & 2.68 & 4.76 & 1.20 & 3.44 \\
+BP & 5 & 53.72 & 25.24 & 9.14 & 8.26 & 3.64 & & & & \\
+LIM\_FL & 5 & 83.05 & 6.66 & 5.30 & 3.24 & 1.76 & & & & \\
+LIM\_SELF & 3 & 94.15 & 4.74 & 1.12 & & & & & & \\
+LIM\_SENS & 3 & 95.62 & 3.82 & 0.56 & & & & & & \\
+COND & 7 & 48.28 & 28.88 & 12.90 & 5.59 & 2.44 & 1.05 & 0.86 & & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+$7.1\%$ of person-waves give the best answer to all eight items. That is the
+measure's ceiling, and it is not a problem for this project: prevention
+questions are asked at the other end, where 12 person-waves sit at the worst
+answer on everything.
+
+\section{The model}
+
+\subsection{Graded response}
+
+Item $j$ with $k_j$ categories has one discrimination $a_j$ and $k_j-1$
+thresholds $b_{j1} < \dots < b_{j,k_j-1}$. The probability of answering at or
+above category $c$ is logistic in $\theta$,
+\[
+P(Y_j \ge c \mid \theta) \;=\; \frac{1}{1 + \exp\{-D\,a_j(\theta - b_{j,c-1})\}},
+\qquad D = 1.702,
+\]
+and a single category's probability is the difference of adjacent curves. The
+model is Samejima's; it is the ordinal factor model in another parameterisation
+(Takane and de~Leeuw, 1987), which is where the weighted sum in
+appendix~\ref{sec:weights} comes from.
+
+Estimation is marginal maximum likelihood by EM over distinct answer patterns
+(28,360 of them), with the latent distribution identified as $N(0,1)$ in the
+pooled sample and 121-point Gauss quadrature on $[-6,6]$. Fitting took 60 EM
+iterations. Scores are expected a posteriori under the pooled prior, so a
+$\theta$ means the same thing at every age --- the age profile is estimated
+separately and does not feed back into anyone's score.
+
+\begin{center}\small
+\begin{tabular}{lrrl}
+\toprule
+Item & $k$ & $a$ & thresholds \\
+\midrule
+GH & 5 & 2.03 & $-2.10$\; $-0.98$\; $0.16$\; $1.45$ \\
+PF & 5 & 3.52 & $-1.73$\; $-1.38$\; $-0.80$\; $-0.40$ \\
+RP & 9 & 3.09 & $-2.20$\; $-2.03$\; $-1.56$\; $-1.37$\; $-0.81$\; $-0.64$\; $-0.23$\; $-0.03$ \\
+BP & 5 & 2.31 & $-2.35$\; $-1.50$\; $-0.99$\; $-0.09$ \\
+LIM\_FL & 5 & 3.38 & $-2.49$\; $-1.94$\; $-1.46$\; $-1.07$ \\
+LIM\_SELF & 3 & 2.43 & $-2.95$\; $-1.99$ \\
+LIM\_SENS & 3 & 1.36 & $-4.49$\; $-2.85$ \\
+COND & 7 & 1.18 & $-4.61$\; $-3.90$\; $-3.12$\; $-2.26$\; $-1.25$\; $0.11$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The pattern is the one the measure was built for. PF, RP and LIM\_FL
+discriminate hardest and their thresholds sit between $-2.5$ and $0$: they are
+what separates people in the unhealthy half. GH and BP discriminate less but
+reach further up, so they keep the healthy half from collapsing onto one point.
+LIM\_SENS and COND discriminate least and sit furthest out --- they are the
+items that keep the very sick from piling up at a floor, which is exactly the
+job the archived search hired them for.
+
+\subsection{Why the graded-response model and not the partial-credit one}
+
+Both were fitted, on all six limitation banks. The graded-response model wins
+by 13,500 to 15,200 log-likelihood points at equal parameter counts, every
+time. The reason is structural: the generalised partial credit model makes a
+weighted sum of category scores a sufficient statistic, which forces its steps
+to be ordered in the data --- and PF and RP are sums of two items whose
+categories are used very unevenly, so their steps are not. Their $\theta$s
+correlate at $0.995$ and their clusters agree 97\% of the time, so nothing here
+turns on the choice; the graded-response model is simply the better-fitting one.
+
+\subsection{Local dependence}
+
+Yen's $Q_3$ on the eight testlets has no positive off-diagonal above $+0.052$
+(the expected value under the model is about $-1/(J-1) = -0.14$). Nothing in
+the bank is measuring a second thing.
+
+\subsection{The age profile}
+
+Refitting multigroup by single year of age --- item parameters common across
+ages, the pooled latent distribution standardised --- gives the latent mean and
+standard deviation at each age. Mean health falls by $1.23$ pooled standard
+deviations between 30 and 80, and the spread widens with age
+(figure~\ref{fig:measure}c). These are descriptive: no score uses them.
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{fig_health_measure}
+\caption{The measure. (a) the expected-score curve that turns $\theta$ into
+$h$, over the pooled distribution of $\theta$; (b) each item's discrimination
+against the location of its thresholds; (c) the latent age profile.}
+\label{fig:measure}
+\end{figure}
+
+\section{The three variants}
+
+\subsection{$\theta$ and $h$}
+
+$h$ is $\theta$ pushed through the test characteristic curve and rescaled to
+$[0,1]$: the expected share of the bank's total scale. The map is monotone, so
+$\theta$ and $h$ order people identically and no rank statistic can separate
+them. It is not affine, and that is the whole of the difference between them:
+the curve is flat at the top and steep in the middle (figure~\ref{fig:measure}a),
+so a standard deviation of $\theta$ buys much less $h$ among the healthy than
+among the sick. Anything reported per standard deviation --- a cost gradient, a
+variance profile --- therefore depends on which of the two is used. Section
+\ref{sec:invariance} is about exactly that.
+
+\subsection{The ten-deficit index}
+
+\code{fi10} is the version that needs no model. Each of ten deficits is scored
+between 0 and 1 and the index is one minus their mean, so 1 is no deficits:
+
+\begin{center}\small
+\begin{tabular}{lp{9.6cm}}
+\toprule
+6 deficits & the SF-12 physical items \code{sf1}, \code{sf2a}, \code{sf2b}, \code{sf3a}, \code{sf3b}, \code{sf5}, each graded 0 to 1 by response step \\
+3 deficits & LIM\_FL, LIM\_SELF, LIM\_SENS as the share of their areas mentioned \\
+1 deficit & the condition count, capped at six, divided by six \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This follows the deficit-accumulation tradition (Mitnitski, Mogilner and
+Rockwood, 2001; Searle et al., 2008), with one departure that is not cosmetic:
+the impairment \emph{areas} are grouped before they are averaged. Scored area
+by area, the eight areas would take more than half the index's weight and the
+result stops being convex in cost --- on costs capped at the 99th percentile
+the area version's cost curvature is $t = -2.0$ against $t = +12.0$ for the
+grouped one. Equal
+weights are defensible here only because the groups make the units comparable
+first.
+
+\code{fi10} takes 121 distinct values, against 28,360 for $\theta$. It is
+coarser, not discrete in any way that matters: no value holds a large mass and
+the bottom percentile alone is spread over 26 of them.
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{fig_health_variants}
+\caption{The variants. (a) each variant's mean within fiftieths of $h$,
+rescaled to a common range --- \code{fi10} and the weighted sum track $h$
+almost exactly, while $\theta$ bends away because the map between them is not
+affine; (b) and (c) mean and variance by age, each variant standardised on the
+pooled sample.}
+\label{fig:variants}
+\end{figure}
+
+\section{What the measure delivers}
+
+The criteria below are the ones the search was run against; the archived note
+has them for all 85 candidates.
+
+\subsection{No floor, and no discreteness that bites}
+
+\begin{center}\small
+\begin{tabular}{lrrrrrr}
+\toprule
+ & distinct & at the worst & \multicolumn{2}{c}{variance ratio} & \multicolumn{2}{c}{cost curvature} \\
+\cmidrule(lr){4-5}\cmidrule(l){6-7}
+ & values & value, 60--84 & 30$\to$60 & 60$\to$85 & $\hat\gamma$ & $t$ \\
+\midrule
+$\theta$ & 28{,}360 & 7 & 1.62 & 0.77 & 105.5 & 36.9 \\
+$h$ & 28{,}360 & 7 & 2.85 & 1.08 & 34.6 & 11.3 \\
+\code{fi10} & 121 & 7 & 2.80 & 1.12 & 36.8 & 11.9 \\
+weighted sum & 28{,}360 & 7 & 2.84 & 1.11 & 30.2 & 9.9 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Seven person-waves in the whole 60--84 sample sit at the worst attainable
+score --- $0.006\%$. The same share is $1.11\%$ for the functioning-only bank
+the project used before, $0.10\%$ once the sensory and continence areas are
+added and $0.023\%$ for the three-group version without conditions. The condition count is what
+finishes the job: it keeps separating people after every limitation item has
+bottomed out.
+
+\subsection{Convexity in cost}
+
+Cost rises with poor health at an increasing rate on every variant: the
+quadratic term in the standardised measure is positive with $t$ between 9.9 and
+36.9, person-clustered, on costs capped at the 99th percentile
+(figure~\ref{fig:health_cost}). This is the criterion the whole search was
+really about, and it is the one that fails for plausible-looking alternatives:
+an ungrouped deficit index is \emph{concave}.
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{fig_health_cost}
+\caption{Mean annual healthcare cost by twentieth of each variant. The curve
+steepens as health worsens (leftwards) in all three.}
+\label{fig:health_cost}
+\end{figure}
+
+\subsection{Age-invariance is a property of the scale, not of the data}
+\label{sec:invariance}
+
+The proportional cost gradient --- log points of cost per standard deviation
+sicker, within an age band --- looks very different on the two model scales:
+
+\begin{center}\small
+\begin{tabular}{lrrrr}
+\toprule
+ & 20--34 & 75--90 & ratio & $z \times$ age, $t$ \\
+\midrule
+$\theta$ & 0.918 & 0.883 & 0.96 & 3.5 \\
+$h$ & 1.124 & 0.729 & 0.65 & 10.2 \\
+\code{fi10} & 1.059 & 0.726 & 0.69 & 6.9 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+On $\theta$ the gradient is nearly the same at 80 as at 25; on $h$ and on the
+deficit index it is a third smaller. Both are correct. A standard deviation is
+not the same amount of health on the two scales, and the expected-score curve
+stretches the unhealthy end, where the old are. The cost proxy plan's statement
+that ``the health--cost relationship is close to age-invariant'' was computed on
+$\theta$ and reproduces exactly; it should be read as a statement about $\theta$
+and not as a scale-free fact.
+
+The scale-free version of the same claim survives: fix a health decile and cost
+barely moves with age. In the sickest decile of the pooled health distribution, mean cost is
+\pounds2{,}143 at 20--34 against \pounds2{,}136 at 75--90, while mean cost over
+everyone rises $2.6$-fold across the same span (\pounds374 to \pounds969). The substantive reading --- that what the
+returns to prevention depend on is health, not age, conditional on health ---
+holds. What does not hold is any claim that ``per standard deviation'' means
+one thing.
+
+\subsection{Identification}
+
+The framework's identification tests ask whether the covariance structure of
+four ages two years apart can separate true health dynamics from measurement
+error, and in particular whether $\mathrm{Corr}(H,d)$ follows the sign path the
+model implies --- positive among the young, negative among the old. The tests
+differ in what they assume the error looks like and in which moments they use:
+
+\begin{center}\small
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{3}{c}{balanced moments} & \multicolumn{3}{c}{pairwise moments} \\
+\cmidrule(lr){2-4}\cmidrule(l){5-7}
+ & Case 2 & Case 3 & Case 4 & Case 2 & Case 3 & Case 4 \\
+\midrule
+$\theta$ & $\surd$ & $\surd$ & $\surd$ & $\surd$ & --- & $\surd$ \\
+$h$ & $\surd$ & $\surd$ & $\surd$ & $\surd$ & --- & --- \\
+\code{fi10} & --- & $\surd$ & $\surd$ & $\surd$ & --- & --- \\
+weighted sum & $\surd$ & $\surd$ & $\surd$ & $\surd$ & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Case 2 is AR(1) measurement error, Case 3 adds age-specific error variance,
+Case 4 is AR(1) plus a one-period spike (evaluated at the best admissible
+persistence). $\theta$ recovers the sign path under five of the six; every
+variant recovers it under at least three, including Case 4, which is the most
+permissive about what the noise can be. Case 3 on pairwise moments fails for
+all 85 candidates in the search, this measure included --- it is a property of
+that estimator, not of any measure.
+
+\subsection{Mortality}
+
+The log-odds of dying before the next wave fall by $1.13$ per standard
+deviation of $\theta$ ($0.89$ on $h$, $0.90$ on \code{fi10}); the death rate in
+the least healthy decile is 43 times that in the healthiest.
+
+\subsection{A simpler version reaches the same conclusions}
+
+This was a requirement, not a bonus. The same eight variables, pooled three
+ways --- the model's $\theta$, its $[0,1]$ transform, and an equal-weighted
+deficit index --- agree on the floor, on continuity, on convexity, on the
+variance profile, on mortality and on the sign path, with the single
+scale-dependent exception in section~\ref{sec:invariance}, which is a fact
+about cardinalisation that we now state rather than a disagreement about the
+world. The appendix weighted sum makes the same point inside the model:
+$h$ is a weighted sum of the eight coded answers to $R^2 = 0.993$.
+
+\section{Reproducing it}
+
+\begin{center}\small
+\begin{tabular}{lp{9.2cm}}
+\toprule
+\code{data\_cleaning/01\_build\_panel.py} & the processed UKHLS panel \\
+\code{02\_build\_measures.py} & the SF-12 item extract every later step reads \\
+\code{03\_build\_chronic.py} & condition histories \\
+\code{04\_build\_health.py} & \textbf{the measure}: \code{health\_measure.parquet} with \code{theta}, \code{theta\_sd}, \code{h}, \code{fi10}, \code{ws}, plus item, $Q_3$, age-profile and weight tables \\
+\code{05\_build\_cost\_proxy.py} & the cost index \\
+\code{descriptives/21\_health\_measure.py} & this note's figures and properties table \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The bank, the coding rules and the deficit index live in
+\code{measures/health.py}, so anything that needs the measure's definition
+imports it rather than re-deriving it. \code{04\_build\_health.py} gates every
+run on: no positive local dependence, the EAP identity
+$\mathrm{Var}(\theta) + \overline{\mathrm{SE}^2} = 1$ (it holds to three
+decimals), the three variants agreeing in rank, and exact reproduction of the
+search's P-LIM3+CC scores while those outputs are still on disk. Outputs derive
+from licensed UKHLS microdata and are gitignored.
+
+\appendix
+
+\section{The weighted sum behind $h$}
+\label{sec:weights}
+
+Regressing $h$ on the eight standardised category codes gives $R^2 = 0.993$.
+Normalised to sum to one, the weights are:
+
+\begin{center}\small
+\begin{tabular}{lrrrrrrrr}
+\toprule
+& GH & PF & RP & BP & LIM\_FL & LIM\_SELF & LIM\_SENS & COND \\
+\midrule
+weight (\%) & 13.1 & 22.1 & 22.0 & 13.5 & 15.2 & 5.4 & 2.5 & 6.3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is not a coincidence of this sample. In the ordinal factor model that the
+graded-response model is a reparameterisation of, the loading is
+$\lambda_j = a_j/\sqrt{a_j^2 + 1.702^2}$ and the optimal score weights are
+proportional to $\lambda_j/\psi_j$ --- so a graded-response score is, to a very
+good approximation, a weighted sum whose weights the data chose. The practical
+content of the model is therefore the \emph{weights}, not the functional form:
+it puts 71\% on the SF-12 testlets, 23\% on the impairment groups and 6\% on
+diagnoses, where \code{fi10} puts 60\%, 30\% and 10\%. That the two give the same answers (Spearman $0.991$) is what
+makes the model defensible to an audience that does not want one.
+
+\section{Relation to what is used elsewhere}
+
+The SF-12 physical component summary is itself a weighted sum of these items,
+with weights from a 1990s US norming sample and a factor structure that mixes
+in the mental items; the archived note documents a 6.6-point artifact at the
+median physical profile that follows from that mixing. The graded-response
+approach differs in three ways: the weights are estimated on this sample, the
+mental items are absent by construction, and the scale is a latent one rather
+than a linear combination with an arbitrary origin.
+
+Item-response measurement of physical function is standard in the health
+measurement literature (PROMIS physical function, the SF-36 IRT literature) and
+deficit accumulation is standard in the frailty literature; the combination of
+SF-12 items with impairment counts and a diagnosis count is ours, and is
+documented here rather than borrowed. In economics the closest relatives are
+the health indices built by factor methods from panel surveys --- the point of
+appendix~\ref{sec:weights} is that a reader who prefers that tradition can read
+our measure as one of those, with weights in a table, and lose nothing.
+
+\end{document}

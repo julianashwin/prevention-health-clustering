@@ -4,7 +4,7 @@ Everything here runs on synthetic inputs: hand-computed subscale values, the
 published SF-6D worked example, and a simulated two-factor population for the
 UK-structure recovery. The licensed-data validation (reconstruction of
 sf12pcs_dv to max error 0.0054, the UK norms table, phi = 0.897) lives in
-data_cleaning/03_build_measures.py, which needs the raw extract.
+data_cleaning/02_build_measures.py, which needs the raw extract.
 """
 
 from __future__ import annotations

@@ -12,7 +12,7 @@ Tables, measuring_health/tables/: lim_categories.tex, lim_fit.tex,
 lim_criteria.tex, lim_weights_a.tex, lim_weights_b.tex. Weights also go to
 data/processed/baseline_measures/limitation_weights.csv for the workbook.
 
-Inputs: data_cleaning/07_build_limitation_banks.py and scripts 05-09 here.
+Inputs: data_cleaning/archive/07_build_limitation_banks.py and scripts 05-09 here.
 """
 
 from __future__ import annotations

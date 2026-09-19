@@ -9,6 +9,9 @@ standardisation conventions as the PCS contracts) for:
 The panel comes from grm2_scores.parquet with birth year merged from
 xwavedat (birthy, doby_dv fallback; needed by the runner's cohort machinery
 even when unused).
+
+Archived with the banks it scores (06_build_grm2.py); the contract on the
+landed health measure is the next build step, not this one.
 """
 
 from __future__ import annotations

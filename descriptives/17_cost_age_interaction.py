@@ -16,10 +16,13 @@ The decomposition is exact in the sense that
 so if the proportional gradient is flat, every bit of age variation in the
 absolute gradient is the rising base and nothing about health mattering more.
 
-This comparison is only legitimate because the GRM was fitted multigroup by
-single year of age against a pooled N(0,1), so a theta of -1 means the same
-latent health at 30 as at 80. Age-standardised measures would build the
-answer in.
+Health here is the project's measure (data_cleaning/04_build_health.py) on
+its theta scale. The comparison is only legitimate because the model was
+fitted against a pooled N(0,1) and scored under the pooled prior, so a theta
+of -1 means the same latent health at 30 as at 80; age-standardised measures
+would build the answer in. Read the numbers as statements about theta: on the
+0-1 expected-score scale the same data give a gradient a third smaller at 80
+than at 25 (measuring_health/health_measure_construction.tex, section 5.3).
 
 A third quantity turns out to matter more than either. The cost-health curve
 is convex, so a linear slope depends on where the mass sits. Older people sit
@@ -74,9 +77,9 @@ def ols_cluster(X, y, groups):
 def main() -> int:
     apply_style()
     d = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "cost_index.parquet")
-    d = d[d[COST].notna() & d["age"].notna() & d["theta_phys_full"].notna()]
+    d = d[d[COST].notna() & d["age"].notna() & d["theta"].notna()]
     d = d[d["age"].between(20, 90)].copy()
-    d["z"] = (d["theta_phys_full"] - d["theta_phys_full"].mean()) / d["theta_phys_full"].std()
+    d["z"] = (d["theta"] - d["theta"].mean()) / d["theta"].std()
     d["logc"] = np.log(d[COST] + 1.0)
     d["band"] = pd.cut(d["age"], [b[0] - 1 for b in BANDS] + [90], labels=LAB)
     print(f"{len(d):,} person-waves, {d['pidp'].nunique():,} people")

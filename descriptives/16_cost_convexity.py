@@ -75,8 +75,8 @@ def main() -> int:
     d = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "cost_index.parquet")
     panel = pd.read_parquet(
         PROCESSED_DATA_DIR / "measures" / "measure_panel.parquet",
-        columns=["pidp", "wave", "grmh_phys_full", "sf12pcs_dv",
-                 "sf6d_utility", "theta_ment"])
+        columns=["pidp", "wave", "theta_phys_full", "grmh_phys_full",
+                 "sf12pcs_dv", "sf6d_utility", "theta_ment"])
     d = d.merge(panel, on=["pidp", "wave"], how="left")
     d = d[d["flat_cost_total"].notna() & d["age"].notna()]
     d = d[d["age"].between(20, 90)]

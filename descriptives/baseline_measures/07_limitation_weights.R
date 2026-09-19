@@ -1,5 +1,5 @@
 ## One-factor weights for the limitation banks, on exactly the rows and codes
-## the GRM and GPCM were fitted to (data_cleaning/07_build_limitation_banks.py).
+## the GRM and GPCM were fitted to (data_cleaning/archive/07_build_limitation_banks.py).
 ## Pearson and polychoric correlations are computed once over every testlet:
 ## both are pairwise quantities, so each bank's matrix is a submatrix.
 ## Weights follow the workbook convention: loading over uniqueness on

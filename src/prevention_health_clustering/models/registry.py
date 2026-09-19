@@ -263,7 +263,7 @@ PHYSGRM_FULL_SSM = ModelSpec(
 )
 
 
-# K = 4 under the state-space specification. Everything else matches the K = 3
+# K = 4 under the AR(1) plus measurement error specification. Everything else matches the K = 3
 # fits, so the only difference is the number of classes. More classes means
 # more adjacent pairs the ordered anchor intercept has to separate, which is
 # the configuration that produced a mode split in the multidim smoke, so
@@ -289,7 +289,7 @@ PHYSGRM_FULL_SSM_K4 = ModelSpec(
     n_classes=4,
 )
 
-# K = 5 for P-FUNC under the state-space specification. Identical to the K=4
+# K = 5 for P-FUNC under the AR(1) plus measurement error specification. Identical to the K=4
 # fit apart from the class count, on the same contract and people.
 
 PHYSGRM_FUNC_SSM_K5 = ModelSpec(
@@ -300,6 +300,100 @@ PHYSGRM_FUNC_SSM_K5 = ModelSpec(
     anchor_channel="theta_phys_func",
     ar_mode=2,
     n_classes=5,
+)
+
+
+# The paper's health measure (P-LIM3+CC), baseline K=3 on each reported
+# variant: independent residuals, no AR term, on the one contract that carries
+# all three, so the fits differ by the variant alone.
+
+HEALTH_THETA_BASE = ModelSpec(
+    name="health-theta-base",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure theta, K=3 quadratic growth mixture, no AR term.",
+    channels=("theta",),
+    anchor_channel="theta",
+)
+
+HEALTH_H_BASE = ModelSpec(
+    name="health-h-base",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure h (expected score, 0-1), K=3, no AR term.",
+    channels=("h",),
+    anchor_channel="h",
+)
+
+HEALTH_FI10_BASE = ModelSpec(
+    name="health-fi10-base",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure ten-deficit index, K=3, no AR term.",
+    channels=("fi10",),
+    anchor_channel="fi10",
+)
+
+
+# The same three variants under AR(1) plus measurement error: an AR(1) latent
+# state plus a one-period measurement error, the paper's stochastic specification.
+
+HEALTH_THETA_SSM = ModelSpec(
+    name="health-theta-ssm",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure theta, K=3, AR(1) state plus measurement error.",
+    channels=("theta",),
+    anchor_channel="theta",
+    ar_mode=2,
+)
+
+HEALTH_H_SSM = ModelSpec(
+    name="health-h-ssm",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure h, K=3, AR(1) state plus measurement error.",
+    channels=("h",),
+    anchor_channel="h",
+    ar_mode=2,
+)
+
+HEALTH_FI10_SSM = ModelSpec(
+    name="health-fi10-ssm",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure ten-deficit index, K=3, AR(1) state plus measurement error.",
+    channels=("fi10",),
+    anchor_channel="fi10",
+    ar_mode=2,
+)
+
+
+# The AR(1) plus measurement error fits with a shared birth-decade level shift (the same
+# cohort intercept for every class), as pcs-cohort did on the baseline.
+
+HEALTH_THETA_SSM_COHORT = ModelSpec(
+    name="health-theta-ssm-cohort",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure theta, K=3, AR(1) plus measurement error, shared birth-decade shifts.",
+    channels=("theta",),
+    anchor_channel="theta",
+    ar_mode=2,
+    cohort="decade",
+)
+
+HEALTH_H_SSM_COHORT = ModelSpec(
+    name="health-h-ssm-cohort",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure h, K=3, AR(1) plus measurement error, shared birth-decade shifts.",
+    channels=("h",),
+    anchor_channel="h",
+    ar_mode=2,
+    cohort="decade",
+)
+
+HEALTH_FI10_SSM_COHORT = ModelSpec(
+    name="health-fi10-ssm-cohort",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure ten-deficit index, K=3, AR(1) plus measurement error, shared birth-decade shifts.",
+    channels=("fi10",),
+    anchor_channel="fi10",
+    ar_mode=2,
+    cohort="decade",
 )
 
 
@@ -323,6 +417,15 @@ REGISTRY: dict[str, ModelSpec] = {
         PHYSGRM_FUNC_SSM_K4,
         PHYSGRM_FULL_SSM_K4,
         PHYSGRM_FUNC_SSM_K5,
+        HEALTH_THETA_BASE,
+        HEALTH_H_BASE,
+        HEALTH_FI10_BASE,
+        HEALTH_THETA_SSM,
+        HEALTH_H_SSM,
+        HEALTH_FI10_SSM,
+        HEALTH_THETA_SSM_COHORT,
+        HEALTH_H_SSM_COHORT,
+        HEALTH_FI10_SSM_COHORT,
     )
 }
 

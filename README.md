@@ -14,7 +14,7 @@ Workstream folders hold thin scripts; everything reusable lives in one
 installable package they all import.
 
 ```
-├── data_cleaning/   raw extract -> panel -> frozen contracts -> measures
+├── data_cleaning/   raw extract -> panel -> health measure + cost index
 ├── descriptives/    figures and tables            -> artifacts/descriptives/
 ├── clustering/      model fits, validation, benchmarks -> artifacts/
 ├── policy/          counterfactual analysis (planned)
@@ -47,7 +47,8 @@ it; then it moves into the package.
 | Held-out scoring | leakage probe | exactly 0 at a 1e-12 gate |
 | SF-12 measures | vs the PCS construction note | `sf12pcs_dv` rebuilt to max err 0.0054 (MCS same, given the zero floor); UK norms, variant-D row and the 6.6-pt artifact exact; SF-6D tariff worked example/ceiling/floor pass |
 | GRM (physical) | vs the EIT note's grm.rds fit | own-code Python refit: same 498,424 person-years, discriminations to 3e-5, person-wave theta to 1e-5, age latent distributions to 5dp |
-| GRM-2 (phys + mental) | 11 self-validation gates | functioning + condition banks, GHQ wording testlets triggered by Q3 as pre-specified; tracks the original GRM at r = 0.994; ever-diagnosis sensitivity quantified in docs/health_measures_note.pdf |
+| GRM-2 (phys + mental) | 11 self-validation gates | functioning + condition banks, GHQ wording testlets triggered by Q3 as pre-specified; tracks the original GRM at r = 0.994; ever-diagnosis sensitivity quantified in measuring_health/health_measures_note.pdf (archived) |
+| Health measure | 6 gates per run | the bank the project uses (P-LIM3+CC): max positive Q3 +0.05, EAP identity 1.000, the three reported variants agreeing in rank at 0.99, and exact reproduction of the measure search's scores — see measuring_health/health_measure_construction.pdf |
 
 ## Setup
 
@@ -57,6 +58,8 @@ ln -s /path/to/UKDA-6614-tab data/raw/UKDA-6614-tab
 export CMDSTAN=~/.cmdstan/cmdstan-2.38.0
 ```
 
-Then, in order: `data_cleaning/01_build_panel.py`,
-`data_cleaning/02_build_contracts.py`, `data_cleaning/03_build_measures.py`,
-and the scripts under `clustering/`.
+Then `data_cleaning/01_build_panel.py` through `05_build_cost_proxy.py` in
+order (see `data_cleaning/README.md`), and the scripts under `clustering/`.
+The clustering contracts are built by the archived scripts under
+`data_cleaning/archive/`, which still hold the measures those fits were
+estimated on.

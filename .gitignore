@@ -24,3 +24,12 @@ docs/*.toc
 # Compiled Stan binaries (cmdstanpy rebuilds these; platform-specific)
 src/prevention_health_clustering/models/stan/*
 !src/prevention_health_clustering/models/stan/*.stan
+
+# paper build artefacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.bbl
+paper/*.blg
+paper/paper_overleaf.zip

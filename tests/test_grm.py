@@ -1,7 +1,7 @@
 """Data-free tests of the GRM estimator: recodes, recovery, scoring identity.
 
 The licensed-data replication (parameters, theta, and age distributions vs the
-EIT note's grm.rds fit) lives in data_cleaning/04_build_grm.py.
+EIT note's grm.rds fit) lives in data_cleaning/archive/04_build_grm.py.
 """
 
 from __future__ import annotations

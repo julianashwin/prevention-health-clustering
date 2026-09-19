@@ -218,8 +218,124 @@ def build_combined_items(phys_full: pd.DataFrame, ment_testlet: pd.DataFrame) ->
 
 
 
+# ---------------------------------------------------------------------------
+# limitation-count banks: the four SF-12 testlets plus counts over disdif areas
+# ---------------------------------------------------------------------------
+
+DISDIF_LISTED: tuple[str, ...] = tuple(f"disdif{i}" for i in range(1, 13)) + ("disdif96",)
+
+# name -> disdif areas counted
+LIMITATION_GROUPS: dict[str, tuple[int, ...]] = {
+    "LIM_PF": (1, 2, 3, 10, 11),   # mobility, lifting, dexterity, coordination, personal care
+    "LIM_SC": (4, 5, 6),           # continence, hearing, sight
+    "LIM_MOB": (1, 2),             # mobility, lifting
+    "LIM_DEX": (3, 10, 11),        # dexterity, coordination, personal care
+    "LIM_CONT": (4,),              # continence
+    "LIM_SENS": (5, 6),            # hearing, sight
+    "LIM_FL": (1, 2, 3, 10),       # functional limitations
+    "LIM_SELF": (4, 11),           # self-care: continence, personal care
+    "LIM_OTHER": (12,),            # other health problem or disability
+}
+
+# bank -> limitation testlets added to GH, PF, RP, BP
+LIMITATION_BANKS: dict[str, tuple[str, ...]] = {
+    "P-FUNC": ("FUNC",),
+    "P-LIM1": ("LIM_PF",),
+    "P-LIM": ("LIM_PF", "LIM_SC"),
+    "P-LIM4": ("LIM_MOB", "LIM_DEX", "LIM_CONT", "LIM_SENS"),
+    "P-LIM3": ("LIM_FL", "LIM_SELF", "LIM_SENS"),
+    "P-LIM3+O": ("LIM_FL", "LIM_SELF", "LIM_SENS", "LIM_OTHER"),
+}
+
+# a top count category holding less than this share of fit-sample
+# person-waves merges into the category below, fixed before any fitting
+MIN_TOP_SHARE = 0.005
+
+
+def limitation_count(items: pd.DataFrame, codes: tuple[int, ...]) -> pd.Series:
+    """Areas mentioned among ``codes``, with FUNC's routing in every wave.
+
+    health == 2 counts as no limitation in every wave (the wave 1-7 routing
+    applied throughout); health == 1 with no disdif answer is missing.
+    """
+    answered = items[list(DISDIF_LISTED)].notna().any(axis=1)
+    count = items[[f"disdif{k}" for k in codes]].eq(1).sum(axis=1).astype(float)
+    count = count.where((items["health"] == 1) & answered)
+    return count.mask(items["health"] == 2, 0.0)
+
+
+def top_category(count: pd.Series, min_share: float = MIN_TOP_SHARE) -> int:
+    """Largest count kept as its own category under the merge rule."""
+    share = count.dropna().value_counts(normalize=True).sort_index()
+    cap = int(share.index.max())
+    while cap > 1 and share[share.index >= cap].sum() < min_share:
+        cap -= 1
+    return cap
+
+
+def build_limitation_items(
+    items: pd.DataFrame, age_range: tuple[int, int] = (20, 90)
+) -> tuple[pd.DataFrame, dict[str, int]]:
+    """Every testlet the limitation banks use, on their common sample, 1 = worst.
+
+    The sample is P-FUNC's: the four SF-12 testlets complete and the disdif
+    module usable. Every limitation group shares that missingness, so all six
+    banks are fitted on identical person-waves. Returns the frame and the
+    number of categories per testlet after the merge rule.
+    """
+    core = build_testlets(items, age_range=age_range)
+    counts = pd.DataFrame({g: limitation_count(items, c) for g, c in LIMITATION_GROUPS.items()})
+    counts["FUNC"] = build_func_item(items)
+    counts[["pidp", "wave"]] = items[["pidp", "wave"]]
+    out = core.merge(counts, on=["pidp", "wave"], how="left")
+    out = out.dropna(subset=["FUNC", *LIMITATION_GROUPS])
+    ncat = {"GH": 5, "PF": 5, "RP": 9, "BP": 5, "FUNC": 4}
+    for g in LIMITATION_GROUPS:
+        cap = top_category(out[g])
+        out[g] = _reverse_count(out[g], cap + 1)
+        ncat[g] = cap + 1
+    for c in ncat:
+        out[c] = out[c].astype(int)
+    return out.reset_index(drop=True), ncat
+
+
+# bank suffix -> condition testlets: CC the total ever-diagnosed count of the
+# sixteen physical conditions, CG P-FULL's six group items
+CONDITION_CODINGS: dict[str, tuple[str, ...]] = {
+    "CC": ("COND",),
+    "CG": tuple(PHYS_CONDITION_ITEMS),
+}
+
+
+def add_condition_items(
+    bank_items: pd.DataFrame, chronic: pd.DataFrame
+) -> tuple[pd.DataFrame, dict[str, int]]:
+    """The condition testlets alongside the limitation testlets, 1 = worst.
+
+    COND sums the six ever-diagnosed group counts, which is the count over the
+    sixteen physical conditions, with the top category set by the merge rule on
+    the rows that have a condition inventory; the group items are coded exactly
+    as in P-FULL. Rows without an inventory keep NaN condition items.
+    """
+    groups = [f"n_{g.lower()}" for g in PHYS_CONDITION_ITEMS]
+    out = bank_items.merge(chronic[["pidp", "wave", *groups]], on=["pidp", "wave"], how="left")
+    total = out[groups].sum(axis=1, min_count=len(groups)).where(out[groups].notna().all(axis=1))
+    cap = top_category(total)
+    out["COND"] = _reverse_count(total, cap + 1)
+    ncat = {"COND": cap + 1}
+    for g, k in PHYS_CONDITION_ITEMS.items():
+        out[g] = _reverse_count(out[f"n_{g.lower()}"], k)
+        ncat[g] = k
+    return out.drop(columns=groups), ncat
+
+
 __all__ = [
     "COMBINED_NCAT",
+    "CONDITION_CODINGS",
+    "DISDIF_LISTED",
+    "LIMITATION_BANKS",
+    "LIMITATION_GROUPS",
+    "MIN_TOP_SHARE",
     "GHQ_NEGATIVE",
     "GHQ_POSITIVE",
     "MENT_ITEMS",
@@ -231,8 +347,12 @@ __all__ = [
     "PHYS_NCAT",
     "PHYS_TIMED_NCAT",
     "TIMED_CONDITION_ITEMS",
+    "add_condition_items",
     "build_combined_items",
     "build_func_item",
+    "build_limitation_items",
+    "limitation_count",
+    "top_category",
     "build_physical_timed_items",
     "build_mental_items",
     "build_physical_items",

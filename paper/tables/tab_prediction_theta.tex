@@ -1,0 +1,15 @@
+\begin{tabular}{lrrrr}
+\toprule
+predictors at $t$ & $\theta_{t+1}$ ($R^2$) & death before $t+1$ (AUC) & in-patient stay, $t+1$ (AUC) & GP visits, $t+1$ ($R^2$) \\
+\midrule
+age & 0.124 & 0.858 & 0.586 & 0.012 \\
++ observables & 0.181 & 0.863 & 0.605 & 0.038 \\
++ K-means type & 0.643 & 0.881 & 0.677 & 0.158 \\
++ baseline class & 0.674 & 0.883 & 0.683 & 0.165 \\
++ AR(1)+ME class & 0.712 & 0.887 & 0.690 & 0.180 \\
++ theta(t) & 0.650 & 0.901 & 0.697 & 0.160 \\
++ theta(t), theta(t-1) & 0.703 & 0.896 & 0.700 & 0.167 \\
++ AR(1)+ME class, theta(t) & 0.745 & 0.900 & 0.701 & 0.188 \\
++ all & 0.745 & 0.902 & 0.703 & 0.194 \\
+\bottomrule
+\end{tabular}

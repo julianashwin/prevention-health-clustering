@@ -1,0 +1,658 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,array,graphicx,float,enumitem,microtype}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[round,authoryear]{natbib}
+\usepackage[hidelinks]{hyperref}
+\graphicspath{{figures/}{figures/external/}}
+\setlist[itemize]{itemsep=2pt,topsep=3pt,parsep=0pt,leftmargin=1.4em}
+\newtheorem{proposition}{Proposition}
+\newtheorem{result}{Result}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\Corr}{\mathrm{Corr}}
+\newcommand{\todo}[1]{\textcolor{red!75!black}{[\textbf{TODO:} #1]}}
+\newcommand{\note}[1]{\textcolor{gray}{\textit{[#1]}}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
+
+\title{Prevention, treatment and lifecycle health types\\[4pt]
+\large Paper skeleton --- first full draft, bullet form}
+\author{Julian Ashwin \and \todo{co-authors}}
+\date{September 2026}
+
+\begin{document}
+\maketitle
+
+
+\section{Introduction}
+\todo{Deferred. Not started by design.}
+
+%% =============================================================================
+\section{Conceptual framework}
+\label{sec:framework}
+%% =============================================================================
+\note{Condensed from \code{conceptual\_framework.tex}, which holds every derivation, proof and simulated figure. Result and equation numbering here is local; cross-reference the note for proofs.}
+
+\subsection{Setup: deterministic type and stochastic noise}
+
+\begin{itemize}
+\item Health of person $i$ of latent type $j$ at age $a$ (age counted from a base age, not birth):
+\begin{equation}
+h_{i,a} = \bar h_{j,a} + u_{i,a}, \qquad \bar h_{j,a} \equiv H_j + \sum_{a'=1}^{a} d_{j,a'} .
+\label{eq:levels}
+\end{equation}
+$(H_j, d_{j,a})$ is the \emph{deterministic} component: the type's level at the base age and its expected change at each age. $u_{i,a}$ is the \emph{stochastic} component, mean zero within type, otherwise unrestricted (transitory, persistent, or measurement error).
+\item Three kinds of information in a health history: what \emph{stays} (the level, including permanent shocks that have landed), what is \emph{in the moment} (transitory variation and measurement error), and how one is \emph{evolving} ($d_{j,a}$, the only component that predicts future \emph{changes}). Prevention targets the third; treatment acts on the first two as realised.
+\item Only what is carried from one wave to the next produces covariance between waves: the three components leave different traces on the covariance matrix, which is what identification reads.
+\item Two-by-two: dispersion is deterministic (across types) or stochastic (within type), and actionable or not. Deterministic and actionable is \emph{targetable} prevention; stochastic and actionable is untargeted prevention or treatment. Predictability of levels $\neq$ predictability of changes.
+\item Types as the object of interest: they are the support of $(H, d)$, and clustering estimates it. Between/within variance maps to type/individual. With the base age at birth, the life-course accounts are second moments: critical period $=\Var(H)$, accumulation $=\Var(d)$, pathway $=\Cov(H,d)$; at a later base age the triple's evolution with the base age separates them.
+\item Linear illustration (constant type slopes, $d_{j,a}=d_j$): a random-coefficients growth model with $V_H, V_d, C_{Hd}$ and noise variances $v_a$,
+\begin{equation}
+\bar h_a=\bar H+a\bar d,\quad \Var(h_a)=V_H+2aC_{Hd}+a^2V_d+v_a,\quad
+\Cov(h_s,h_t)=V_H+(s+t)C_{Hd}+st\,V_d+\Cov(u_s,u_t).
+\label{eq:forward}
+\end{equation}
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.95\linewidth]{fig_two_worlds.pdf}
+\caption{Two simulated populations with the same cross-sectional distribution at every age. (a) Dispersion from continuously distributed types: future decline differs predictably and targeting has value. (b) Dispersion from a random walk: no role for targeted prevention. Dynamic moments are what tell the two apart.}
+\label{fig:twoworlds}
+\end{figure}
+
+\subsection{Policy: healthcare cost, treatment and prevention}
+\label{sec:policy_fw}
+
+\note{Result numbers below are the framework note's own (Results 1--7, Result C.1, Lemma C.1, Proposition 1, Lemma A.1, Proposition F.1), so the paper and the note can be read side by side. Proofs stay in the note.}
+
+\begin{itemize}
+\item Cost of poor health $c(h)=(1-h)^2$, full health normalised to one. The quadratic is the second-order approximation to any smooth increasing convex cost and makes the first two moments of health sufficient for every policy object below; Appendix~\ref{app:extras} repeats the returns with the \emph{estimated} cost curve in place of the quadratic. \note{On the scale: the covariance channels and the identification results never use the bound. For an unbounded measure such as $\theta$ the same algebra goes through with the gap $(\bar h_{\max}-h)$ in place of $(1-h)$, or with any quadratic; the returns are reported on both scales.}
+\item Population cost at age $a$: mean gap plus between-type plus within-type variance,
+\begin{equation}
+\E[c(h_{i,a})]=(1-\bar h_a)^2+\Var_j(\bar h_{j,a})+\textstyle\sum_j\pi_j\Var(u_{i,a}\mid j).
+\label{eq:popcost}
+\end{equation}
+\item Two instruments. \textbf{Treatment} is ex post and proportional to the realised gap, $h\mapsto h+\tau(1-h)$ from age $r$. \textbf{Prevention} is ex ante and scales every future type change by $(1-\mu)$ from age $r$, so health gained is $\mu$ times the type's \emph{preventable decline} $\bar h_{j,r-1}-\bar h_{j,a}$; it compounds.
+\end{itemize}
+
+\begin{result}[Return to treatment; note Result 1]\label{res:treat}
+$T(r)=2\sum_{a\ge r}\bigl[(1-\bar h_a)^2+\Var(h_{i,a})\bigr]$: twice the expected cost still to come. Cross-sectional moments only; no identification problem.
+\end{result}
+
+\begin{result}[Return to prevention; note Results 2 and 3]\label{res:prev}
+By type, $P_j(r)=2\sum_{a\ge r}(1-\bar h_{j,a})(\bar h_{j,r-1}-\bar h_{j,a})$: gap times preventable decline. For a uniform policy,
+\begin{equation}
+P(r)=\textstyle\sum_j\pi_jP_j(r)
+=2\sum_{a\ge r}\Bigl[\underbrace{(1-\bar h_a)(\bar h_{r-1}-\bar h_a)}_{\text{mean channel}}
++\underbrace{\Cov_j\bigl(1-\bar h_{j,a},\,\bar h_{j,r-1}-\bar h_{j,a}\bigr)}_{\text{between-type channel}}\Bigr],
+\label{eq:P}
+\end{equation}
+and the between-type channel splits as $\Cov_j(1-H_j,\,\bar h_{j,r-1}-\bar h_{j,a})+\Cov_j(H_j-\bar h_{j,r-1},\,\bar h_{j,r-1}-\bar h_{j,a}) +\Var_j(\bar h_{j,r-1}-\bar h_{j,a})$: the pathway, persistence and accumulation margins.
+\end{result}
+
+\begin{result}[Prevention versus treatment; note Result 4]\label{res:pvt}
+Treatment reaches all realised dispersion, between and within, but only gaps already open. Prevention averts future gaps but must be assigned ex ante; the uniform policy pays the population-average preventable decline and its between-type channel is bounded by deterministic heterogeneity. Measurement error belongs in neither return and is removed by Case~4 below.
+\end{result}
+
+\begin{result}[Targeting; note Results 5--7 and Lemma C.1]\label{res:target}
+Any allocation $\mu(z)$ with the same average intensity saves $\Cov(\mu(z),\E[P_i\mid z])$ over the uniform policy, at most $\mathrm{sd}(\mu)\,\mathrm{sd}(\E[P_i\mid z])$: a signal is worth the return dispersion it reveals. Targeting on initial health $h_{i,0}$ collects a gap channel and a compounding channel, both cells of the first row of the covariance matrix, attenuated by the level/noise share $\lambda_0$. The type is the ceiling, $\max_jP_j(r)-\sum_j\pi_jP_j(r)$: returns depend on the person only through the type, so no signal does better, and the gap between what a level collects and the ceiling is what estimating types is worth.
+\end{result}
+
+\paragraph{What each policy object needs (note Result C.1 and Table 2).} In the linear case $\bar h_{j,a}=H_j+a\,d_j$ the between-type channel is $(a-r+1)(C_{Hd}+aV_d)$, so
+\begin{equation}
+P(r)=2\sum_{a\ge r}\bigl[(1-\bar h_a)(\bar h_{r-1}-\bar h_a)\bigr]+2K(r),\qquad
+K(r)=A(r)\,C_{Hd}+B(r)\,V_d,
+\label{eq:Kr}
+\end{equation}
+with known exposure weights $A(r)=\sum_{a\ge r}(a-r+1)$ and $B(r)=\sum_{a\ge r}a(a-r+1)$. This is the precise form of the three statements the structure calls P(i)--P(iii):
+
+\begin{center}\small
+\begin{tabular}{@{}lp{5.6cm}p{5.6cm}@{}}
+\toprule
+ & Policy object & Moments it needs \\
+\midrule
+P(i) & $T(r)$, and the mean channel of $P(r)$ & the mean path $\bar h_a$ and the cross-sectional
+variance $\Var(h_a)$: Exhibit~1 panels (a), (b) \\
+P(ii) & the accumulation margin of $P(r)$; the timing profile $r\mapsto P(r)$ & $V_d$ (with
+$C_{Hd}$): the curvature of the surface; Exhibit~2 \\
+P(iii) & the pathway margin; targeting on a level & $C_{Hd}$, locally $C_{Hd}(a)\equiv
+\Cov_j(\bar h_{j,a},d_j)$, whose sign says diverging or converging: Exhibit~1 panel (c),
+Exhibit~2 \\
+ & type targeting & the spread of $P_j(r)$ across types: third and fourth moments, i.e.\ the
+clusters of Section~\ref{sec:types} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+\item Reading Exhibit~1 through \eqref{eq:Kr}: an accelerating mean raises the mean channel for later starts; a $V_d$ that falls with age puts the accumulation margin early; a $C_{Hd}(a)$ that turns from positive to negative makes the pathway margin, and with it targeting on low initial health, an early-life object and a late-life liability.
+\item \todo{Deeper point 1: in the data the mean channel dominates $P(r)$ and the between-type channel is small and turns negative after 45 (Section~\ref{sec:policy}). The between-type moments matter for \emph{targeting} far more than for the uniform return. Section~2.2 should be organised around that: treatment and uniform prevention priced by the cross-section, targeting priced by the types.}
+\end{itemize}
+
+\subsection{Identification}
+\label{sec:ident_fw}
+
+\begin{itemize}
+\item Every observed covariance is a between-type part plus a noise part, $\Cov(h_s,h_t)=\Cov_j(\bar h_{j,s},\bar h_{j,t})+\Cov(u_{i,s},u_{i,t})$. The returns need the first; the data deliver the sum. Assumptions: A1 window linearity ($d_{j,a}=d_j$ over the waves used), A2 orthogonality of the noise to $(H,d)$, A3 a noise class. In the linear case
+\begin{equation}
+\Var(h_a)=V_H+2aC_{Hd}+a^2V_d+v_a,\qquad
+\Cov(h_s,h_t)=V_H+(s+t)C_{Hd}+st\,V_d+\Cov(u_s,u_t).
+\label{eq:forward}
+\end{equation}
+\end{itemize}
+
+\begin{result}[The diagonal alone is not enough; note Lemma A.1]\label{lem:diag}
+With the noise variances $v_a$ unrestricted the variance profile can never rule out pure noise and bounds the deterministic variance only from above. With stationary noise its differences identify $(C_{Hd},V_d)$ but never split $V_H$ from $\sigma^2_u$, which enter every diagonal cell as a bundle. Identification needs a restriction on how the noise variance moves with age and at least one off-diagonal cell.
+\end{result}
+
+\begin{proposition}[Identification within the AR-plus-spike class; note Proposition 1]\label{prop:main}
+Assume A1--A2 and $\Cov(u_s,u_t)=\rho^{\,t-s}v_s+\mathbf 1\{s=t\}\sigma^2_{\varepsilon,s}$ for $s\le t$, $\rho\in[0,1)$: a carried component with memory $\rho$ and variances $v_s$, plus a one-period spike. Then (i) five waves identify $V_H,C_{Hd},V_d,\rho$ and both noise variances at the waves used; (ii) four suffice with the spike absent (Case~3) or with both noise variances stationary (Case~4); (iii) three suffice with the spike absent and the carried variance stationary, whatever $\rho$ (Cases~1--2); (iv) two suffice if in addition $C_{Hd}=0$ and the noise is memoryless.
+\end{proposition}
+
+\begin{itemize}
+\item The forces, one per region of the matrix. This is the precise content of I(i) and I(ii):
+\begin{itemize}
+\item[I(i)] \textbf{Diagonal} $V(a)$: every component adds variance. Stationary noise cancels in differences and leaves $C_{Hd}$ (slope) and $V_d$ (curvature). Fails when $v_a$ drifts.
+\item[I(ii)] \textbf{First row} $C_0(a)$: the deterministic part is the line $V_H+aC_{Hd}$, carried noise a decay $\rho^av_0$; a line cannot mimic a decay, which splits the level from the noise and measures the memory; the row's slope beyond the noise is $C_{Hd}$ itself, locally $C_{Hd}(s)$ for the row anchored at $s$. A one-period spike is invisible to the row and is read as the anchor's excess over the row's back-extrapolation. Limit: $\rho\to1$ merges permanent shocks with the level.
+\item[I(iii)] \textbf{Interior}: $st\,V_d$ needs both indices to move; delivers $V_d$ when the diagonal cannot be read, overidentifying tests otherwise.
+\end{itemize}
+\item The cases, and where each appears in the paper:
+\end{itemize}
+
+\begin{center}\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lp{2.5cm}cp{1.7cm}p{4.6cm}p{4.2cm}@{}}
+\toprule
+Case & Noise & Waves & Diagonal gives & Row / interior give & Where in the paper \\
+\midrule
+1 & i.i.d., stationary & 3 & $C_{Hd}$, $V_d$ & $V_H$, $\sigma^2_u$ & nested in Exhibit~2's Case~2 at $\rho=0$ \\
+2 & AR(1), stationary & 3 & $C_{Hd}$, $V_d$ & $\rho$ from the detilted fade; $V_H$ & Exhibit~2 row 1; Appendix~\ref{app:extras}, three ages three years apart \\
+3 & AR(1), $v_a$ free & 4 & nothing & $\rho$, $v_0$, $V_H$, $C_{Hd}$ from row second differences; $V_d$ from two interior cells & Exhibit~2 row 2 \\
+4 & AR(1) + spike, stationary & 4 & $C_{Hd}$, $V_d$ & $\rho$ from off-diagonal drops only; spike as the anchor's excess & Exhibit~2 row 3; the AR(1) plus measurement error mixture of Section~\ref{sec:types} \\
+denoising & independent, $v_a$ free & 3 & nothing & everything from off-diagonal cells; the starred profile & Appendix~\ref{app:extras}, the local triple \\
+F.1 & random walk + spike & 4 & nothing & $C_{Hd}$ and $V_d$ as row differences; staircase-immune & Appendix~\ref{app:extras}, the bundle fit of $C_{Hd}(a)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+\item The local reading. A1 holds only over a window, so every read is local. With $C_{Hd}(a)\equiv\Cov_j(\bar h_{j,a},d_j)$, the deterministic variance grows by $C_{Hd}(a)+C_{Hd}(a+1)$ per year: a variance profile that flattens requires $C_{Hd}(a)$ to change sign, which the global linear model cannot produce. The between-type channel of $P(r)$ is the exposure-weighted sum $\sum_{a\ge r}(a-r+1)C_{Hd}(a)$.
+\item Linear-regression representation: person-level OLS of $h$ on $(1,a)$ carries the same information as the level moments; only the noise correction is case-specific (note Appendix E).
+\end{itemize}
+
+\paragraph{Correspondence: framework, exhibits, clustering.}
+\begin{center}\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{3.3cm}p{4.2cm}p{4.2cm}p{3.2cm}@{}}
+\toprule
+Framework object & Model-free exhibit & Moment estimate & Clustering counterpart \\
+\midrule
+$\bar h_a$ & Exhibit~1 (a) & --- & $\sum_j\pi_j\bar h_{j,a}$, Figure~\ref{fig:clusters} \\
+$V(a)=\Var(h_a)$ & Exhibit~1 (b) & --- & between + within, Figure~\ref{fig:decomp}(a) \\
+rows $C_s(t)$; the spike & Exhibit~1 (c), Appendix rows & bundle fit: $C_{Hd}(a)$ and spike level & within-type autocorrelation, Figure~\ref{fig:clusters}; $\sigma_{\text{meas}}$ of the AR(1) plus measurement error fit \\
+$V_H$, $C_{Hd}$, $V_d$ by window & --- & Exhibit~2, Cases 2--4; the local triple & $\Var_j(\bar h_{j,a})$, $\Cov_j(\bar h_{j,a},d_{j,a})$, $\Var_j(d_{j,a})$, Figure~\ref{fig:decomp} \\
+$\rho$, $v_a$, $\sigma^2_\varepsilon$ & --- & Exhibit~2 Case~4 & $\rho_k$, $\sigma$, $\sigma_{\text{meas}}$ of the AR(1) plus measurement error fit \\
+$P_j(r)$, targeting ceiling & --- & --- & Section~\ref{sec:policy} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+\item \todo{Deeper point 2: which noise class is the paper's. Every read that lets the data choose pushes $\rho$ to the top of the grid (Exhibit~2 Case~4 in the young bands; the bundle fit), the AR(1) plus measurement error mixture finds $\rho\approx0.95$ with a large measurement error, and the rows show a big one-year drop followed by a slow slope. That is Case~4 at its $\rho\to1$ corner, i.e.\ Proposition F.1 (random walk plus spike), under which the diagonal is unreadable and every read is off-diagonal. The main text currently leads with Cases 1--3; the paper should probably lead with Case~4 / F.1 and present Cases 1--3 as the nested special cases.}
+\item \todo{Deeper point 3: a permanent shock and a type level are the same thing to the covariance surface (the $\rho\to1$ bundle). The mixture model calls the persistent state ``noise within class''; the framework calls it ``what stays''. For the returns this is harmless (treatment includes it, prevention never contains it); for targeting it is not (a persistent deviation predicts future levels, note Result T2). The paper needs one definition of ``type'' that both sections use.}
+\item \todo{Deeper point 4: the sign of the small $C_{Hd}$ depends on the noise treatment (Case~2 positive in mid-life, the denoising solve and the bundle fit at or below zero from 25). Exhibit~2 should present the case that matches the parametric model, Case~4, and treat the others as the sensitivity.}
+\item \todo{Deeper point 5: window linearity versus the quadratic type paths of the mixtures. The template with $f=(1,a,a^2)$ costs extra waves; state how the band-local reads and the quadratic class paths are the same object at different resolutions.}
+\item \todo{Deeper point 6: selection. Every row conditions on being observed later; the mortality channel of the multidimensional model is where this is handled, and identification should say so.}
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.48\linewidth]{fig_case2_curves.pdf}\hfill
+\includegraphics[width=0.48\linewidth]{fig_case4_curves.pdf}
+\caption{Simulated illustrations of the reads. Left, Case~2: the diagonal supplies the line, the detilted first row fades geometrically. Right, Case~4: the spike lives on the diagonal alone and the fade is read from off-diagonal drops only. The empirical counterparts on the paper's measure are in Appendix~\ref{app:extras}.}
+\label{fig:cases}
+\end{figure}
+
+%% =============================================================================
+\section{Data and motivating descriptives}
+\label{sec:data}
+%% =============================================================================
+
+\subsection{Data and the health measure}
+
+\begin{itemize}
+\item Understanding Society (UKHLS), waves 1--15, 2009--2024 \citep{ukhls}; adults aged 20--90. The SF-12 is asked every wave; the impairment battery every wave (routed by long-standing illness in waves 1--7); the condition inventory at a person's first interview and for new diagnoses since.
+\item \textbf{The measure} (one page; full construction in \code{measuring\_health/health\_measure\_construction.pdf}). A graded-response model \citep{samejima1969} over eight ordinal items: the four SF-12 physical testlets (general health GH, physical functioning PF, role-physical RP, bodily pain BP), three counts over the UKHLS impairment areas (functional: mobility, lifting, dexterity, co-ordination; self-care: personal care, continence; sensory: hearing, sight), and one count of ever-diagnosed physical conditions (0--5, 6+). Sample 387,599 person-waves on 69,958 people, complete on all eight items, 5.5 observations per person.
+\item Reported three ways, all monotone in the same answers: $\theta$ (latent, $N(0,1)$ in the pool), $h$ ($\theta$ through the expected-score curve, on $[0,1]$: the scale the framework's health variable maps to), and a ten-deficit index anyone can compute by hand \citep{mitnitski2001,searle2008}. Spearman $0.991$ between $h$ and the deficit index.
+\item Transparency: the model is the ordinal factor model in another parameterisation \citep{takane1987}, so the score is to a very good approximation a weighted sum of the coded answers ($R^2=0.993$): \textbf{71\% on the SF-12 physical testlets, 23\% on the impairment groups, 6\% on diagnoses}. That is the ``PHYS $\approx\sum_k\lambda_kh_k$'' reading. The deficit index puts 60/30/10 on the same three blocks and reaches the same conclusions.
+\item Why this bank (one sentence each; the 85-candidate search is archived): no floor (7 person-waves at the worst score among 60--84 year olds, against 1.1\% for functioning-only banks), no positive local dependence (max $Q_3=+0.05$), convex in cost on every variant, mental items absent by construction.
+\end{itemize}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrl}
+\toprule
+Item & $k$ & $a$ & thresholds \\
+\midrule
+GH & 5 & 2.03 & $-2.10$\; $-0.98$\; $0.16$\; $1.45$ \\
+PF & 5 & 3.52 & $-1.73$\; $-1.38$\; $-0.80$\; $-0.40$ \\
+RP & 9 & 3.09 & $-2.20$\; $-2.03$\; $-1.56$\; $-1.37$\; $-0.81$\; $-0.64$\; $-0.23$\; $-0.03$ \\
+BP & 5 & 2.31 & $-2.35$\; $-1.50$\; $-0.99$\; $-0.09$ \\
+LIM\_FL & 5 & 3.38 & $-2.49$\; $-1.94$\; $-1.46$\; $-1.07$ \\
+LIM\_SELF & 3 & 2.43 & $-2.95$\; $-1.99$ \\
+LIM\_SENS & 3 & 1.36 & $-4.49$\; $-2.85$ \\
+COND & 7 & 1.18 & $-4.61$\; $-3.90$\; $-3.12$\; $-2.26$\; $-1.25$\; $0.11$ \\
+\bottomrule
+\end{tabular}
+\caption{The eight items: categories, discrimination and thresholds. PF, RP and the functional limitation count separate the unhealthy half; the sensory and condition items sit furthest out and keep the very sick from piling up at a floor. \note{Appendix candidate.}}
+\end{table}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_health_measure.png}
+\caption{The measure. (a) The expected-score curve mapping $\theta$ to $h$, over the pooled distribution of $\theta$; (b) each item's discrimination against its thresholds; (c) the latent age profile from a multigroup fit by single year of age (descriptive; no score uses it).}
+\end{figure}
+
+\paragraph{Comparison metrics, mortality and utilisation.}
+\begin{itemize}
+\item Against the alternatives the paper does not use: the UKHLS PCS (a 1990s US-normed weighted sum that mixes in the mental items), the MCS, and the raw chronic count (Table~\ref{tab:corr}). The measure is a physical construct: correlation $0.90$--$0.94$ with the PCS, $0.27$ with the MCS.
+\item Mortality (Table~\ref{tab:mort}): the log-odds of dying before the next wave fall by $0.85$ per SD of $\theta$ ($0.66$ on $h$), the death rate in the least healthy tenth is 45 times that in the healthiest, and the slope is close to constant across age bands (slightly steeper with age on $h$).
+\item Utilisation in pounds (the bed-day-weighted cost index of \code{cost\_proxy\_plan.pdf}; Figure~\ref{fig:cost}): cost rises with poor health at an increasing rate on every variant, quadratic $t$ between 10 and 37 with costs capped at the 99th percentile.
+\item Is the mapping consistent with age? (Table~\ref{tab:costage}) The proportional gradient, log points of cost per SD sicker, is hump-shaped in age on every variant, peaking at 45--54. On $\theta$ it runs $0.95$ at 20--34 to $0.89$ at 75--90 and the $z\times$age interaction is $+0.017$ per decade ($t=3.5$): close to age-invariant. On $h$ the fall is a third ($1.23$ to $0.94$, $t=10.2$). Both are right: a standard deviation is a different amount of health on the two scales, and the expected-score curve stretches the unhealthy end where the old sit. The scale-free statement survives on either: at a fixed health decile, cost barely moves with age (sickest decile \pounds2,143 at 20--34 vs \pounds2,136 at 75--90), while mean cost rises 2.6-fold. Ageing raises cost by moving people down a fixed curve.
+\end{itemize}
+
+\begin{table}[H]\centering\small
+\input{tables/tab_measure_correlations}
+\caption{Correlations of the three variants with the comparison metrics, 385,427 person-waves.}
+\label{tab:corr}
+\end{table}
+
+\begin{table}[H]\centering\small
+\input{tables/tab_measure_mortality}
+\caption{Log-odds of death before the next wave per standard deviation of each variant, with a quadratic in age (standard errors in brackets), overall and within age bands; 363,033 person-waves at risk, 1,825 deaths. Decile ratio: death rate in the least healthy tenth over the healthiest.}
+\label{tab:mort}
+\end{table}
+
+\begin{table}[H]\centering\small
+\input{tables/tab_measure_cost_age}
+\caption{Log points of the cost index per standard deviation sicker, by age band, and the $z\times$age interaction (age in decades, centred at 50) with person-clustered $t$; 211,697 person-waves, waves 7--15.}
+\label{tab:costage}
+\end{table}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_health_cost.png}
+\caption{Mean annual cost index by twentieth of each variant, costs capped at the 99th percentile. The curve steepens as health worsens (leftwards) on all three. \todo{decide whether to show the by-age version (\code{fig\_cost\_age\_interaction.png}, on P-FULL) here or in an appendix.}}
+\label{fig:cost}
+\end{figure}
+
+\subsection{Exhibit 1: the moments of health over the life course}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit1.png}
+\caption{The measure's mean path, variance profile and covariance rows, model-free, on $h$ (top) and $\theta$ (bottom). 387,599 person-waves; five-year centred rolling means; each covariance row starts on the diagonal at a five-year base age and runs nine years.}
+\label{fig:exhibit1}
+\end{figure}
+
+\begin{itemize}
+\item \textbf{Mean accelerates down} (panels a, d): on $h$ from $0.89$ at 22 to $0.62$ at 88, the decline steepening after 50 and again after 70. $\E(d)$ rises with age, which on its own says intervene late: the mean channel of $P(r)$ is largest where the preventable decline is largest.
+\item \textbf{Variance flattens} (b, e): rises steeply to about 60 and then stops growing, with a dip at 65--70. On $\theta$ it falls after 62. Under stationary noise this says the local covariance $C_{Hd}(a)$ has reached zero by 60 and $\Var(d)$ is falling: interventions on dispersion pay early.
+\item \textbf{Divergence then convergence} (c, f): every row drops sharply in its first year (the one-year spike, health not carried even one year), after which the young rows run flat and the old rows keep falling. One stationary noise process cannot produce both. Either the noise moves with age or the local covariance has changed sign: divergence among the young, compression among the old. Timing and targeting implication: intervene early and target the low early in life; later in life the covariance turns against targeting on levels.
+\item Cautions carried to the next section: composition (who survives to be measured), floors and cohort pooling are all in these curves; the type models use within-person information.
+\item The covariance surface and the rows with two base ages highlighted are in Appendix~\ref{app:extras}, on the paper's measure.
+\end{itemize}
+
+\subsection{Exhibit 2: the linear approximation on real data}
+
+\note{The choice of cases to present is still open; the main text shows Case~1 and Case~4 on $h$ and $\theta$, the two ends of the noise ladder, and Appendix~\ref{app:extras} has every case on every variant, on balanced and on pairwise moments. The pipeline is self-contained (\code{descriptives/29\_paper\_moments.py}): the identification panel keeps one row per person-age and people with at least four observed ages, 33,711 people.}
+
+\begin{itemize}
+\item Four ages two years apart, pooled over base ages within four bands, balanced moments (people observed at all four ages). Case~1 is i.i.d.\ noise with one variance, so the tilt and curvature are read off the diagonal alone and the noise is whatever the diagonal carries above the rows. Case~4 is the AR(1) carried component plus a one-period error, $\rho$ profiled: the fade read from the off-diagonal drops, the spike as the anchor's excess.
+\item \textbf{Case 1 gives the sign path on both scales.} On $h$, $\Corr(H,d)$ runs $+0.16$, $+0.04$, $-0.09$, $-0.17$ across the bands; on $\theta$ it is negative throughout and steepening, $-0.10$ to $-0.36$. The noise layer is a third of the variance at 25--40 and a fifth at 75--90, and Case~1 cannot say whether it is a spike or carried.
+\item \textbf{Case 4 is admissible only in the old bands.} In the young bands its best fit runs $\rho$ to $0.90$--$0.95$, the carried term absorbs the level, $V_H$ goes to zero and the implied correlation leaves $[-1,1]$: the $\rho\to1$ corner of Section~\ref{sec:ident_fw}, where a near-permanent shock and a type level cannot be told apart from four waves. Where it is admissible it agrees with Case~1 ($+0.03$ at 60--75 on $h$; $-0.20$ and $-0.34$ on $\theta$), with the spike taking a fifth of the diagonal.
+\item Cases 2 and 3, and the pairwise moments, are in Appendix~\ref{app:extras}: Case~2's fade read gives much larger young-band correlations ($+0.72$ on $h$) than the diagonal supports; Case~3 sits with Case~1; pairwise moments turn the youngest band negative under Cases~1 and 3, so the sample definition does as much work there as the noise model.
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit2_main.png}
+\caption{Exhibit 2: the ten moments of four ages two years apart in each band, decomposed into the fitted layers under Case~1 (rows 1 and 3) and Case~4 (rows 2 and 4), on $h$ and on $\theta$, balanced moments.}
+\label{fig:ex2main}
+\end{figure}
+
+%% =============================================================================
+\section{Lifecycle types}
+\label{sec:types}
+%% =============================================================================
+
+\subsection{Why and how}
+
+\begin{itemize}
+\item \textbf{Why the whole lifecycle.} The health-dynamics literature works with the old (HRS, ELSA) or short windows; \citet{denardi2017} splice the PSID early in life with the HRS later, but health is modelled only for the older people; \citet{hosseini2022} build a frailty index on the PSID. The prevention framework says $H_{55}$ is an \emph{outcome} of the dynamics before 55, not an input. And the data say the dynamics differ across the lifecycle (Exhibit~1): starting in late middle age misses the divergence phase.
+\item \textbf{How.} Overlapping cohorts observed over 15 waves: cohort-independent types with cohort-dependent shares. First non-parametric (partial K-means), then parametric (Bayesian mixtures), then against observables.
+\item \textbf{Four challenges} addressed along the way: (1) power and type categorisation (functional forms, stochastic structure, several dimensions); (2) mortality and attrition; (3) cohort effects; (4) units and bounds (ceiling, floor, cardinalisation).
+\end{itemize}
+
+\subsection{(A) Non-parametric types: partial K-means}
+
+\begin{itemize}
+\item Method: each person is a vector over ages 20--90 with most entries missing; distances average squared deviations over observed entries only; $K=3$, 50 seeded starts; people with at least three observed ages (39,004). ``Equal penalty'': every person-wave is punished equally, so the method is neutral about whether the stochastic process is transitory or persistent. \note{Open: the person is assigned to one cluster for life, which does impose that the type is permanent; note the caveat in the text.}
+\item Focus on means because they are what the policy objects use and what the interventions considered shift.
+\item Figure~\ref{fig:clusters}: on $h$ three ordered, non-crossing, fanning paths, shares 10 / 28 / 61\%; the worst type starts below the others at 20 and falls fastest to 60. The deficit index gives the same typology (ARI $0.90$, 97\% of people in the same type). $\theta$ does not: shares 18 / 43 / 40\% and ARI $0.37$ with the $h$ typology, because $\theta$ stretches the healthy end and K-means then splits the healthy majority. \note{This is the units challenge showing up immediately; the paper needs a position on it.}
+\item The stochastic part (middle row): within-type deviations are persistent, with lag-1 autocorrelation $0.62$ in the worst type and $0.42$--$0.44$ elsewhere, decaying to $0.15$--$0.23$ at nine years (the middle type to zero). Persistence is class-graded already in the non-parametric version.
+\item Composition strips: the worst type's share of observed person-waves rises with age on $h$ (7\% at 20 to 13\% at 85). Selection into the observed sample, not people changing type.
+\item \todo{cohort adjustment within K-means: demean across cohorts at the same age before clustering, or cluster on cohort-demeaned profiles; not done.}
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_clusters.png}
+\caption{Structure's Figure 3. Partial K-means types ($K=3$) on the three variants. Top: type means with the within-type $\pm1$ sd band; middle: autocorrelation of within-type deviations by lag; bottom: type composition of the person-waves observed at each age.}
+\label{fig:clusters}
+\end{figure}
+
+\begin{itemize}
+\item Figure~\ref{fig:decomp} is the clustering version of Exhibit 1. Row (a): the between-type share of the cross-sectional variance rises from about half at 20--30 to two thirds by 50 and stays there; the within-type variance is flat to 60 and then rises (attrition thins the tails and the old are noisier). Row (b): $\Var_j(d_{j,a})$ is largest at 20--40 and falls to a low plateau after 50: the dispersion of decline is a young-age object. Row (c): $\Cov_j(\bar h_{j,a},d_{j,a})$ is positive through the 20s to 50s (the worse-off type declines faster: divergence) and crosses zero at about 55--60 on all three variants, negative thereafter (convergence). P(ii) and P(iii) read directly.
+\item \note{Between-type shares are partly mechanical: the clusters are chosen to maximise them. The comparison that is not mechanical is with observables in Section~\ref{sec:observables}.}
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_cluster_decomposition.png}
+\caption{Structure's Figure 4. Between versus within by age. (a) Cross-sectional variance split by type composition; (b) between-type variance of the one-year change of the smoothed type paths; (c) the level-change covariance across types.}
+\label{fig:decomp}
+\end{figure}
+
+\subsection{(B) Parametric types: Bayesian mixtures}
+
+\paragraph{First fits on the paper's measure: the baseline mixture against the types.}
+\begin{itemize}
+\item The health contract (\code{data\_cleaning/07\_build\_health\_contract.py}) carries $\theta$, $h$ and the deficit index for the same 38,963 people and 334,194 rows, which is the P-FULL roster to the person. The baseline $K=3$ mixture (quadratic paths, independent residuals, no AR term) was fitted on each variant; all three converged (max $\hat R\le1.003$, 2.4--3.3 h each).
+\item Figure~\ref{fig:bayesbase}: the mixture and the K-means types are the same typology. Shares agree to a few points ($.10/.25/.65$ against $.10/.28/.61$ on $h$; $.15/.44/.41$ against $.18/.43/.40$ on $\theta$), the class paths track the type means, and person by person the two assign 94--95\% of people to the same class (ARI $0.82$--$0.85$, mean maximum posterior $0.93$--$0.95$).
+\item The $h$ / $\theta$ split is therefore a property of the scale, not of the method: on $h$ and the deficit index both methods isolate a 10\% sick tail, on $\theta$ both split the healthy majority.
+\item The composition strips move the same way under both: the worst class grows with age among the observed person-waves, from 7\% at 20 to 13\% at 85 on $h$. \note{This is the baseline specification; the AR(1) plus measurement error fit, which reversed that drift on P-FULL, is the next fit to run on this contract.}
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_bayes_base.png}
+\caption{Structure's Figure 5, first version on the paper's measure. Baseline $K=3$ mixture class paths (solid, width proportional to the share) and the K-means type means (dashed) in each variant's units; class composition of the observed person-waves by age under each method; and the posterior-weighted share of each K-means type in each mixture class.}
+\label{fig:bayesbase}
+\end{figure}
+
+\begin{table}[H]\centering\small
+\input{tables/tab_bayes_base}
+\caption{The baseline mixture against the K-means types on the same people.}
+\end{table}
+
+\paragraph{The AR(1) plus measurement error specification on the paper's measure.}
+\begin{itemize}
+\item The same three variants under the paper's stochastic specification, AR(1) plus measurement error, on the same contract; all converged (max $\hat R\le1.003$, 4--8 h each). Figure~\ref{fig:bayesssm} and Table~\ref{tab:bayesssm}.
+\item \textbf{On $\theta$ the P-FULL story carries over.} Shares $.25/.47/.29$, persistence $.96/.90/.87$, measurement error $0.42$ against a state innovation of $0.23$: between a quarter and a half of the year-to-year movement is measurement, the worst class starts within half a standard deviation of the middle and falls away, and the composition drift reverses: the worst class is 26\% of the observed person-waves at 30 and 17\% at 85, against $13\%\to16\%$ under the baseline.
+\item \textbf{On $h$ and the deficit index it does not.} The top class collapses onto the ceiling: $\rho=0.25$ and a signal share of $0.38$, the signature the K=4 P-FULL analysis found for its added class, because the expected-score curve compresses the healthy majority into the last few hundredths of the scale where a person's score alternates between the maximum and just below. With the top class absorbed by the ceiling, the whole ladder shifts: the worst class takes 27\% of people and starts level with the others at 20 ($0.86$ against $0.88$ and $0.93$), and the composition drift does not reverse ($22\%\to34\%$). Agreement with the K-means types falls to ARI $0.46$, with half of K-means type 2 reassigned to the worst class.
+\item \note{This is the sharpest version yet of the units challenge, and it cuts against $h$ for the dynamic model: a bounded scale with a hard ceiling is not something a Gaussian AR(1) plus measurement error model can fit, whatever its merits for the cost function. The cleanest resolution is $\theta$ for the mixtures and $h$ (or the deficit index) for the returns, with the class posteriors carried across; or a censored observation model at the ceiling.}
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_bayes_ssm.png}
+\caption{As Figure~\ref{fig:bayesbase}, for the AR(1) plus measurement error fits.}
+\label{fig:bayesssm}
+\end{figure}
+
+\begin{table}[H]\centering\footnotesize
+\input{tables/tab_bayes_ssm}
+\caption{The AR(1) plus measurement error mixture against the K-means types, with the class persistence and the measurement-error scale.}
+\label{tab:bayesssm}
+\end{table}
+
+\todo{The held-out and $K$ results below are still on the archived P-FULL measure. Running now on the health contract: the AR(1) plus measurement error fits with a shared birth-decade intercept. Still to run: K=4 and the multidimensional model.}
+
+\begin{itemize}
+\item Model: $K=3$ quadratic growth mixture on the standardised measure, class $k$ mean $\alpha_k+\beta_ka+\gamma_ka^2$ with $a=(\text{age}-55)/10$, class 1 worst health (anchor). Three stochastic specifications: independent residuals; AR(1) in the class residual; and the \textbf{AR(1) plus measurement error} specification, an AR(1) latent health state plus an independent one-period measurement error (ARMA(1,1) in reduced form, Kalman-marginalised), which is the one the paper uses. Partition inits, 4 chains, all fits converged (max $\hat R\le1.008$).
+\item \textbf{Persistence and measurement error} (Case~4 estimated jointly with the types). On the same 38,963 people, AR(1) reads $\rho=.78/.27/.39$ by class; adding the measurement error gives $\rho=.95/.90/.86$ with $\sigma_{\text{meas}}=.42$ against a state innovation of $.23$. Total observation variance is preserved to 2--3\%: the variance is reallocated, not invented. Between a quarter and a half of the year-to-year movement in the score is measurement. Validated on simulated data first: AR(1) alone, fitted to data generated with measurement error, attenuates $\rho$ by 25\%.
+\item \textbf{Typology} (Figure~\ref{fig:traj}): under the AR(1) plus measurement error model the shares are $.26/.48/.26$; the worst class starts closest to the others at 30 ($0.91$ sd gap to the best) and declines most ($-1.69$ sd to 80), a fanning ratio of $2.1\times$. The worst class is defined by its trajectory rather than by sitting low throughout. Its composition share falls with age ($.28$ at 30 to $.18$ at 85): thinned by attrition and death.
+\item \textbf{Held-out prediction} (last two observations per person held out, 29,901 people): age alone $R^2=.13$; the class structure alone does not beat carrying the last observation forward ($.59$ vs $.60$); carrying the filtered state forward reaches $R^2=.70$ and beats LOCF by $.15$--$.21$ nats per observation. The class trajectory says where a person is heading, $\rho$ how much of where they are now to carry.
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_trajectory_comparison.png}
+\caption{Structure's Figure 5 (placeholder, archived measures). Fitted class trajectories and shares across the univariate fits; the three ``ME'' panels are the AR(1) plus measurement error specification. Line width is the class share; the strip is class composition by age. \todo{replace by one panel: the AR(1) plus measurement error $K=3$ fit on the paper's measure, $h$ and $\theta$ side by side, with the AR(1)-only fit in an appendix.}}
+\label{fig:traj}
+\end{figure}
+
+\paragraph{Extensions: $K$, dimensions, mortality.}
+\begin{itemize}
+\item $K=4$ (Figure~\ref{fig:k4}): converges cleanly, BIC prefers it, and simulation shows the model recovers a fourth class when one exists. But the added class is small (7\%), high and flat, with the lowest persistence and signal share, and its members have half their observations at the measure's exact maximum: a ceiling artefact rather than a distinct trajectory. Keep $K=3$. $K=5$ on P-FUNC is running (started 15 September; roughly a day of sampling left). \note{Challenge (4), units and bounds, is what decides $K$ here.}
+\item Multidimensional model (Figure~\ref{fig:multidim}): physical GRM, mental GRM (without the depression diagnosis, which recovers a quarter of the sample) and the chronic count as a negative binomial, one shared class structure; 38,268 people. Extra channels stabilise the classes against the AR term (shares $.19/.38/.42$ across all variants); persistence is much less class-graded than a single channel implies ($.73/.61/.60$). Mental trajectories rise with age for every class, fastest for the healthiest physical type. The count channel separates the classes most sharply (4.5 vs 0.7 conditions at 80).
+\item Mortality as a channel (per-wave logit hazard, quadratic in age; 1,996 deaths): strongly graded by class, odds 7 times higher in the worst class than the best at 55, converging to $2.4\times$ by 85, and it leaves the typology exactly unchanged (shares and intercepts to three decimals). It describes survival by class; it does not define the classes. This is where the survivor-bias discussion lives. \note{The AR(1) plus measurement error multidimensional fits split into two modes on the physical-channel ordering constraint; provisional until the constraint moves to the chronic channel.}
+\item Windows (Figure~\ref{fig:windows}, K-means version): types refitted on twenty-year windows agree with the lifecycle typology at ARI $0.80$--$0.83$ up to the 60--80 window and $0.67$ at 70--90; backward-expanding windows from 90 reach ARI $0.82$ once the window starts at 60 and $0.95$ from 30. What a late window sees are the types after the divergence phase: the worst type's share rises from 5\% (20--40) to 20\% (70--90) as the window moves. \todo{Bayesian version of this figure for the main text; move the K-means version to the appendix.}
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_k4_trajectories.png}
+\caption{Structure's Figure 6a (placeholder). $K=3$ against $K=4$ under the AR(1) plus measurement error specification, P-FULL and P-FUNC.}
+\label{fig:k4}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_multidim_trajectories.png}
+\caption{Structure's Figure 6b (placeholder). Class trajectories and shares for the multidimensional fits: one row per variant, one column per channel. \todo{add the mortality hazard panel (\code{fig\_multidim\_mortality.png}) as a fourth column.}}
+\label{fig:multidim}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_windows.png}
+\caption{Structure's Figure 7 (K-means version). Types over sliding twenty-year windows (a) and windows expanding backwards from 90 (b), against the lifecycle typology in grey; (c) agreement with the lifecycle assignment.}
+\label{fig:windows}
+\end{figure}
+
+\paragraph{Robustness (appendix).} \todo{cohort (birth-decade level shifts; the registry supports it), specification (AR(1) vs AR(1) plus measurement error vs independent), bounded observation model (scores at the maximum treated as censored, or the GRM posterior sd passed through as known measurement variance).}
+
+\subsection{(C) Types against observables}
+\label{sec:observables}
+
+\begin{itemize}
+\item Figure~\ref{fig:obs}, in the layout of the earlier PCS version: (a) the three types; (b) every cell of highest qualification $\times$ sex $\times$ white/other ethnic group $\times$ income tercile, 40 groups with at least 30 people at an age; (c) education; (d) deciles of the person's mean within-wave rank of equivalised household net income (both built from the raw files, \code{data\_cleaning/06\_build\_observables.py}). Region is left out of (b) because twelve regions empty most cells; add it if the point needs making with more lines.
+\item Gradients exist and are in the expected order: at 50, $0.83$ for degree holders against $0.76$ for no qualification; $0.88$ for the top income decile against $0.77$ for the bottom, with the income gap widest at 50--65. But even the 40-way partition spans a band of about $0.1$ in $h$ at any age, against $0.4$ between the types. The between-group share of the cross-sectional variance is 3\% for education, 5--8\% for income deciles, 6--10\% for the 40 cells, against 52--69\% for the types (Table~\ref{tab:obs}); the observable partitions are essentially independent of the types (ARI $0.01$--$0.05$).
+\item \note{The between-share comparison is partly mechanical (the types maximise it); the fairer statements are the ARI, the type composition of each observable group, and the predictive comparison below.}
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_observables.png}
+\caption{Figure 8. Lifecycle trajectories of $h$ by (a) health type, (b) 40 observable partitions, (c) education and (d) income decile, on the clustered people; cells with fewer than 30 people suppressed.}
+\label{fig:obs}
+\end{figure}
+
+\begin{table}[H]\centering\small
+\input{tables/tab_observables}
+\caption{Share of the cross-sectional variance of $h$ between groups at ages 30, 50 and 70 ($\pm2$ years), and the adjusted Rand index of each observable partition with the types.}
+\label{tab:obs}
+\end{table}
+
+\paragraph{Figure 9: predictive value.}
+\begin{itemize}
+\item Rebuilt as a forecast on the paper's measure (\code{descriptives/33\_paper\_prediction.py}): on the health contract's people, every pair of adjacent waves is one observation, the predictors are what is known at $t$ and the outcomes are at $t+1$: $h_{t+1}$, death before the next wave, an in-patient stay in the year before the $t+1$ interview, and the GP-visit band at $t+1$. People are split 70/30, fitted on the 70, scored on the 30. Predictor sets are the objects the paper uses: the observables of Figure~\ref{fig:obs}, the K-means types, the baseline and AR(1) plus measurement error class posteriors, the measure at $t$ and its lag, and their combinations, each with a quadratic in age (Figure~\ref{fig:pred}, Table~\ref{tab:pred}).
+\item \textbf{Observables predict almost nothing; any health summary predicts a lot.} Education, income and sex add $0.05$ of $R^2$ for $h_{t+1}$ and $0.03$ for GP visits over age; the types add $0.55$--$0.60$ and $0.14$--$0.16$.
+\item \textbf{The current score beats the types, and the types add little to it.} $h_t$ alone reaches $R^2=0.72$ for $h_{t+1}$, AUC $0.90$ for death and $0.70$ for admission; adding the AR(1) plus measurement error classes to it gains $0.05$ of $R^2$ for $h_{t+1}$, nothing for death or admission, and $0.02$ for GP visits. The lag $h_{t-1}$ buys about as much as the classes do for $h_{t+1}$: the classes summarise the history, and the history is what matters.
+\item \textbf{Death is the outcome health predicts least beyond age.} Age alone gives AUC $0.86$; the best set reaches $0.90$. Utilisation is the opposite: age gives $0.59$ and $0.01$, health does nearly all the work. Prevention targeted on these measures should expect to move utilisation far more readily than mortality.
+\item \note{Caveat carried over: class posteriors and K-means labels are from fits on every wave, including $t+1$, so the class rows test the class-to-outcome link out of sample but not the whole pipeline. The measure rows are clean forecasts.}
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_prediction.png}
+\caption{Structure's Figure 9. Out-of-sample gain over an age-only quadratic in predicting next wave's $h$, death before the next wave, an in-patient stay and the GP-visit band, from each set of predictors known at $t$.}
+\label{fig:pred}
+\end{figure}
+
+\begin{table}[H]\centering\small
+\input{tables/tab_prediction}
+\caption{Out-of-sample scores by predictor set and outcome; $R^2$ for the continuous outcomes, AUC for the binary ones.}
+\label{tab:pred}
+\end{table}
+
+%% =============================================================================
+\section{Prevention exercises}
+\label{sec:policy}
+%% =============================================================================
+
+\note{First pass, on the K-means types, all three variants: the framework's returns computed from the smoothed type paths and the population moments of the clustered people, $c(h)=(1-h)^2$, horizon 90, no survival weighting, no discounting. $\theta$ is mapped affinely to $[0,1]$ by its sample range so that the same gap is defined.}
+
+\begin{itemize}
+\item \textbf{Prevention versus treatment} (Figure~\ref{fig:returns}, Table~\ref{tab:returns}). $P(r)/T(r)$ falls from about $0.35$ at $r=30$ to $0.20$ at 50 and $0.17$ at 70 on $h$, and the same on $\theta$ and the deficit index. Two thirds of $T$ is the mean gap and one third the variance (mostly within type after 60); $P$ is almost entirely its mean channel once past 40.
+\item \textbf{Timing.} The between-type covariance channel of $P(r)$ is positive for a start at 30 (divergence still to come), and negative from about 45 on, reaching $-40\%$ of $P(50)$ on $h$: starting later, the compression among types works \emph{against} uniform prevention. This is Exhibit~1's sign change priced.
+\item \textbf{Targeting.} At $r=30$ the worst type's return is ten times the best type's on $h$ ($11.8$ vs $1.1$; uniform $3.5$), so type targeting collects $2.4\times$ the uniform return; by 50 the middle type has the highest return and the type gain falls to $0.8\times$, by 70 to $0.8\times$. On $\theta$ the gains are smaller ($1.0\times$ at 30, $0.3\times$ later) because its typology splits the healthy majority rather than isolating the sick tail. \note{The units challenge again: which typology the policy exercise rests on is a substantive choice.}
+\item Skeleton for the full version:
+\begin{itemize}
+\item the same objects on the Bayesian types, with posterior uncertainty, once refitted;
+\item survival-weighted sums $\sum_{a\ge r}S(a\mid r)(\cdot)$ using the class hazards, both ways (the sickest die, prevention raises survival);
+\item targeting on observables versus on early health history versus on the type (the ceiling), priced by the targeting identity of Section~\ref{sec:framework}, using the Section~\ref{sec:observables} partitions;
+\item the additive-prevention robustness check (the multiplicative $(1-\mu)d$ favours decliners by construction), and prevention as moving a person to a better type;
+\item cost sides: $\mu$ and $\tau$ carry no prices, so cross-instrument comparisons are composition-only; state this or attach unit costs from the cost index.
+\end{itemize}
+
+
+\item \textbf{On the AR(1) plus measurement error classes} (Figure~\ref{fig:returnsssm}, Table~\ref{tab:returnsssm}) the picture shifts in the direction the composition strips suggested. The worst class is larger (27\% on $h$) and its path steeper, so the between-type channel of $P(r)$ is \emph{positive} for starts at 30 and 50 on every variant ($+24\%$ of $P(30)$ on $h$, $+30\%$ on $\theta$) and turns negative only from about 60; $P/T$ is higher ($0.44$ at 30 on $h$ against $0.34$ on the K-means types); and type targeting is worth $1.9\times$ the uniform return at 30 on $h$ and $1.1\times$ on $\theta$, declining more slowly with $r$ than on the K-means types. The difference is the classes themselves: once the year-to-year noise is absorbed, the types fan out more and for longer.
+\end{itemize}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_returns.png}
+\caption{Returns to prevention and treatment by start age $r$, from the K-means types, one column per variant. Top: $P_j(r)$ by type and the uniform $P(r)$; middle: $T(r)$, $P(r)$ and its mean channel (log scale); bottom: $P/T$ and the gain from type targeting relative to the uniform return.}
+\label{fig:returns}
+\end{figure}
+
+\begin{table}[H]\centering\footnotesize
+\input{tables/tab_returns}
+\caption{Returns at three start ages. Cov.\ channel share is the between-type channel of $P(r)$ as a share of $P(r)$; type gain is $(\max_jP_j-P)/P$.}
+\label{tab:returns}
+\end{table}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_returns_ssm.png}
+\caption{As Figure~\ref{fig:returns}, on the AR(1) plus measurement error classes: shares and quadratic paths at the posterior mean, the population moments from the same people.}
+\label{fig:returnsssm}
+\end{figure}
+
+\begin{table}[H]\centering\footnotesize
+\input{tables/tab_returns_ssm}
+\caption{As Table~\ref{tab:returns}, on the AR(1) plus measurement error classes.}
+\label{tab:returnsssm}
+\end{table}
+
+%% =============================================================================
+\appendix
+\section{Reproducibility}
+\begin{center}\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{6.3cm}>{\raggedright\arraybackslash}p{8.6cm}@{}}
+\toprule
+\code{data\_cleaning/01--05} & panel, SF-12 items, condition histories, \textbf{the measure}, the cost index \\
+\code{data\_cleaning/06\_build\_observables.py} & household income (equivalised, within-wave ranks) and highest qualification from the raw files \\
+\code{descriptives/21\_health\_measure.py} & the measure's three figures and properties table \\
+\code{descriptives/22\_paper\_kmeans.py} & K-means on the three variants, full lifecycle and windows \\
+\code{descriptives/23\_paper\_exhibit1.py} & Exhibit 1 \\
+\code{descriptives/24\_paper\_measure\_tables.py} & correlation, mortality and cost-by-age tables \\
+\code{descriptives/25\_paper\_clusters.py} & Figures 3 and 4 \\
+\code{descriptives/26\_paper\_windows.py} & Figure 7 \\
+\code{descriptives/27\_paper\_observables.py} & Figure 8 and its table \\
+\code{descriptives/28\_paper\_returns.py} & Section~\ref{sec:policy}, on the K-means types or (\code{ssm}) the mixture classes \\
+\code{descriptives/33\_paper\_prediction.py} & Figure~\ref{fig:pred}: next-wave outcomes from what is known at $t$ \\
+\code{descriptives/29\_paper\_moments.py} & Exhibit 2 and its moments, self-contained \\
+\code{descriptives/30\_paper\_framework\_empirics.py} & the framework's empirical figures, Appendix~\ref{app:extras} \\
+\code{descriptives/31\_paper\_appendix\_extras.py} & Appendix~\ref{app:extras}: cost Exhibit 1, returns in pounds \\
+\code{data\_cleaning/07\_build\_health\_contract.py}, \code{clustering/runs/health\_base\_queue.py}, \code{descriptives/32\_paper\_bayes\_base.py} & the health contract, the three baseline fits, and Figure~\ref{fig:bayesbase} \\
+\code{clustering/}, \code{descriptives/08,10,12,19,20} & the Bayesian fits and their figures (archived measures) \\
+\code{conceptual\_framework/} & the framework note, its simulated figures and numerical checks \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Extra figures}
+\label{app:extras}
+
+\subsection*{B.1 The framework's empirical figures on the paper's measure}
+\note{Reproduced from this repository by \code{descriptives/30\_paper\_framework\_empirics.py} on the identification panel; $h$ primary, $\theta$ alongside.}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_fw_rows.png}
+\caption{Rows of the covariance matrix leaving the diagonal at five-year base ages, base ages 35 and 70 highlighted. The row from 35 drops off the diagonal and runs flat; the row from 70 drops and keeps falling.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_fw_heatmap.png}
+\caption{The covariance surface in five-year blocks; the diagonal outlined. Cells more than fourteen years off the diagonal are empty by construction.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_fw_convexity.png}
+\caption{In-patient admission against health in ten equal-width bins of each measure's own units, with the fitted quadratic. Convex on every ruler: mildly on $h$ and the deficit index (quadratic $t$ of 14 and 15), strongly on $\theta$ and the SF-6D (43 and 40). The ruler decides the curvature; the ranking of people is the same on $h$ and $\theta$.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_fw_local.png}
+\caption{The local triple: the denoising solve (independent noise, free $v_a$; off-diagonal cells only) on four ages four years apart at three life stages. $V_H$ grows as shocks accumulate into the level; $C_{Hd}$ starts at zero and turns negative from mid-life; $V_d$ rises mildly with age on every variant. \todo{the moment-based $V_d$ rises with age while the three-type $\Var_j(d_{j,a})$ of Figure~\ref{fig:decomp} falls: the types capture a shrinking share of slope heterogeneity with age, or the twelve-year windows are too long for A1. Worth resolving.}}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_fw_case2.png}
+\caption{Case~2 on three ages three years apart in four windows. On the paper's measure only the 60--76 and 30--76 windows return a valid deterministic block ($\rho=0.52$ and $0.61$ on $h$); at 45--61 the implied correlation exceeds one and at 25--41 $V_d$ comes back negative.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_fw_localCHd.png}
+\caption{The local covariance $C_{Hd}(a)$ from the bundle fit of each nine-year row (level $+$ slope $+$ curvature $+$ one-period spike, no decay column), with a 200-replicate person-bootstrap band, and the spike level by base age. On $h$ the profile sits at or just below zero through the 20s to 50s and is decisively negative from about 58 (89\% of replicates show a sustained crossing, between 36 and 58); the spike level doubles between 20 and 80 on $h$ and falls on $\theta$.}
+\end{figure}
+
+\subsection*{B.2 Exhibit 2: every case, every variant, balanced and pairwise moments}
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit2_corr.png}
+\caption{Exhibit 2, summary: the implied $\Corr(H,d)$ by age band under Cases 1 to 4, for the three variants, on balanced (top) and pairwise (bottom) moments. Crosses are inadmissible best fits, open circles the best admissible $\rho$.}
+\label{fig:ex2corr}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit2_h.png}
+\caption{Exhibit 2 on $h$, Cases 1 to 4, balanced moments.}
+\label{fig:ex2h}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit2_theta.png}
+\caption{Exhibit 2 on $\theta$, Cases 1 to 4, balanced moments.}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit2_fi10.png}
+\caption{Exhibit 2 on the deficit index, Cases 1 to 4, balanced moments.}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit2_h_pairwise.png}
+\caption{Exhibit 2 on $h$, pairwise moments: each cell over the people observed at both of its ages.}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit2_theta_pairwise.png}
+\caption{Exhibit 2 on $\theta$, pairwise moments.}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit2_fi10_pairwise.png}
+\caption{Exhibit 2 on the deficit index, pairwise moments.}
+\end{figure}
+
+\subsection*{B.3 Exhibit 1 for healthcare cost}
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_exhibit1_cost.png}
+\caption{The cost index through Exhibit 1: in pounds capped at the 99th percentile (top) and in logs (bottom); waves 7--15, rows run eight years.}
+\label{fig:ex1cost}
+\end{figure}
+\begin{itemize}
+\item Cost is what $c(h)$ stands for, so its mean and variance by age are the objects $T(r)$ prices directly: the mean is flat to 40 and then rises steeply, from \pounds330 to \pounds960 by 88; its variance rises fourfold. In logs the variance \emph{falls} with age.
+\item The rows say what kind of variance it is: every row drops to about a fifth of the diagonal within a year and is flat after. Realised cost is almost entirely a one-period draw around the health state, which is exactly the within-type, in-the-moment variance that treatment reaches and prevention cannot (Result~\ref{res:pvt}).
+\end{itemize}
+
+\subsection*{B.4 The returns under the estimated cost curve}
+\begin{figure}[H]\centering
+\includegraphics[width=\linewidth]{fig_returns_cost.png}
+\caption{Figure~\ref{fig:returns} with $c(\cdot)$ the polynomial fitted to the capped cost index on each variant in place of $(1-h)^2$. Top row: the same polynomial refitted within six age bands against the pooled fit, the age-invariance check; second row: the pooled fit against twentieths. Then $T(r)=\sum_{a\ge r}\E[-c'(h_a)(1-h_a)]$ and $P_j(r)=\sum_{a\ge r}\E[-c'(h_a)\mid j](\bar h_{j,r-1}-\bar h_{j,a})$, in pounds of lifetime cost per unit of intensity. The quadratic case of this code reproduces Figure~\ref{fig:returns} to 0.1\%.}
+\label{fig:returnscost}
+\end{figure}
+\begin{table}[H]\centering\footnotesize
+\input{tables/tab_returns_cost}
+\caption{Returns in pounds under the estimated cost curve, as Table~\ref{tab:returns}.}
+\end{table}
+\begin{itemize}
+\item The estimated curve is close to age-invariant: refitted within age bands it lies on top of the pooled curve from 20 to 74, and only the 75--90 band sits above it, by about 10\% at a given health level (\code{paper\_cost\_curve\_by\_band.csv}). Costing health rather than age is therefore defensible for the returns, with a modest understatement of late-life cost.
+\item In pounds, treatment from 30 is worth about \pounds31,000 of lifetime cost per unit of $\tau$ on $h$ and uniform prevention \pounds11,000, a ratio of $0.37$ falling to $0.20$ at 70: the same shape as under the quadratic.
+\item The estimated curve is steeper at the bottom than $(1-h)^2$, so it weights the sick more. That raises the worst type's return (\pounds29,000 at 30 against \pounds5,700 for the best type), raises the type-targeting gain to $1.5\times$ the uniform return at 30 on $h$ ($1.1\times$ on $\theta$), and makes the between-type channel of $P(r)$ negative already at 30 on $h$.
+\end{itemize}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}

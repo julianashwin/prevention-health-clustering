@@ -220,7 +220,40 @@ for bank, (vkey, items) in TWIN_ITEMS.items():
     M.append((f'{bank} sum', f'{bank}, equal-weight sum', 'Weighted subscales', 'SF-12 physical + limitations' if '+CC' not in bank else 'SF-12 physical + limitations + conditions',
               SUM_TEXT.format(bank=bank), vkey, ("Yes", "A sum of the answers; one sentence."),
               ('Partly', "Sum scores are the standard simple scoring of an item bank, and the partial credit model makes the weighted version exact."), mental))
-assert len(M) == 76 and set(k for k, *_ in M) == set(df['key'])
+# ---------------------------------------------------------------------------- frailty-index style variants of the same variables, 16 September 2026
+FI_TEXT = ("A deficit-accumulation index over the P-LIM3 variables, reported as one minus the mean deficit so that 1 is no deficits. {detail} Every "
+           "deficit carries the same weight, so the only design choice is how the impairment areas are pooled before averaging, and that choice "
+           "decides whether the index stays convex in healthcare cost: at area level it does not.")
+FI_ROWS = [
+ ('FI area', 'FI, 14 area deficits', 'SF-12 physical + limitations', 'FI15',
+  "The six SF-12 physical items graded from 0 to 1 by response step, and the eight impairment areas as binary deficits, fourteen in all. This is "
+  "the 15-deficit frailty index without its long-standing illness deficit, and it puts eight fourteenths of the weight on the impairment areas."),
+ ('FI group', 'FI, 9 grouped deficits', 'SF-12 physical + limitations', 'FI15',
+  "The six SF-12 physical items graded from 0 to 1, and functional limitations, self-care and sensory difficulty each as the share of their areas "
+  "mentioned, nine in all. Grouping the areas first leaves two thirds of the weight on the SF-12 items."),
+ ('FI testlet', 'FI, 7 testlet deficits', 'SF-12 physical + limitations', 'FI15',
+  "The four SF-12 testlets, each graded from 0 to 1, and the same three limitation shares, seven in all."),
+ ('FI area+CC', 'FI, 14 area deficits + conditions', 'SF-12 physical + limitations + conditions', 'FI31',
+  "The fourteen area deficits plus the chronic-condition count, capped at six and scaled to 0 to 1, as a fifteenth deficit."),
+ ('FI group+CC', 'FI, 9 grouped deficits + conditions', 'SF-12 physical + limitations + conditions', 'FI31',
+  "The nine grouped deficits plus the chronic-condition count, capped at six and scaled to 0 to 1, as a tenth deficit."),
+ ('FI testlet+CC', 'FI, 7 testlet deficits + conditions', 'SF-12 physical + limitations + conditions', 'FI31',
+  "The seven testlet deficits plus the chronic-condition count, capped at six and scaled to 0 to 1, as an eighth deficit."),
+ ('FI area+CG', 'FI, 14 area deficits + condition groups', 'SF-12 physical + limitations + conditions', 'FI15+G',
+  "The fourteen area deficits plus the six condition groups, each scaled to 0 to 1 with P-FULL's caps, twenty in all. The conditions then carry "
+  "three tenths of the weight."),
+ ('FI group+CG', 'FI, 9 grouped deficits + condition groups', 'SF-12 physical + limitations + conditions', 'FI15+G',
+  "The nine grouped deficits plus the six condition groups, fifteen in all, so the conditions carry four tenths of the weight against one seventh "
+  "in the graded-response bank."),
+ ('FI testlet+CG', 'FI, 7 testlet deficits + condition groups', 'SF-12 physical + limitations + conditions', 'FI15+G',
+  "The seven testlet deficits plus the six condition groups, thirteen in all."),
+]
+for key, name, content, vkey, detail in FI_ROWS:
+    M.append((key, name, 'Frailty index', content, FI_TEXT.format(detail=detail), vkey,
+              ('Yes', "A share of listed deficits; one sentence."),
+              ('Yes', "Deficit-accumulation method of Searle and coauthors 2008, though standard indices use thirty or more deficits and include diagnoses."),
+              'Yes'))
+assert len(M) == 85 and set(k for k, *_ in M) == set(df['key'])
 
 # ---------------------------------------------------------------------------- columns
 C = []  # (id, group, header, width, number format, definition)
@@ -378,7 +411,7 @@ def line(a, b=''):
     notes.merge_cells(start_row=r, start_column=2, end_row=r, end_column=4); notes.row_dimensions[r].height = max(15, 13.2 * math.ceil(len(b) / 150) + 4); r += 1
 section('Samples')
 line('Sample, distribution and age profile', "Each measure's own person-waves aged 20 to 90.")
-line('Healthcare cost and in-patient use', "210,389 person-waves and 44,941 people in waves 7 to 15 where all 68 measures and the cost index are observed. Cost is the flat-rate cost index, flat_cost_total, built 4 September 2026 by data_cleaning/09_build_cost_proxy.py: in-patient spells and excess bed days, out-patient attendances and GP visits at national average unit costs, maternity excluded. The condition-weighted variant gives the same comparison.")
+line('Healthcare cost and in-patient use', "210,389 person-waves and 44,941 people in waves 7 to 15 where all 68 measures and the cost index are observed. Cost is the flat-rate cost index, flat_cost_total, built 4 September 2026 by data_cleaning/05_build_cost_proxy.py: in-patient spells and excess bed days, out-patient attendances and GP visits at national average unit costs, maternity excluded. The condition-weighted variant gives the same comparison.")
 line('Mortality', "385,427 person-waves where all 68 measures are observed and death by the next wave is known; 1,800 deaths.")
 line('Identification', "People observed in at least four waves, one row per person and age. Four ages two years apart, pooled over base ages within the bands 25 to 40, 40 to 60, 60 to 75 and 75 to 90; the AR(1) persistence is profiled over 0.05 to 0.97. Case 3 uses balanced moments, Case 2 pairwise moments.")
 line('Cost gradient by age', "Added 16 September 2026. The proportional gradient is log points of cost per standard deviation sicker, fitted band by band on each measure's own cost sample with person-clustered standard errors, as in descriptives/17_cost_age_interaction.py. A ratio near one means a unit of health is worth the same proportional amount at every age; the h scales run about 0.7 and the theta scales about 1.0.")
@@ -394,7 +427,7 @@ line('t-statistics', 'Clustered by person. Unclustered versions quoted in earlie
 line('Decile ratios', 'Measures with many tied values at the top, such as phys, split ties by average rank, which moves the ratios by several points.')
 line('Ever-diagnosis items', 'Conditions are cumulative ever-diagnosed indicators, available only from the first condition inventory, which excludes almost all BHPS continuers.')
 line('Formulas', 'The scorecard columns and the condition totals on the Weights sheet are formulas. Their results are stored in the file, so previewers show them, and Excel recalculates them on opening, including after you edit a threshold or a judgement cell.')
-line('Limitation banks', "Six banks, each the four SF-12 testlets plus counts over the UKHLS impairment areas, fitted under the graded-response model and the generalised partial credit model by data_cleaning/07_build_limitation_banks.py. Anyone without a long-standing illness counts as having no limitation in every wave, and a top count category under half a percent of person-waves merges into the one below. All six share P-FUNC's person-waves, so adding them leaves the cost and mortality samples unchanged. The measures note's section on these banks has their figures, fit comparison and weights. Each limitation bank except P-FUNC is also fitted, under the graded-response model only, with the chronic conditions added in two ways: +CC, one count of the sixteen ever-diagnosed physical conditions, 0 to 5 and 6 or more; and +CG, P-FULL's six group items. These need the condition inventory, so they use P-FULL's person-waves; P-FUNC with the six groups is P-FULL itself, reproduced exactly.")
+line('Limitation banks', "Six banks, each the four SF-12 testlets plus counts over the UKHLS impairment areas, fitted under the graded-response model and the generalised partial credit model by data_cleaning/archive/07_build_limitation_banks.py. Anyone without a long-standing illness counts as having no limitation in every wave, and a top count category under half a percent of person-waves merges into the one below. All six share P-FUNC's person-waves, so adding them leaves the cost and mortality samples unchanged. The measures note's section on these banks has their figures, fit comparison and weights. Each limitation bank except P-FUNC is also fitted, under the graded-response model only, with the chronic conditions added in two ways: +CC, one count of the sixteen ever-diagnosed physical conditions, 0 to 5 and 6 or more; and +CG, P-FULL's six group items. These need the condition inventory, so they use P-FULL's person-waves; P-FUNC with the six groups is P-FULL itself, reproduced exactly.")
 line('Reproducibility', 'prevention-health-clustering/descriptives/baseline_measures, scripts 01 to 11, recovered on 15 September 2026 from the session scratch scripts that built the first version; rerunning them reproduces every earlier cell exactly. Intermediate files are in data/processed/baseline_measures, which is not committed.')
 
 # ---------------------------------------------------------------------------- Identification sheet

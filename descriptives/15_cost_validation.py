@@ -140,7 +140,7 @@ def main() -> int:
                  "benchmark": np.nan, "unit": "GBP"})
 
     # ---- 4. the object of interest: the health gradient --------------------
-    d["hdec"] = pd.qcut(d["theta_phys_full"], 10, labels=False,
+    d["hdec"] = pd.qcut(d["theta"], 10, labels=False,
                         duplicates="drop")
     g = d.groupby("hdec")[COST].mean()
     gi = d.groupby("hdec")["flat_cost_inpatient"].mean()

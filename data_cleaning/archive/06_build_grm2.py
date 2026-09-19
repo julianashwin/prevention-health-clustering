@@ -21,6 +21,11 @@ three age bands (20-45, 45-65, 65-91), latent distributions free throughout.
 
 Outputs (gitignored): data/processed/measures/grm2_scores.parquet,
 grm2_items.csv, grm2_age_profiles.csv, grm2_q3.csv.
+
+Archived: the physical/mental bank generation (P-FUNC, P-FULL, P-REC and the
+mental and combined banks), superseded by data_cleaning/04_build_health.py.
+Kept runnable: it produces grm2_scores.parquet, which the clustering
+contracts and several descriptives still read.
 """
 
 from __future__ import annotations
