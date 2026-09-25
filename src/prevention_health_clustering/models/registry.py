@@ -12,7 +12,7 @@ the Stan data payload is derived from it mechanically.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import replace, dataclass, field
 from pathlib import Path
 
 STAN_DIR = Path(__file__).resolve().parent / "stan"
@@ -397,6 +397,55 @@ HEALTH_FI10_SSM_COHORT = ModelSpec(
 )
 
 
+# AR(1) on the observation itself (ar_mode 1), the specification the paper
+# argues against: with no measurement-error term, rho must absorb both genuine
+# persistence and instrument noise. These three exist to test that attenuation
+# on the paper's own measure rather than on the archived one.
+
+HEALTH_THETA_AR1 = ModelSpec(
+    name="health-theta-ar1",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure theta, K=3, AR(1) in the class residual, no measurement error.",
+    channels=("theta",),
+    anchor_channel="theta",
+    ar_mode=1,
+)
+
+HEALTH_H_AR1 = ModelSpec(
+    name="health-h-ar1",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure h, K=3, AR(1) in the class residual, no measurement error.",
+    channels=("h",),
+    anchor_channel="h",
+    ar_mode=1,
+)
+
+HEALTH_FI10_AR1 = ModelSpec(
+    name="health-fi10-ar1",
+    stan_file=GAUSSIAN_PANEL,
+    description="Health measure ten-deficit index, K=3, AR(1), no measurement error.",
+    channels=("fi10",),
+    anchor_channel="fi10",
+    ar_mode=1,
+)
+
+
+# K = 4 and K = 5 on the paper's health measure, theta and h, under independent
+# residuals and under AR(1) plus measurement error. Each is its K = 3 spec with
+# only the class count changed, so the comparison across K is clean.
+
+def _with_k(spec: ModelSpec, k: int, tag: str) -> ModelSpec:
+    return replace(spec, name=f"{spec.name}-k{k}", n_classes=k,
+                   description=spec.description.replace("K=3", f"K={k}") + f" ({tag})")
+
+
+HEALTH_K45 = tuple(
+    _with_k(spec, k, "class-count comparison")
+    for k in (4, 5)
+    for spec in (HEALTH_THETA_BASE, HEALTH_H_BASE, HEALTH_THETA_SSM, HEALTH_H_SSM)
+)
+
+
 REGISTRY: dict[str, ModelSpec] = {
     spec.name: spec
     for spec in (
@@ -426,6 +475,10 @@ REGISTRY: dict[str, ModelSpec] = {
         HEALTH_THETA_SSM_COHORT,
         HEALTH_H_SSM_COHORT,
         HEALTH_FI10_SSM_COHORT,
+        HEALTH_THETA_AR1,
+        HEALTH_H_AR1,
+        HEALTH_FI10_AR1,
+        *HEALTH_K45,
     )
 }
 

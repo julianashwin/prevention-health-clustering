@@ -1,6 +1,6 @@
 """Figure 8: lifecycle health trajectories by health type and by observable groups.
 
-Four panels on the clustered people (h, at least three observed ages 20-90),
+Four panels on the clustered people (h, the health contract: at least three observed ages 20-89),
 each series an age-specific cell mean of h, cells with fewer than 30 people
 suppressed:
   (a) the three health types
@@ -9,6 +9,9 @@ suppressed:
       within-wave rank of equivalised household net income (3), 48 groups
   (c) highest qualification
   (d) deciles of the income rank
+Panels (b) and (d) involve income and stop at age 70 (INCOME_MAX_AGE): past
+retirement a household income rank says more about pensions and household
+composition than about the working-life gradient the panels are meant to show.
 Education and income come from data_cleaning/06_build_observables.py; sex and
 ethnic group from the processed panel (first non-missing value per person).
 
@@ -39,6 +42,7 @@ from prevention_health_clustering.config import PROCESSED_DATA_DIR  # noqa: E402
 EDUC_ORDER = ["other/none", "GCSE", "A-level", "degree or higher"]
 INC_ORDER = ["bottom third", "middle third", "top third"]
 CHECK_AGES = [30, 50, 70]
+INCOME_MAX_AGE = 70
 MIN_CELL = 30
 
 
@@ -92,6 +96,7 @@ def main() -> int:
     # (b) partitions
     ax = axes[0, 1]
     t = cell_means(s.dropna(subset=["partition"]), "partition", v)
+    t = t[t["age"] <= INCOME_MAX_AGE]
     cmap = plt.get_cmap("winter")
     for k, (g, q) in enumerate(t.groupby("partition")):
         ax.plot(q["age"], q["mean"], color=cmap(k / max(t["partition"].nunique() - 1, 1)), lw=0.8, alpha=0.8)
@@ -107,6 +112,7 @@ def main() -> int:
     # (d) income deciles
     ax = axes[1, 1]
     t = cell_means(s.dropna(subset=["income_decile"]), "income_decile", v)
+    t = t[t["age"] <= INCOME_MAX_AGE]
     for k in range(10):
         q = t[t["income_decile"] == f"D{k + 1}"]
         ax.plot(q["age"], q["mean"], color=cmap(k / 9), lw=1.4, label=f"D{k + 1}")
@@ -118,17 +124,18 @@ def main() -> int:
     for ax in axes[:, 0]:
         ax.set_ylabel("mean $h$")
     fig.text(0.01, -0.01,
-             f"Clustered people ({len(L):,}, at least three observed ages 20-90). Every series is the age-specific mean "
+             f"Clustered people ({len(L):,}: the health contract, at least three observed ages 20-89). Every series is the age-specific mean "
              "of h, cells with fewer than 30 people suppressed. Partitions in (b): highest qualification (4) x sex (2) x\n"
              "white / other ethnic group (2) x income tercile (3). Income is the person's mean within-wave percentile "
-             "rank of equivalised household net income; education the highest qualification ever recorded.",
+             "rank of equivalised household net income; education the highest qualification ever recorded.\n"
+             f"Panels (b) and (d) involve income and stop at age {INCOME_MAX_AGE}.",
              fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / "fig_observables.png")
 
     rows, recs = [], []
     per_l = per.join(L.rename("cluster"))
     for col, name in [("educ_group", "education (4 groups)"), ("income_group", "income tercile"),
-                      ("income_decile", "income decile"), ("partition", "education x sex x ethnicity x income (48)"),
+                      ("income_decile", "income decile"), ("partition", "education x sex x ethnicity x income"),
                       ("cluster", "health types (K = 3)")]:
         bs = between_share(s, col, v)
         ok = per_l.dropna(subset=[col, "cluster"])
@@ -139,6 +146,24 @@ def main() -> int:
                 ["partition"] + [f"between share, age {a}" for a in CHECK_AGES] + ["ARI vs types"], rows)
     out = pd.DataFrame(recs)
     out.to_csv(DESC / "paper_observables.csv", index=False)
+    # the gradients the text quotes: group means at 50, the income gap by age, the spread of the partitions
+    g = []
+    m50 = lambda col: cell_means(s.dropna(subset=[col]), col, v).query("age == 50").set_index(col)["mean"]  # noqa: E731
+    e = m50("educ_group"); g += [{"quantity": f"h at 50, {k}", "value": val} for k, val in e.items()]
+    d10 = cell_means(s.dropna(subset=["income_decile"]), "income_decile", v)
+    gap = d10.pivot(index="age", columns="income_decile", values="mean")
+    gap = (gap["D10"] - gap["D1"]).loc[:INCOME_MAX_AGE]
+    g += [{"quantity": "h at 50, income D1", "value": gap.index.size and d10.query("age == 50 and income_decile == 'D1'")["mean"].iloc[0]},
+          {"quantity": "h at 50, income D10", "value": d10.query("age == 50 and income_decile == 'D10'")["mean"].iloc[0]},
+          {"quantity": "age of widest D10-D1 gap", "value": float(gap.idxmax())}, {"quantity": "widest D10-D1 gap", "value": float(gap.max())},
+          {"quantity": "ages with D10-D1 gap within 0.01 of its max", "value": ",".join(str(a) for a in gap[gap >= gap.max() - 0.01].index)}]
+    pm = cell_means(s.dropna(subset=["partition"]), "partition", v); tm = cell_means(s, "cluster", v)
+    for a in (30, 50, 70):
+        q = pm[pm["age"] == a]["mean"]; t_ = tm[tm["age"] == a]["mean"]
+        g += [{"quantity": f"range across the {pm['partition'].nunique()} partitions at {a}", "value": q.max() - q.min()},
+              {"quantity": f"range across the types at {a}", "value": t_.max() - t_.min()}]
+    g = pd.DataFrame(g); g.to_csv(DESC / "paper_observables_gradients.csv", index=False)
+    print(g.to_string(index=False))
     print(out.round(3).to_string(index=False))
     print("wrote fig_observables.png and tab_observables.tex")
     return 0

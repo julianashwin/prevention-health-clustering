@@ -1,40 +1,35 @@
-"""Stage 4b: does the health-cost relationship change with age?
+"""Stage 4b: does the health-cost relationship change with age? In pounds.
 
 The framework's question is what a unit of health improvement is worth, and
-whether that depends on when in life it happens. Two versions, which can
-give opposite answers and are routinely confused:
+whether that depends on when in life it happens. Cost is kept in pounds
+throughout: convexity of cost in health is already the non-linearity the
+framework cares about, and a log or proportional gradient would change the
+estimand from mean cost to something else.
 
-  ABSOLUTE     pounds avoided per SD of health. This is the cost-benefit
-               object. It almost has to rise with age, because the base
-               level of spending rises with age.
-  PROPORTIONAL log points per SD, i.e. the percentage difference in cost
-               between someone 1 SD sicker than average and the average.
-               This asks whether health DISCRIMINATES more at older ages.
+The pound gradient per SD of health almost has to rise with age over the full
+range, for a reason that has nothing to do with health mattering more: the
+cost-health curve is convex, and older people sit further into its steep
+region. Three tests separate that composition effect from a genuine change in
+the curve:
 
-The decomposition is exact in the sense that
-    absolute slope  ~=  mean cost at that age  x  proportional slope,
-so if the proportional gradient is flat, every bit of age variation in the
-absolute gradient is the rising base and nothing about health mattering more.
+  1. cost at a fixed level of health, by age, in bins of the pooled health
+     distribution. The bins are percentiles, so this test is identical on
+     every ruler (theta, h, any monotone rescaling).
+  2. the slope over a common support, a window of pooled percentiles every
+     age band populates. The same people on every ruler, though the slope is
+     per SD of the ruler. It is fragile: single answer patterns hold up to
+     11% of the sample, so where the window edge falls moves the young band's
+     slope. It is therefore reported across windows, not for one.
+  3. a pooled regression of cost on age, age squared, health, health squared
+     and health x age. The quadratic in health absorbs the convexity, so the
+     interaction asks whether the curve itself tilts with age.
 
-Health here is the project's measure (data_cleaning/04_build_health.py) on
-its theta scale. The comparison is only legitimate because the model was
-fitted against a pooled N(0,1) and scored under the pooled prior, so a theta
-of -1 means the same latent health at 30 as at 80; age-standardised measures
-would build the answer in. Read the numbers as statements about theta: on the
-0-1 expected-score scale the same data give a gradient a third smaller at 80
-than at 25 (measuring_health/health_measure_construction.tex, section 5.3).
+Health is the project's measure (data_cleaning/04_build_health.py), reported
+on theta and on h. theta is comparable across ages by construction (fitted
+against a pooled N(0,1), scored under the pooled prior), and h is a monotone
+function of it, so both are. Standard errors are clustered on the person.
 
-A third quantity turns out to matter more than either. The cost-health curve
-is convex, so a linear slope depends on where the mass sits. Older people sit
-further into the steep region, which inflates the absolute slope without the
-underlying relationship changing at all. The slope is therefore reported
-twice: over the full range, and over the common support z in [-2, 1] where
-every age band has substantial mass.
-
-Standard errors are clustered on the person: the same people appear in up to
-nine waves.
-
-Outputs: measuring_health/figures/fig_cost_age_interaction.png,
+Outputs: measuring_health/figures/fig_cost_age_interaction.png and the same file in paper/figures/,
          artifacts/descriptives/cost_age_interaction.csv
 """
 
@@ -48,7 +43,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _style import BLUE, GREEN, INK2, ORANGE, VERM, apply_style  # noqa: E402
+from _style import BLUE, INK2, ORANGE, VERM, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import (
     ARTIFACTS_DIR, PROCESSED_DATA_DIR, ROOT_DIR)
@@ -56,6 +51,9 @@ from prevention_health_clustering.config import (
 BANDS = [(20, 34), (35, 44), (45, 54), (55, 64), (65, 74), (75, 90)]
 LAB = ["20-34", "35-44", "45-54", "55-64", "65-74", "75-90"]
 COST = "flat_cost_total"
+SCALES = [("theta", r"$\theta$", BLUE), ("h", "$h$", ORANGE)]
+SUPPORT = (0.10, 0.90)
+WINDOWS = [(0.05, 0.95), (0.10, 0.90), (0.15, 0.85), (0.20, 0.80), (0.25, 0.75)]
 
 
 def ols_cluster(X, y, groups):
@@ -79,81 +77,92 @@ def main() -> int:
     d = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "cost_index.parquet")
     d = d[d[COST].notna() & d["age"].notna() & d["theta"].notna()]
     d = d[d["age"].between(20, 90)].copy()
-    d["z"] = (d["theta"] - d["theta"].mean()) / d["theta"].std()
-    d["logc"] = np.log(d[COST] + 1.0)
     d["band"] = pd.cut(d["age"], [b[0] - 1 for b in BANDS] + [90], labels=LAB)
-    print(f"{len(d):,} person-waves, {d['pidp'].nunique():,} people")
+    d["pct"] = d["theta"].rank(pct=True)          # identical on theta and h
+    cap = d[COST].quantile(0.99)
+    d["cost_cap"] = d[COST].clip(upper=cap)
+    print(f"{len(d):,} person-waves, {d['pidp'].nunique():,} people; "
+          f"mean £{d[COST].mean():,.0f}, p99 cap £{cap:,.0f}")
+    support = d["pct"].between(*SUPPORT)
 
-    # ---- gradients band by band -------------------------------------------
-    SICK = float(np.quantile(d["z"], 0.10))
+    # ---- 2. slopes band by band, per SD of each ruler ----------------------
     rows = []
-    for lab in LAB:
-        s = d[d["band"] == lab]
-        g = s["pidp"].to_numpy()
-        X = np.column_stack([np.ones(len(s)), s["z"]])
-        b_abs, se_abs = ols_cluster(X, s[COST].to_numpy(float), g)
-        b_log, se_log = ols_cluster(X, s["logc"].to_numpy(float), g)
-        c = s[s["z"].between(-2, 1)]
-        Xc = np.column_stack([np.ones(len(c)), c["z"]])
-        b_cs, se_cs = ols_cluster(Xc, c[COST].to_numpy(float),
-                                  c["pidp"].to_numpy())
-        rows.append({"band": lab, "n": len(s), "people": s["pidp"].nunique(),
-                     "mean_cost": s[COST].mean(),
-                     "abs_slope": -b_abs[1], "abs_se": se_abs[1],
-                     "log_slope": -b_log[1], "log_se": se_log[1],
-                     "cs_slope": -b_cs[1], "cs_se": se_cs[1],
-                     "share_sickest": float((s["z"] <= SICK).mean())})
+    for col, name, _ in SCALES:
+        z = (d[col] - d[col].mean()) / d[col].std()
+        d[f"z_{col}"] = z
+        for lab in LAB:
+            m = (d["band"] == lab).to_numpy()
+            s = d[m]
+            g = s["pidp"].to_numpy()
+            X = np.column_stack([np.ones(m.sum()), z[m]])
+            b, se = ols_cluster(X, s[COST].to_numpy(float), g)
+            mc = m & support.to_numpy()
+            Xc = np.column_stack([np.ones(mc.sum()), z[mc]])
+            bc, sec = ols_cluster(Xc, d.loc[mc, COST].to_numpy(float), d.loc[mc, "pidp"].to_numpy())
+            rows.append({"scale": col, "band": lab, "n": int(m.sum()), "mean_cost": s[COST].mean(),
+                         "slope": -b[1], "se": se[1], "cs_slope": -bc[1], "cs_se": sec[1],
+                         "share_sickest": float((s["pct"] <= 0.10).mean())})
     t = pd.DataFrame(rows)
-    t["implied_abs"] = t["mean_cost"] * t["log_slope"]
-    print("\ngradient in cost per SD of WORSE physical health, by age band:")
-    print(t[["band", "n", "mean_cost", "abs_slope", "abs_se", "log_slope",
-             "log_se"]].round(3).to_string(index=False))
-    print("\n  abs_slope = £ more per SD sicker;  log_slope = log points per SD")
+    print("\n£ more per SD sicker, by age band: full range, and on the common support "
+          f"(pooled percentiles {SUPPORT[0]:.0%}-{SUPPORT[1]:.0%}):")
+    print(t.pivot(index="band", columns="scale", values=["slope", "cs_slope"]).round(0).to_string())
+    for col, _, _ in SCALES:
+        u = t[t["scale"] == col].set_index("band")
+        print(f"  {col:5s} full range £{u.loc['20-34','slope']:,.0f} -> £{u.loc['75-90','slope']:,.0f} "
+              f"({u.loc['75-90','slope']/u.loc['20-34','slope']:.2f}x);  common support "
+              f"£{u.loc['20-34','cs_slope']:,.0f} -> £{u.loc['75-90','cs_slope']:,.0f} "
+              f"({u.loc['75-90','cs_slope']/u.loc['20-34','cs_slope']:.2f}x)")
+    win = []
+    for lo_, hi_ in WINDOWS:
+        rec = {"window": f"{lo_:.0%}-{hi_:.0%}", "width": hi_ - lo_}
+        for col, _, _ in SCALES:
+            sl = []
+            for a0, a1 in (BANDS[0], BANDS[-1]):
+                m = (d["age"].between(a0, a1) & d["pct"].between(lo_, hi_)).to_numpy()
+                X = np.column_stack([np.ones(m.sum()), d.loc[m, f"z_{col}"]])
+                b, _ = ols_cluster(X, d.loc[m, COST].to_numpy(float), d.loc[m, "pidp"].to_numpy())
+                sl.append(-b[1])
+            rec[col] = sl[1] / sl[0]
+        win.append(rec)
+    win = pd.DataFrame(win)
+    print("\n  ratio of the 75-90 to the 20-34 slope, by common-support window:")
+    print(win.round(2).to_string(index=False))
+    sh = t[t["scale"] == "theta"].set_index("band")["share_sickest"]
+    print(f"  share of the band in the sickest pooled decile: {sh.iloc[0]:.1%} -> {sh.iloc[-1]:.1%}")
 
-    lo, hi = t["abs_slope"].iloc[0], t["abs_slope"].iloc[-1]
-    llo, lhi = t["log_slope"].iloc[0], t["log_slope"].iloc[-1]
-    clo, chi = t["cs_slope"].iloc[0], t["cs_slope"].iloc[-1]
-    print(f"\n  ABSOLUTE gradient, full range:  £{lo:,.0f} at 20-34 -> "
-          f"£{hi:,.0f} at 75-90  ({hi / lo:.1f}x)")
-    print(f"  ABSOLUTE, common support:      £{clo:,.0f} -> £{chi:,.0f}"
-          f"  ({chi / clo:.2f}x)")
-    print(f"  PROPORTIONAL:                  {llo:.3f} -> {lhi:.3f} log points"
-          f"  ({lhi / llo:.2f}x)")
-    print(f"  share of the band in the sickest pooled decile: "
-          f"{t['share_sickest'].iloc[0]:.1%} -> {t['share_sickest'].iloc[-1]:.1%}")
-
-    # ---- formal interaction test ------------------------------------------
+    # ---- 3. the pooled interaction test ------------------------------------
     a = (d["age"].to_numpy(float) - 50) / 10.0
-    z = d["z"].to_numpy()
     g = d["pidp"].to_numpy()
-    print("\ninteraction tests (age centred at 50, in decades; "
-          "cluster-robust on person):")
-    for name, y in (("cost, £", d[COST].to_numpy(float)),
-                    ("log cost", d["logc"].to_numpy(float))):
-        X = np.column_stack([np.ones(len(d)), a, a**2, z, z**2, z * a])
-        b, se = ols_cluster(X, y, g)
-        print(f"  {name:9s}  theta {b[3]:9.4f} ({b[3]/se[3]:6.1f})   "
-              f"theta^2 {b[4]:8.4f} ({b[4]/se[4]:6.1f})   "
-              f"theta x age {b[5]:8.4f} ({b[5]/se[5]:6.1f})")
-        rows.append({"band": f"interaction:{name}", "abs_slope": b[5],
-                     "abs_se": se[5]})
+    print("\ninteraction test: cost on age, age^2, health, health^2, health x age "
+          "(age centred at 50, in decades; health oriented so higher = sicker):")
+    inter = []
+    for col, _, _ in SCALES:
+        z = -d[f"z_{col}"].to_numpy()
+        for yname in (COST, "cost_cap"):
+            X = np.column_stack([np.ones(len(d)), a, a**2, z, z**2, z * a])
+            b, se = ols_cluster(X, d[yname].to_numpy(float), g)
+            tag = "uncapped" if yname == COST else "capped p99"
+            print(f"  {col:5s} {tag:10s} health £{b[3]:7.1f} ({b[3]/se[3]:5.1f})  "
+                  f"health^2 £{b[4]:6.1f} ({b[4]/se[4]:5.1f})  health x age £{b[5]:6.1f} ({b[5]/se[5]:5.1f})")
+            inter.append({"scale": col, "cost": tag, "health": b[3], "health_t": b[3] / se[3],
+                          "health2": b[4], "health2_t": b[4] / se[4],
+                          "health_x_age": b[5], "health_x_age_t": b[5] / se[5]})
 
-    # ---- the same person-type at every age --------------------------------
-    print("\ncost at a fixed level of health, by age band "
-          "(theta bins, pooled edges):")
-    edges = np.quantile(d["z"], [0, .1, .25, .5, .75, .9, 1])
-    d["zb"] = pd.cut(d["z"], edges, labels=["p0-10", "p10-25", "p25-50",
-                                            "p50-75", "p75-90", "p90-100"],
+    # ---- 1. cost at a fixed level of health --------------------------------
+    print("\ncost at a fixed level of health, by age band (pooled percentile bins, "
+          "the same on every ruler):")
+    d["zb"] = pd.cut(d["pct"], [0, .1, .25, .5, .75, .9, 1],
+                     labels=["p0-10", "p10-25", "p25-50", "p50-75", "p75-90", "p90-100"],
                      include_lowest=True)
-    piv = d.pivot_table(index="band", columns="zb", values=COST,
-                        aggfunc="mean", observed=True)
+    piv = d.pivot_table(index="band", columns="zb", values=COST, aggfunc="mean", observed=True)
     print(piv.round(0).to_string())
     gap = piv["p0-10"] / piv["p90-100"]
     print("\n  ratio of sickest tenth to healthiest tenth, by age band:")
     print("   " + "  ".join(f"{b}: {v:.1f}x" for b, v in gap.items()))
 
-    pd.DataFrame(rows).to_csv(
-        ARTIFACTS_DIR / "descriptives" / "cost_age_interaction.csv", index=False)
+    out = pd.concat([t.assign(table="slopes"), pd.DataFrame(inter).assign(table="interaction"),
+                     win.assign(table="windows")])
+    out.to_csv(ARTIFACTS_DIR / "descriptives" / "cost_age_interaction.csv", index=False)
 
     # ---- figure ------------------------------------------------------------
     fig, axes = plt.subplots(2, 3, figsize=(15.0, 8.0))
@@ -166,7 +175,7 @@ def main() -> int:
         ax.plot(range(len(bins)), piv.loc[lab].to_numpy(), "o-", color=cmap[i],
                 lw=1.9, ms=4, label=lab)
     ax.set_xticks(range(len(bins)), bins, fontsize=7, rotation=30)
-    ax.set_xlabel("bin of $\\theta$ (pooled edges, low = sickest)")
+    ax.set_xlabel("pooled percentile of health (low = sickest)")
     ax.set_ylabel("cost index, £ per person-year")
     ax.set_title("(a) One curve, not six", fontsize=10)
     ax.legend(fontsize=6.6, frameon=False, title="age", title_fontsize=6.6)
@@ -177,16 +186,15 @@ def main() -> int:
         ax.plot(x, piv[b].reindex(LAB).to_numpy(), "o-", lw=1.9, ms=4,
                 color=plt.cm.plasma(k / (len(bins) - 1) * 0.85), label=b)
     ax.set_xticks(x, LAB, fontsize=7.5, rotation=20)
-    ax.set_yscale("log")
-    ax.set_xlabel("age band"); ax.set_ylabel("cost index, £ (log scale)")
+    ax.set_xlabel("age band"); ax.set_ylabel("cost index, £ per person-year")
     ax.set_title("(b) At fixed health, cost barely moves with age", fontsize=10)
-    ax.set_ylim(top=ax.get_ylim()[1] * 3.2)
+    ax.set_ylim(0, piv.to_numpy().max() * 1.3)
     ax.legend(fontsize=6.4, frameon=False, ncol=3, loc="upper center",
-              title="$\\theta$ bin", title_fontsize=6.4)
+              title="health percentile", title_fontsize=6.4)
     ax.grid(True)
 
     ax = axes[0, 2]
-    ax.plot(x, gap.reindex(LAB).to_numpy(), "o-", color=ORANGE, lw=2, ms=6)
+    ax.plot(x, gap.reindex(LAB).to_numpy(), "o-", color=VERM, lw=2, ms=6)
     ax.set_xticks(x, LAB, fontsize=7.5, rotation=20)
     ax.set_ylim(bottom=0)
     ax.set_xlabel("age band")
@@ -194,49 +202,48 @@ def main() -> int:
     ax.set_title("(c) The health gap narrows slightly", fontsize=10)
     ax.grid(True)
 
-    ax = axes[1, 0]
-    ax.errorbar(x, t["abs_slope"], yerr=1.96 * t["abs_se"], fmt="o-",
-                color=VERM, lw=2, ms=6, capsize=3, label="full range")
-    ax.errorbar(x, t["cs_slope"], yerr=1.96 * t["cs_se"], fmt="s--",
-                color=BLUE, lw=1.8, ms=5, capsize=3,
-                label="common support, $z\\in[-2,1]$")
-    ax.set_xticks(x, LAB, fontsize=7.5, rotation=20)
-    ax.set_ylim(bottom=0)
-    ax.set_xlabel("age band"); ax.set_ylabel("£ per SD sicker")
-    ax.set_title(f"(d) The {hi/lo:.1f}x rise is mostly composition", fontsize=10)
+    for ax, key, ttl in ((axes[1, 0], "slope", "(d) Full range: the slope rises with age"),):
+        for j, (col, name, c) in enumerate(SCALES):
+            u = t[t["scale"] == col]
+            se = "se" if key == "slope" else "cs_se"
+            ax.errorbar(x + (j - 0.5) * 0.12, u[key], yerr=1.96 * u[se], fmt="o-", color=c,
+                        lw=1.9, ms=5, capsize=3, label=f"per SD of {name}")
+        ax.set_xticks(x, LAB, fontsize=7.5, rotation=20)
+        ax.set_ylim(bottom=0)
+        ax.set_xlabel("age band"); ax.set_ylabel("£ per SD sicker")
+        ax.set_title(ttl, fontsize=10)
+        ax.legend(fontsize=7, frameon=False); ax.grid(True)
+    ax = axes[1, 1]
+    for col, name, c in SCALES:
+        ax.plot(win["width"] * 100, win[col], "o-", color=c, lw=1.9, ms=5, label=f"per SD of {name}")
+    ax.axhline(1, color=INK2, lw=0.9)
+    ax.set_xticks(win["width"] * 100, win["window"], fontsize=7.5)
+    ax.set_xlabel("common-support window, pooled percentiles")
+    ax.set_ylabel("slope at 75-90 / slope at 20-34")
+    ax.set_title("(e) On a common support: near one, window-sensitive", fontsize=10)
     ax.legend(fontsize=7, frameon=False); ax.grid(True)
 
-    ax = axes[1, 1]
-    ax.errorbar(x, t["log_slope"], yerr=1.96 * t["log_se"], fmt="o-",
-                color=GREEN, lw=2, ms=6, capsize=3)
-    ax.set_xticks(x, LAB, fontsize=7.5, rotation=20)
-    ax.set_ylim(0, 1.35)
-    ax.set_xlabel("age band"); ax.set_ylabel("log points per SD sicker")
-    ax.set_title("(e) Proportional gradient is flat", fontsize=10)
-    ax.grid(True)
-
     ax = axes[1, 2]
-    ax.bar(x, t["share_sickest"] * 100, color=INK2, width=0.62)
+    ax.bar(x, sh.reindex(LAB).to_numpy() * 100, color=INK2, width=0.62)
     ax.set_xticks(x, LAB, fontsize=7.5, rotation=20)
     ax.set_xlabel("age band")
     ax.set_ylabel("% of the band in the sickest pooled decile")
-    ax.set_title("(f) What ageing does: moves people down the curve",
-                 fontsize=10)
+    ax.set_title("(f) What ageing does: moves people down the curve", fontsize=10)
     ax.grid(True, axis="y")
 
-    fig.suptitle("Stage 4: the health-cost relationship is close to "
+    fig.suptitle("Stage 4: in pounds, the health-cost relationship is close to "
                  "age-invariant; the health distribution is not",
                  fontweight="bold", y=0.995)
     fig.text(0.01, -0.005,
-             "Cost index, waves 7-15. Physical GRM theta is comparable across ages by construction (multigroup by single year of age\n"
-             "against a pooled N(0,1)), so a fixed theta means the same latent health at 30 and at 80. Bands are 95% intervals from\n"
-             "standard errors clustered on the person. Panel (d): the cost-health curve is convex, so a linear slope depends on where\n"
-             "the mass sits; restricting to a range every age band populates removes most of the apparent steepening.",
+             "Cost index in pounds, waves 7-15. Panels (a)-(c) and (f) use percentiles of the pooled health distribution, so they are the same on every\n"
+             "health scale. Panel (d) gives the pound slope per standard deviation of theta and of h over the full range; panel (e) the ratio of the\n"
+             "oldest to the youngest band's slope within windows of the pooled distribution, the same people on both scales. 95% intervals clustered on the person.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout(rect=[0, 0.045, 1, 1])
-    out = ROOT_DIR / "measuring_health" / "figures" / "fig_cost_age_interaction.png"
-    fig.savefig(out, dpi=200, bbox_inches="tight")
-    print(f"\nwrote {out}")
+    for out in (ROOT_DIR / "measuring_health" / "figures" / "fig_cost_age_interaction.png",   # the construction note
+                ROOT_DIR / "paper" / "figures" / "fig_cost_age_interaction.png"):             # the paper
+        fig.savefig(out, dpi=200, bbox_inches="tight")
+        print(f"wrote {out}")
     return 0
 
 

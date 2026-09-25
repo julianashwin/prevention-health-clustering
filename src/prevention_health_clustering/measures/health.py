@@ -128,11 +128,46 @@ def projection_weights(codes: pd.DataFrame, score: np.ndarray) -> tuple[pd.Serie
     return pd.Series(b[1:] / b[1:].sum(), index=list(HEALTH_ITEMS)), float(r2)
 
 
+def one_factor_score(codes: pd.DataFrame, orient: np.ndarray | None = None
+                     ) -> tuple[np.ndarray, pd.Series, float]:
+    """The linear factor model on the eight codes, treated as continuous.
+
+    One factor fitted to the correlation matrix of the standardised codes by
+    iterated principal axes (the least-squares fit, equal here to maximum
+    likelihood at the precision that matters), scored by regression
+    (Thurstone) weights and standardised. This is what a linear measurement
+    system of the skill-formation kind does with ordinal items: it keeps the
+    loadings but imposes equal spacing between adjacent categories.
+
+    Returns the score (higher = better health when ``orient`` is given and
+    positively ordered), the loadings, and the first eigenvalue's share of
+    the trace.
+    """
+    X = codes[list(HEALTH_ITEMS)].to_numpy(float)
+    Z = (X - X.mean(axis=0)) / X.std(axis=0)
+    R = np.corrcoef(Z, rowvar=False)
+    psi = np.full(len(HEALTH_ITEMS), 0.5)
+    for _ in range(1000):
+        w, v = np.linalg.eigh(R - np.diag(psi))
+        lam = v[:, -1] * np.sqrt(max(w[-1], 1e-12))
+        new = np.clip(1 - lam**2, 1e-3, 1.0)
+        if np.max(np.abs(new - psi)) < 1e-10:
+            psi = new
+            break
+        psi = new
+    fs = Z @ np.linalg.solve(R, lam)
+    if orient is not None and np.corrcoef(fs, orient)[0, 1] < 0:
+        fs, lam = -fs, -lam
+    share = float(np.linalg.eigvalsh(R)[-1] / len(HEALTH_ITEMS))
+    return (fs - fs.mean()) / fs.std(), pd.Series(lam, index=list(HEALTH_ITEMS)), share
+
+
 __all__ = [
     "CONDITION_GROUPS",
     "HEALTH_GROUPS",
     "HEALTH_ITEMS",
     "build_deficit_index",
     "build_health_items",
+    "one_factor_score",
     "projection_weights",
 ]

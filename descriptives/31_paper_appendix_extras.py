@@ -3,7 +3,7 @@
 Part A (fig_exhibit1_cost.png). The cost index (waves 7-15, one row per
 person-wave that answered the utilisation block) through Exhibit 1's three
 panels: mean, variance and covariance rows by age, in pounds capped at the
-99th percentile and in log(1 + pounds). Rows run eight years, the most the
+99th percentile. Rows run eight years, the most the
 nine utilisation waves allow.
 
 Part B (fig_returns_cost.png, tab_returns_cost.tex). The framework's returns
@@ -91,19 +91,19 @@ def main() -> int:
     cost = cost.sort_values(["pidp", "age", "wave"]).drop_duplicates(["pidp", "age"])
     cap = cost[COST].quantile(0.99)
     cost["cost_capped"] = cost[COST].clip(upper=cap)
-    cost["log_cost"] = np.log1p(cost[COST])
-    fig, axes = plt.subplots(2, 3, figsize=(11, 6.2))
-    for i, (v, lab) in enumerate([("cost_capped", f"cost index, £ capped at £{cap:,.0f}"), ("log_cost", "log(1 + cost index)")]):
-        smooth, rows = profile_rows(cost, v, row_len=8)
-        draw_exhibit1_row(axes[i], smooth, rows, lab, "abc" if i == 0 else "def", legend=(i == 0))
-        pd.concat([smooth.reset_index().assign(kind="profile"), rows.assign(kind="row")]).assign(variant=v).to_csv(
-            DESC / f"paper_exhibit1_cost_{v}.csv", index=False)
-    for ax in axes[1]:
-        ax.set_xlabel("age")
+    fig, axes = plt.subplots(3, 1, figsize=(5.4, 9), gridspec_kw={"hspace": 0.33})
+    v, lab = "cost_capped", f"cost index, \u00a3 capped at \u00a3{cap:,.0f}"
+    smooth, rows = profile_rows(cost, v, row_len=8)
+    draw_exhibit1_row(axes, smooth, rows, lab, legend=True,
+                      titles=[f"(a) {lab}: mean", "(b) variance", "(c) rows of the covariance matrix"])
+    pd.concat([smooth.reset_index().assign(kind="profile"), rows.assign(kind="row")]).assign(variant=v).to_csv(
+        DESC / f"paper_exhibit1_cost_{v}.csv", index=False)
+    axes[2].set_xlabel("age")
     fig.text(0.01, -0.01, f"{len(cost):,} person-ages on {cost['pidp'].nunique():,} people, waves 7-15, ages 20-90. "
-             "Five-year centred rolling means; cells with fewer than 100 person-ages dropped; rows run eight years.",
+             "Five-year centred rolling means;\ncells with fewer than 100 person-ages dropped; rows run eight years. "
+             "Panels (b) and (c) share a vertical scale.",
              fontsize=7.4, color=INK2, va="top")
-    fig.tight_layout(); fig.savefig(FIG / "fig_exhibit1_cost.png"); plt.close(fig)
+    fig.savefig(FIG / "fig_exhibit1_cost.png"); plt.close(fig)
 
     # ---- Part B: returns under the estimated cost curve ---------------------------
     d = load_measure()

@@ -1,6 +1,7 @@
 """Early mode check for a running multidim state-space fit.
 
-The K=3 multidim SSM has at least two local optima on small samples. In one,
+The K=3 multidim SSM has at least two local optima on small samples.
+Persistence is now class x channel; the check reads the physical channel (rho.k.1). In one,
 classes 2 and 3 are separated by the anchor INTERCEPT; in the other their
 intercepts sit pinned together against the ordering constraint and the
 classes separate by SLOPE instead. Chains in different modes produce a large
@@ -11,7 +12,7 @@ distinguish the modes -- so a bad run can be stopped hours in rather than
 after twenty. Safe to run at any time; chains still in warmup are skipped.
 
     PYTHONPATH=src .venv/bin/python clustering/runs/multidim_mode_check.py \
-        artifacts/multidim-ssm/ssm-mort
+        artifacts/multidim-health/theta-ssm-mort
 """
 
 from __future__ import annotations
@@ -52,7 +53,7 @@ def main(argv=None) -> int:
             print(f"{i:>6d} {'--':>6s}   (warmup)")
             continue
         g = lambda n: dat[:, hdr.index(n)].mean()
-        r = [g(f"rho.{k}") for k in (1, 2, 3)]
+        r = [g(f"rho.{k}.1") for k in (1, 2, 3)]  # physical-channel persistence
         i2, i3, s2 = g("coef.1.2.1"), g("coef.1.3.1"), g("coef.1.2.2")
         keep.append(r + [i3 - i2])
         print(f"{i:>6d} {len(dat):>6d} " + " ".join(f"{x:7.4f}" for x in r)

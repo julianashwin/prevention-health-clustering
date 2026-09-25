@@ -18,6 +18,9 @@ installable package they all import.
 ├── descriptives/    figures and tables            -> artifacts/descriptives/
 ├── clustering/      model fits, validation, benchmarks -> artifacts/
 ├── policy/          counterfactual analysis (planned)
+├── measuring_health/  the empirical construction note (measure + cost index), the archived measure search
+├── conceptual_framework/  the framework note, its figures and checks
+├── paper/           the paper skeleton
 ├── src/prevention_health_clustering/
 │   ├── data/        UKHLS ingest and cleaning
 │   ├── measures/    SF-12 rebuild, UK variants, phys-only, SF-6D, composites

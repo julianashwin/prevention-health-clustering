@@ -26,6 +26,8 @@ Paper scripts (`2x_paper_*.py`, all on the health measure; figures to
 | `29_paper_moments.py` | Exhibit 2 and the identification moments behind it, self-contained: four ages two years apart, Cases 2-4, balanced and pairwise, theta / h / fi10 |
 | `30_paper_framework_empirics.py` | the framework note's empirical figures on the paper's measure: rows, surface, local triple, Case 2 windows, convexity, the bundle-fit C_Hd(a) with a person bootstrap (`BOOT`, default 200; ~5 min) |
 | `31_paper_appendix_extras.py` | Appendix B: Exhibit 1 for the cost index, and the returns under the estimated cost curve |
+| `36_paper_trajectories.py` | structure's Figure 5: class paths and shares for h and theta under both specifications, with composition strips; deficit-index twin for the appendix |
+| `34_paper_cohort.py` | Appendix B.5: the birth-decade cohort fits (`artifacts/health-ssm-cohort/`): class paths with and without cohort shifts, decade profiles raw and net, the shifts with intervals |
 | `33_paper_prediction.py` | Figure 9: next-wave h, death, in-patient stay and GP band from what is known at t; observables, types, class posteriors, the measure and its lag |
 | `32_paper_bayes_fits.py` | the K = 3 mixtures on the health contract against the K-means types: paths, composition, person-by-person cross-tab; `base` (`artifacts/health-base/`) or `ssm` (`artifacts/health-ssm/`, Kalman posteriors) on the command line |
 

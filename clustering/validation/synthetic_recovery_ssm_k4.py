@@ -27,6 +27,10 @@ AR(1) contrast of the K=3 recovery is not needed for either question.
 
     PYTHONPATH=src .venv/bin/python \
         clustering/validation/synthetic_recovery_ssm_k4.py
+
+On the paper's measure, with the health-theta-ssm-k4 posterior mean as truth:
+    ... --truth artifacts/health-k45/health-theta-ssm-k4/run_summary.json \
+        --channel theta --model health-theta-ssm-k4 --output artifacts/recovery-health-theta-k4
 """
 
 from __future__ import annotations
@@ -157,6 +161,7 @@ def classification(pl, prm: dict, true_by_pidp: pd.Series):
 
 
 def main(argv=None) -> int:
+    global CHANNEL
     ap = argparse.ArgumentParser()
     ap.add_argument("--persons", type=int, default=5000)
     ap.add_argument("--seed", type=int, default=20260914)
@@ -165,6 +170,10 @@ def main(argv=None) -> int:
     ap.add_argument("--sampling", type=int, default=600)
     ap.add_argument("--output", type=Path,
                     default=ARTIFACTS_DIR / "recovery-ssm-k4")
+    ap.add_argument("--truth", type=Path, default=TRUTH_FIT,
+                    help="run_summary.json of the K=4 fit whose posterior mean is the truth")
+    ap.add_argument("--channel", default=CHANNEL, help="the measure column the truth was fitted on")
+    ap.add_argument("--model", default="physgrm-full-ssm-k4", help="registry name of the K=4 AR(1)+spike spec to refit")
     ap.add_argument("--from-csv", action="store_true",
                     help="Skip sampling and analyse the chains already in "
                          "OUTPUT/chains. The simulated panel is rebuilt "
@@ -172,8 +181,9 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     a.output.mkdir(parents=True, exist_ok=True)
     K = 4
+    CHANNEL = a.channel
 
-    truth = load_truth(TRUTH_FIT, K)
+    truth = load_truth(a.truth, K)
     frame, true_class = simulate(truth, a.persons, a.seed)
     true_by_pidp = pd.Series(true_class.to_numpy(), index=range(a.persons))
     realised = np.bincount(true_class, minlength=K) / a.persons
@@ -185,7 +195,7 @@ def main(argv=None) -> int:
     tp = to_payload_scale(truth, m, sd)
     print(f"standardisation: mean {m:.4f}, sd {sd:.4f}")
 
-    spec = get_model("physgrm-full-ssm-k4")
+    spec = get_model(a.model)
     assert spec.n_classes == K and spec.ar_mode == 2
     pl = build_payload(spec, frame)
 

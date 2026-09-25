@@ -1,11 +1,21 @@
-"""Payload for the four-channel multidimensional mixture.
+"""Payload for the multidimensional mixture.
 
-Rows are the shared person-wave set of the multidim contract: both GRM
-thetas observed on every row, with the chronic count and the mortality
-hazard carried as masked channels.
+Rows are the shared person-wave set of a multidim contract: every Gaussian
+channel observed on every row, with the chronic count (optional) and the
+mortality event carried as masked channels.
 
-``use_mortality`` False leaves the mortality parameters zero-sized and
-unsampled, which is the three-channel specification.
+Gaussian channels are chosen by name (``gauss_channels``): the paper's runs
+pair a physical variant (``theta`` or ``h``) with the mental GRM
+(``theta_ment_nodepr``); the archived four-channel fits paired
+``theta_phys_func`` with the mental GRM and a chronic count.
+
+Persistence is class and channel specific (rho[k, c]); the innovation and
+"spike" scales are channel specific and common to the classes.
+
+Mortality is a Gompertz-Makeham hazard, class-specific level and slope with a
+common Makeham constant, integrated over each row's interval at risk
+(``mort_gap``: years to the person's next observed row, one year after their
+last). ``use_mortality`` False leaves its parameters zero-sized.
 
 Windows. The Gaussian and chronic channels use the fitted window and are
 scored on the held-out window (``holdout_last_k``). Mortality uses the
@@ -26,7 +36,8 @@ import pandas as pd
 
 from prevention_health_clustering.config import DEFAULT_AGE_CENTER, DEFAULT_AGE_SCALE
 
-GAUSS_CHANNELS = ("theta_phys_func", "theta_ment_nodepr")
+GAUSS_CHANNELS = ("theta", "theta_ment_nodepr")
+ARCHIVED_CHANNELS = ("theta_phys_func", "theta_ment_nodepr")
 
 
 @dataclass
@@ -34,23 +45,33 @@ class MultidimPayload:
     data: dict
     person_ids: np.ndarray
     channel_moments: dict[str, dict[str, float]]
+    channels: tuple[str, ...]
 
 
 def build_multidim_payload(
     long: pd.DataFrame,
     *,
+    gauss_channels: tuple[str, ...] = GAUSS_CHANNELS,
     n_classes: int = 3,
     ar_mode: int = 0,
     holdout_last_k: int | None = None,
     min_person_obs: int | None = None,
+    use_chronic: bool = False,
     use_mortality: bool = True,
     age_center: int = DEFAULT_AGE_CENTER,
     age_scale: float = DEFAULT_AGE_SCALE,
     emit_person_quantities: bool = False,
     channel_weight: tuple[float, ...] | None = None,
     grainsize: int = 0,
+    gomp_slope_prior: tuple[float, float] = (0.09, 0.03),
+    makeham_prior_scale: float = 0.001,
 ) -> MultidimPayload:
     frame = long.sort_values(["pidp", "age"]).reset_index(drop=True)
+    missing = [c for c in gauss_channels if c not in frame.columns]
+    if missing:
+        raise KeyError(f"contract lacks channel(s) {missing}")
+    if use_chronic and "n_chronic" not in frame.columns:
+        raise KeyError("use_chronic needs an n_chronic column")
     dropped = 0
     # The sample filter is applied to EVERY variant, not only the holdout
     # ones, so that baseline / AR / holdout differ by specification alone.
@@ -88,38 +109,50 @@ def build_multidim_payload(
         fit_start = np.array(fit_start); fit_end = np.array(fit_end)
         hold_start = np.array(hold_start); hold_end = np.array(hold_end)
 
-    a = (frame["age"].to_numpy() - age_center) / age_scale
+    age = frame["age"].to_numpy(dtype=float)
+    a = (age - age_center) / age_scale
     design = np.column_stack([np.ones_like(a), a, a**2])
 
     y, moments = [], {}
-    for ch in GAUSS_CHANNELS:
+    for ch in gauss_channels:
         v = frame[ch].to_numpy(dtype=float)
         m, s = float(v.mean()), float(v.std(ddof=1))
         moments[ch] = {"mean": m, "sd": s}
         y.append((v - m) / s)
 
-    chronic = frame["n_chronic"].to_numpy(dtype=float)
-    chronic_obs = np.isfinite(chronic).astype(int)
-    chronic_y = np.where(chronic_obs == 1, np.nan_to_num(chronic), 0).astype(int)
-    mort = frame["mort_event"].to_numpy(dtype=float)
+    if use_chronic:
+        chronic = frame["n_chronic"].to_numpy(dtype=float)
+        chronic_obs = np.isfinite(chronic).astype(int)
+        chronic_y = np.where(chronic_obs == 1, np.nan_to_num(chronic), 0).astype(int)
+        chronic_log_mean = float(np.log(max(chronic[chronic_obs == 1].mean(), 0.05)))
+    else:
+        chronic_obs = np.zeros(len(frame), dtype=int)
+        chronic_y = np.zeros(len(frame), dtype=int)
+        chronic_log_mean = 0.0
+
+    mort = frame["mort_event"].to_numpy(dtype=float) if "mort_event" in frame.columns \
+        else np.full(len(frame), np.nan)
     mort_obs = (np.isfinite(mort) & use_mortality).astype(int)
     mort_y = np.where(mort_obs == 1, np.nan_to_num(mort), 0).astype(int)
-
-    chronic_log_mean = float(np.log(max(chronic[chronic_obs == 1].mean(), 0.05)))
+    # years at risk from each row: to the person's next observed row, one year after the last
+    next_age = np.concatenate([age[1:], [np.nan]])
+    same_person = np.concatenate([codes[1:] == codes[:-1], [False]])
+    mort_gap = np.where(same_person, np.maximum(next_age - age, 1.0), 1.0)
+    mort_age = age - age_center
     if mort_obs.sum() > 0:
-        rate = float(np.clip(mort[mort_obs == 1].mean(), 1e-4, 0.5))
-        mort_logit_mean = float(np.log(rate / (1 - rate)))
+        rate = float(np.clip(mort_y[mort_obs == 1].sum() / mort_gap[mort_obs == 1].sum(), 1e-5, 0.5))
+        mort_log_mean = float(np.log(rate))
     else:
-        mort_logit_mean = 0.0
+        mort_log_mean = -5.0
 
     if channel_weight is None:
-        channel_weight = (1.0,) * (len(GAUSS_CHANNELS) + 2)
+        channel_weight = (1.0,) * (len(gauss_channels) + 2)
 
     data = {
         "N_obs": int(len(frame)),
         "N_person": int(len(lo)),
         "K": int(n_classes),
-        "C": len(GAUSS_CHANNELS),
+        "C": len(gauss_channels),
         "P": 3,
         "y": [v.tolist() for v in y],
         "X": design.tolist(),
@@ -130,16 +163,19 @@ def build_multidim_payload(
         "full_end": hi.tolist(),
         "ar_mode": int(ar_mode),
         "age_gap": (np.concatenate([[0.0], np.maximum(
-            np.diff(frame["age"].to_numpy()), 1.0)]).tolist()
+            np.diff(age), 1.0)]).tolist()
             if ar_mode != 0 else []),
-        "use_mortality": int(bool(use_mortality)),
+        "use_chronic": int(bool(use_chronic)),
         "chronic_obs": chronic_obs.tolist(),
         "chronic_y": chronic_y.tolist(),
+        "use_mortality": int(bool(use_mortality)),
         "mort_obs": mort_obs.tolist(),
         "mort_y": mort_y.tolist(),
+        "mort_age": mort_age.tolist(),
+        "mort_gap": mort_gap.tolist(),
         "homosigma": 1,
         "anchor_channel": 1,
-        "channel_n_obs": [int(len(frame))] * len(GAUSS_CHANNELS),
+        "channel_n_obs": [int(len(frame))] * len(gauss_channels),
         "channel_weight": list(channel_weight),
         "alpha_prior_scale": 2.0,
         "coef_prior_scale": [1.0, 0.5],
@@ -153,14 +189,17 @@ def build_multidim_payload(
         "sigma_meas_prior_location": 0.0,
         "sigma_meas_prior_scale": 0.4,
         "chronic_log_mean": chronic_log_mean,
-        "mort_logit_mean": mort_logit_mean,
+        "mort_log_mean": mort_log_mean,
+        "gomp_slope_prior_mean": float(gomp_slope_prior[0]),
+        "gomp_slope_prior_sd": float(gomp_slope_prior[1]),
+        "makeham_prior_scale": float(makeham_prior_scale),
         "emit_person_quantities": int(emit_person_quantities),
         "grainsize": int(grainsize) if grainsize > 0
         else max(1, len(lo) // 64),
         "_dropped_min_obs": dropped,
     }
     return MultidimPayload(data=data, person_ids=person_ids.to_numpy(),
-                           channel_moments=moments)
+                           channel_moments=moments, channels=tuple(gauss_channels))
 
 
 def multidim_inits(payload: MultidimPayload, *, jitter: float = 0.15,
@@ -197,18 +236,27 @@ def multidim_inits(payload: MultidimPayload, *, jitter: float = 0.15,
     # when AR(1) weakens the Gaussian separation the chains drift into
     # different modes (observed: R-hat 13.2 on coef_chronic with identical
     # starts). A per-class log-linear fit on the k-means partition breaks it.
-    chronic = np.asarray(d["chronic_y"], dtype=float)
-    cobs = np.asarray(d["chronic_obs"]) == 1
-    chronic_log_mean = d["chronic_log_mean"]
     chronic_coefs = np.zeros((K, P))
-    for k in range(K):
-        m = cobs & (row_label == k)
-        if m.sum() > P + 1:
-            beta = np.linalg.lstsq(X[m], np.log(chronic[m] + 0.5),
-                                   rcond=None)[0]
-            chronic_coefs[k] = beta
-            chronic_coefs[k, 0] -= chronic_log_mean   # the model re-adds it
-    mort = np.asarray(d["mort_y"], dtype=float)
+    if d["use_chronic"] == 1:
+        chronic = np.asarray(d["chronic_y"], dtype=float)
+        cobs = np.asarray(d["chronic_obs"]) == 1
+        for k in range(K):
+            m = cobs & (row_label == k)
+            if m.sum() > P + 1:
+                beta = np.linalg.lstsq(X[m], np.log(chronic[m] + 0.5), rcond=None)[0]
+                chronic_coefs[k] = beta
+                chronic_coefs[k, 0] -= d["chronic_log_mean"]   # the model re-adds it
+    # Mortality: the partition's crude yearly death rate per class, relative
+    # to the pooled rate, starts the class levels apart in the right order.
+    mort_start = np.zeros(K)
+    if d["use_mortality"] == 1:
+        my = np.asarray(d["mort_y"], dtype=float); mg = np.asarray(d["mort_gap"], dtype=float)
+        mo = np.asarray(d["mort_obs"]) == 1
+        pooled = my[mo].sum() / mg[mo].sum()
+        for k in range(K):
+            m = mo & (row_label == k)
+            if m.sum() > 0 and my[m].sum() > 0:
+                mort_start[k] = np.log((my[m].sum() / mg[m].sum()) / pooled)
 
     rng = np.random.default_rng(seed)
     inits = []
@@ -219,19 +267,22 @@ def multidim_inits(payload: MultidimPayload, *, jitter: float = 0.15,
         init = {
             "theta": (th / th.sum()).tolist(),
             "anchor_intercept": anchor.tolist(),
-            "other_intercept": [[coefs[1, k, 0] + j()] for k in range(K)],
+            "other_intercept": [[coefs[c, k, 0] + j() for c in range(1, C)] for k in range(K)],
             "slope": [[[coefs[c, k, p] + j(0.05) for p in range(1, P)]
                        for k in range(K)] for c in range(C)],
             "sigma_raw": [[max(sigma + j(0.05), 0.1)] * C],
-            "coef_chronic_raw": [
+        }
+        if d["use_chronic"] == 1:
+            init["coef_chronic_raw"] = [
                 [chronic_coefs[k, 0] + j(0.1)]
                 + [chronic_coefs[k, q] + j(0.05) for q in range(1, P)]
-                for k in range(K)],
-            "phi_chronic": float(max(2.0 + j(0.5), 0.5)),
-        }
+                for k in range(K)]
+            init["phi_chronic"] = [float(max(2.0 + j(0.5), 0.5))]
         if d["use_mortality"] == 1:
-            init["coef_mort_raw"] = [[j(0.3)] + [j(0.2)] * (P - 1)
-                                     for _ in range(K)]
+            init["log_b_raw"] = [float(mort_start[k] + j(0.3)) for k in range(K)]
+            init["gomp_slope"] = [float(np.clip(d["gomp_slope_prior_mean"] + j(0.01), 0.02, 0.2))
+                                  for _ in range(K)]
+            init["makeham"] = [float(abs(0.5 * d["makeham_prior_scale"] + j(0.1 * d["makeham_prior_scale"])))]
         if d["ar_mode"] != 0:
             # Under ar_mode 2 the persistence posterior sits near 0.95, not
             # 0.5: once transient noise is taken out of the residual, what is
@@ -239,8 +290,8 @@ def multidim_inits(payload: MultidimPayload, *, jitter: float = 0.15,
             # that chains finish at different points, which shows up as a
             # large rho R-hat even though the model is identified.
             centre = 0.90 if d["ar_mode"] == 2 else 0.5
-            init["rho"] = [float(np.clip(centre + j(0.05), 0.05, 0.97))
-                           for _ in range(K)]
+            init["rho"] = [[float(np.clip(centre + j(0.05), 0.05, 0.97))
+                            for _ in range(C)] for _ in range(K)]
         if d["ar_mode"] == 2:
             # Open on the rho/sigma_meas ridge rather than at either end of
             # it, so chains do not set off in opposite directions.
@@ -258,5 +309,5 @@ def write_multidim_data(payload: MultidimPayload, output_dir: Path) -> Path:
     return path
 
 
-__all__ = ["GAUSS_CHANNELS", "MultidimPayload", "build_multidim_payload",
+__all__ = ["ARCHIVED_CHANNELS", "GAUSS_CHANNELS", "MultidimPayload", "build_multidim_payload",
            "multidim_inits", "write_multidim_data"]

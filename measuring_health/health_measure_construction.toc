@@ -1,24 +1,48 @@
-\contentsline {section}{\numberline {1}The measure in one page}{2}{section.1}%
-\contentsline {section}{\numberline {2}The variables and the coding rules}{3}{section.2}%
-\contentsline {subsection}{\numberline {2.1}The SF-12 physical testlets}{3}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}The impairment areas}{3}{subsection.2.2}%
-\contentsline {subsection}{\numberline {2.3}The condition count}{3}{subsection.2.3}%
-\contentsline {subsection}{\numberline {2.4}Category use}{4}{subsection.2.4}%
-\contentsline {section}{\numberline {3}The model}{4}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Graded response}{4}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Why the graded-response model and not the partial-credit one}{5}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Local dependence}{5}{subsection.3.3}%
-\contentsline {subsection}{\numberline {3.4}The age profile}{5}{subsection.3.4}%
-\contentsline {section}{\numberline {4}The three variants}{6}{section.4}%
-\contentsline {subsection}{\numberline {4.1}$\theta $ and $h$}{6}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}The ten-deficit index}{6}{subsection.4.2}%
-\contentsline {section}{\numberline {5}What the measure delivers}{7}{section.5}%
-\contentsline {subsection}{\numberline {5.1}No floor, and no discreteness that bites}{7}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Convexity in cost}{7}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Age-invariance is a property of the scale, not of the data}{8}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Identification}{8}{subsection.5.4}%
-\contentsline {subsection}{\numberline {5.5}Mortality}{9}{subsection.5.5}%
-\contentsline {subsection}{\numberline {5.6}A simpler version reaches the same conclusions}{9}{subsection.5.6}%
-\contentsline {section}{\numberline {6}Reproducing it}{9}{section.6}%
-\contentsline {section}{\numberline {A}The weighted sum behind $h$}{10}{appendix.A}%
-\contentsline {section}{\numberline {B}Relation to what is used elsewhere}{10}{appendix.B}%
+\contentsline {part}{I\hspace {1em}The health measure}{3}{part.1}%
+\contentsline {section}{\numberline {1}The measure for an economics reader}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}What it is}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Why not something off the shelf}{3}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Three versions of the same score}{4}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}What the scale choice does and does not change}{4}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}Validation, in one line each}{4}{subsection.1.5}%
+\contentsline {subsection}{\numberline {1.6}The honest caveats}{5}{subsection.1.6}%
+\contentsline {subsection}{\numberline {1.7}Relation to the economics literature}{5}{subsection.1.7}%
+\contentsline {paragraph}{Health as a latent index.}{5}{section*.2}%
+\contentsline {paragraph}{Item response models in economics.}{6}{section*.3}%
+\contentsline {paragraph}{Self-reported health and its dynamics.}{9}{section*.4}%
+\contentsline {paragraph}{Scale and cardinalisation.}{9}{section*.5}%
+\contentsline {paragraph}{Cost, convexity and the health--cost link.}{10}{section*.6}%
+\contentsline {section}{\numberline {2}The measure in one page}{10}{section.2}%
+\contentsline {section}{\numberline {3}The variables and the coding rules}{11}{section.3}%
+\contentsline {subsection}{\numberline {3.1}The SF-12 physical testlets}{11}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}The impairment areas}{11}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}The condition count}{12}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Category use}{12}{subsection.3.4}%
+\contentsline {section}{\numberline {4}The model}{13}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Graded response}{13}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Why the graded-response model and not the partial-credit one}{13}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Local dependence}{14}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}The age profile}{14}{subsection.4.4}%
+\contentsline {section}{\numberline {5}The three variants}{14}{section.5}%
+\contentsline {subsection}{\numberline {5.1}$\theta $ and $h$}{14}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}The ten-deficit index}{15}{subsection.5.2}%
+\contentsline {section}{\numberline {6}What the measure delivers}{15}{section.6}%
+\contentsline {subsection}{\numberline {6.1}No floor, and no discreteness that bites}{16}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Convexity in cost}{16}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}In pounds, age-invariance holds on every scale}{16}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Identification}{17}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}Mortality}{18}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}A linear factor model lands with $h$}{18}{subsection.6.6}%
+\contentsline {subsection}{\numberline {6.7}A simpler version reaches the same conclusions}{19}{subsection.6.7}%
+\contentsline {part}{II\hspace {1em}The cost index}{20}{part.2}%
+\contentsline {section}{\numberline {7}What it is}{20}{section.7}%
+\contentsline {section}{\numberline {8}Ingredients}{20}{section.8}%
+\contentsline {section}{\numberline {9}Construction}{21}{section.9}%
+\contentsline {subsection}{\numberline {9.1}The flat-rate index}{21}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Condition weighting}{21}{subsection.9.2}%
+\contentsline {section}{\numberline {10}Validation against published profiles}{21}{section.10}%
+\contentsline {section}{\numberline {11}Convexity in pounds, and whether health matters more with age}{23}{section.11}%
+\contentsline {section}{\numberline {12}What the index cannot do}{24}{section.12}%
+\contentsline {section}{\numberline {13}Reproducing it}{25}{section.13}%
+\contentsline {section}{\numberline {A}The weighted sum behind $h$}{25}{appendix.A}%
+\contentsline {section}{\numberline {B}Relation to what is used elsewhere}{26}{appendix.B}%

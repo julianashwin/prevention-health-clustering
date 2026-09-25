@@ -16,7 +16,8 @@ Two fit sets, chosen on the command line:
                                   likelihood is the same Kalman recursion the
                                   Stan program runs (mixture_gaussian_panel.stan,
                                   ar_mode 2), with age gaps
-Outputs carry the set's name: fig_bayes_{base,ssm}.png, tab_bayes_{base,ssm}.tex.
+Outputs carry the set's name: fig_bayes_{base,ssm}.png (h and theta), fig_bayes_{base,ssm}_fi10.png
+(the deficit index, for the appendix), tab_bayes_{base,ssm}.tex.
 
 Figure (fig_bayes_base.png), one column per variant:
   row 1  Bayesian class paths (solid, width = share) and the K-means type
@@ -41,8 +42,10 @@ import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import DESC, FIG, K, MAX_AGE, MIN_AGE, TAB, VARIANTS, load_labels, load_measure, write_table  # noqa: E402
+from _paper_common import DESC, FIG, K, MAX_AGE, MIN_AGE, TAB, VARIANTS, bayes_fit, load_labels, load_measure, observed_class_means, write_table  # noqa: E402
 from _style import CLUSTER, INK2, apply_style  # noqa: E402
+
+KMEANS_RED = ["#a50f15", "#ef3b2c", "#fc9272"]      # K-means types, worst -> best, in red so they read apart from the classes
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
 
@@ -50,77 +53,22 @@ CONTRACT = PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1
 SET = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] in ("base", "ssm") else "base"
 FITS = {v: f"health-{v}-{SET}" for v in ("h", "theta", "fi10")}
 FIT_DIR = ARTIFACTS_DIR / ("health-base" if SET == "base" else "health-ssm")
-LOG2PI = np.log(2 * np.pi)
 MIN_SUPPORT = 25
 
 
-def kalman_person_lp(Y, X, coef, sigma, sigma_meas, rho, gap, fs, fe):
-    """Per-person, per-class log-likelihood under ar_mode 2, as the Stan program computes it."""
-    n_person, Kc = len(fs), coef.shape[0]
-    out = np.zeros((n_person, Kc))
-    mu_all = X @ coef.T
-    v_stat = sigma ** 2 / (1 - rho ** 2)
-    var_meas = sigma_meas ** 2
-    for i in range(n_person):
-        rows = np.arange(fs[i] - 1, fe[i])
-        a = np.zeros(Kc); Pv = v_stat.copy(); total = np.zeros(Kc)
-        for j, n in enumerate(rows):
-            if j > 0:
-                g = gap[n]
-                rg = rho ** g
-                a = rg * a
-                Pv = rg ** 2 * Pv + v_stat * np.maximum(1 - rho ** (2 * g), 1e-9)
-            F = Pv + var_meas
-            v = Y[n] - mu_all[n] - a
-            total += -0.5 * (np.log(2 * np.pi * F) + v ** 2 / F)
-            Kg = Pv / F
-            a = a + Kg * v
-            Pv = Pv - Kg * Pv
-        out[i] = total
-    return out
-
-
 def posteriors(v: str):
-    d = json.load(open(FIT_DIR / FITS[v] / "stan_data.json"))
-    summ = json.load(open(FIT_DIR / FITS[v] / "run_summary.json"))
-    p = summ["params"]
-    theta = np.array([p[f"theta[{k}]"]["mean"] for k in range(1, K + 1)])
-    coef = np.array([[p[f"coef[1,{k},{j}]"]["mean"] for j in (1, 2, 3)] for k in range(1, K + 1)])
-    sigma = p["sigma[1,1]"]["mean"]
-    X, Y = np.asarray(d["X"]), np.asarray(d["y"][0])
-    fs, fe = np.asarray(d["fit_start"]), np.asarray(d["fit_end"])
-    long = pd.read_csv(CONTRACT / "long.csv").sort_values(["pidp", "age"]).reset_index(drop=True)
-    mom = json.load(open(CONTRACT / "manifest.json"))["metric_moments"][v]
-    z = (long[v].to_numpy() - mom["mean"]) / mom["sd"]
-    assert len(long) == len(Y) and np.abs(z - Y).max() < 1e-6, "payload rows do not match the contract"
-    person = np.repeat(np.arange(len(fs)), fe - fs + 1)
-    assert (np.diff(long["pidp"].to_numpy()) != 0).sum() + 1 == len(fs)
-    if d["ar_mode"] == 2:
-        rho = np.array([p[f"rho[{k}]"]["mean"] for k in range(1, K + 1)])
-        sigma_meas = p["sigma_meas[1]"]["mean"]
-        per = kalman_person_lp(Y, X, coef, sigma, sigma_meas, rho, np.asarray(d["age_gap"], float), fs, fe)
-        extra = {"rho": rho, "sigma_meas": sigma_meas}
-    else:
-        mu = X @ coef.T
-        lp = -0.5 * LOG2PI - np.log(sigma) - 0.5 * ((Y[:, None] - mu) / sigma) ** 2
-        per = np.zeros((len(fs), K)); np.add.at(per, person, lp)
-        extra = {"rho": np.zeros(K), "sigma_meas": 0.0}
-    un = np.log(theta)[None, :] + per
-    w = np.exp(un - un.max(axis=1, keepdims=True)); w /= w.sum(axis=1, keepdims=True)
-    pids = long.groupby("pidp", sort=False)["pidp"].first().to_numpy()
-    post = pd.DataFrame(w, columns=[f"class{k + 1}" for k in range(K)]).assign(pidp=pids)
-    rows = pd.DataFrame(w[person], columns=[f"class{k + 1}" for k in range(K)]).assign(age=long["age"].to_numpy())
-    comp = rows.groupby("age").mean()
-    return {"theta": theta, "coef": coef, "sigma": sigma, "mom": mom, "post": post, "comp": comp,
-            "rhat": summ["max_structural_rhat"], **extra}
+    """The fit for one variant at its posterior mean (shared reader in _paper_common)."""
+    return bayes_fit(FIT_DIR / FITS[v], v, K)
 
 
 def main() -> int:
     apply_style()
     d = load_measure()
     ages = np.arange(MIN_AGE, MAX_AGE + 1); A = (ages - 55) / 10
-    fig, axes = plt.subplots(4, 3, figsize=(13, 12),
-                             gridspec_kw={"height_ratios": [3.2, 0.7, 0.7, 1.9], "hspace": 0.5, "wspace": 0.22})
+    gk = {"height_ratios": [3.2, 0.7, 0.7, 1.9], "hspace": 0.5}
+    fig, axm = plt.subplots(4, 2, figsize=(9.2, 12), gridspec_kw={**gk, "wspace": 0.22})
+    figb, axb = plt.subplots(4, 1, figsize=(4.8, 12), gridspec_kw=gk)
+    axes = np.column_stack([axm, axb])            # column 2 is the deficit index, on its own figure
     table, classes, posts = [], [], []
     for j, (v, lab) in enumerate(VARIANTS):
         r = posteriors(v)
@@ -141,11 +89,13 @@ def main() -> int:
         ax = axes[0, j]
         s = d[d["pidp"].isin(L.index)].assign(cluster=lambda x: x["pidp"].map(L))
         t = s.groupby(["cluster", "age"])[v].agg(["mean", "count"]).reset_index()
+        obs = observed_class_means(r["post"], v, K)
         for k in range(K):
             mu = r["mom"]["mean"] + r["mom"]["sd"] * (r["coef"][k, 0] + r["coef"][k, 1] * A + r["coef"][k, 2] * A ** 2)
             ax.plot(ages, mu, color=CLUSTER[k], lw=1.2 + 4 * r["theta"][k], label=f"class {k + 1} ({r['theta'][k]:.0%})")
+            ax.plot(obs.index, obs[f"class{k + 1}"].to_numpy(), color=CLUSTER[k], lw=1.0, ls=":")
             q = t[(t["cluster"] == k) & (t["count"] >= MIN_SUPPORT)]
-            ax.plot(q["age"], q["mean"], color=CLUSTER[k], lw=1.1, ls="--", label=f"K-means type {k + 1} ({km_share[k]:.0%})")
+            ax.plot(q["age"], q["mean"], color=KMEANS_RED[k], lw=1.1, ls="--", label=f"K-means type {k + 1} ({km_share[k]:.0%})")
             classes.append({"variant": v, "class": k + 1, "share_bayes": r["theta"][k], "share_kmeans": km_share[k],
                             "alpha": r["coef"][k, 0], "beta": r["coef"][k, 1], "gamma": r["coef"][k, 2],
                             "level_30": mu[10], "level_80": mu[60], "sigma": r["sigma"], "rhat": r["rhat"],
@@ -180,12 +130,15 @@ def main() -> int:
     fig.text(0.01, -0.01,
              ("Baseline K = 3 quadratic growth mixtures, independent residuals," if SET == "base" else
               "K = 3 quadratic growth mixtures with AR(1) plus measurement error (an AR(1) latent state and a one-period measurement error),")
-             + " on the health contract (38,963 people, the "
-             "P-FULL roster), parameters at the posterior mean; class 1 is worst health. K-means types from\n"
-             "22_paper_kmeans.py on the same people (all in its sample). Paths are in each variant's own units. Composition: "
-             "class shares of the person-waves observed at each age. Cross-tab rows sum to one.",
+             + "\non the health contract (38,963 people, 334,194 person-ages), parameters at the posterior mean; class 1 is worst "
+             "health.\nK-means types from 22_paper_kmeans.py on the same rows. Paths are in each variant's own units. Dotted: the "
+             "observed class mean at each age,\nthe measure averaged over the people observed there weighted by their posterior class "
+             "probabilities. Dashed red: the K-means type means.\nComposition: class shares of the person-waves observed at each age. "
+             "Cross-tab rows sum to one.",
              fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / f"fig_bayes_{SET}.png")
+    figb.text(0.01, -0.01, "As the main-text figure, for the ten-deficit index.", fontsize=7.4, color=INK2, va="top")
+    figb.savefig(FIG / f"fig_bayes_{SET}_fi10.png", bbox_inches="tight")
     header = ["variant", "shares, mixture", "shares, K-means", "ARI", "same class", "mean max posterior", "max $\\hat R$"]
     if SET == "ssm":
         header += ["$\\rho$ by class", "$\\sigma_{\\text{meas}}$"]

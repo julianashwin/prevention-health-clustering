@@ -21,7 +21,7 @@ GP and out-patient contacts are banded with a top category of "more than
 ten". Only the uncensored tier can express intensity, so we report the age
 gradient tier by tier and run a sensitivity on the top-band value.
 
-Outputs: measuring_health/figures/fig_cost_validation.png,
+Outputs: measuring_health/figures/fig_cost_validation.png and the same file in paper/figures/,
          artifacts/descriptives/cost_validation.csv
 """
 
@@ -237,9 +237,10 @@ def main() -> int:
              "the external checks test, and the binding limitation is the flat unit cost per contact, not the bands.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout(rect=[0, 0.045, 1, 1])
-    out = ROOT_DIR / "measuring_health" / "figures" / "fig_cost_validation.png"
-    fig.savefig(out, dpi=200, bbox_inches="tight")
-    print(f"wrote {out}")
+    for out in (ROOT_DIR / "measuring_health" / "figures" / "fig_cost_validation.png",   # the construction note
+                ROOT_DIR / "paper" / "figures" / "fig_cost_validation.png"):             # the paper
+        fig.savefig(out, dpi=200, bbox_inches="tight")
+        print(f"wrote {out}")
     return 0
 
 

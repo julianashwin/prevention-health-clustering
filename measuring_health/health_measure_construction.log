@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.28)  16 SEP 2026 11:26
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.28)  21 SEP 2026 13:39
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -209,6 +209,13 @@ Package: float 2001/11/08 v1.3d Float enhancements (AL)
 \@float@everytoks=\toks28
 \@floatcapt=\box59
 )
+(/usr/local/texlive/2026/texmf-dist/tex/latex/natbib/natbib.sty
+Package: natbib 2010/09/13 8.31b (PWD, AO)
+\bibhang=\skip57
+\bibsep=\skip58
+LaTeX Info: Redefining \cite on input line 694.
+\c@NAT@ctr=\count306
+)
 (/usr/local/texlive/2026/texmf-dist/tex/latex/hyperref/hyperref.sty
 Package: hyperref 2026-01-29 v7.01p Hypertext links for LaTeX
 
@@ -250,15 +257,15 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
  (/usr/local/texlive/2026/texmf-dist/tex/latex/kvoptions/kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count306
+\c@section@level=\count307
 )
 (/usr/local/texlive/2026/texmf-dist/tex/generic/stringenc/stringenc.sty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
 \@linkdim=\dimen184
-\Hy@linkcounter=\count307
-\Hy@pagecounter=\count308
+\Hy@linkcounter=\count308
+\Hy@pagecounter=\count309
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/hyperref/pd1enc.def
 File: pd1enc.def 2026-01-29 v7.01p Hyperref: PDFDocEncoding definition (HO)
@@ -268,7 +275,7 @@ Now handling font encoding PD1 ...
 (/usr/local/texlive/2026/texmf-dist/tex/generic/intcalc/intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count309
+\Hy@SavedSpaceFactor=\count310
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/hyperref/puenc.def
 File: puenc.def 2026-01-29 v7.01p Hyperref: PDF Unicode definition (HO)
@@ -282,7 +289,7 @@ Package hyperref Info: Plain pages OFF on input line 4216.
 Package hyperref Info: Backreferencing OFF on input line 4221.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4468.
-\c@Hy@tempcnt=\count310
+\c@Hy@tempcnt=\count311
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/url/url.sty
 \Urlmuskip=\muskip18
@@ -298,7 +305,7 @@ Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count311
+\Fld@menulength=\count312
 \Field@Width=\dimen186
 \Fld@charsize=\dimen187
 Package hyperref Info: Hyper figures OFF on input line 6084.
@@ -308,16 +315,16 @@ Package hyperref Info: backreferencing OFF on input line 6099.
 Package hyperref Info: Link coloring OFF on input line 6104.
 Package hyperref Info: Link coloring with OCG OFF on input line 6109.
 Package hyperref Info: PDF/A mode OFF on input line 6114.
-\Hy@abspage=\count312
-\c@Item=\count313
-\c@Hfootnote=\count314
+\Hy@abspage=\count313
+\c@Item=\count314
+\c@Hfootnote=\count315
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/hyperref/hpdftex.def
 File: hpdftex.def 2026-01-29 v7.01p Hyperref driver for pdfTeX
-\Fld@listcount=\count315
-\c@bookmark@seq@number=\count316
+\Fld@listcount=\count316
+\c@bookmark@seq@number=\count317
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
 Package: rerunfilecheck 2025-06-21 v1.11 Rerun checks for auxiliary files (HO)
@@ -328,7 +335,7 @@ Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 84.
 )
-\Hy@SectionHShift=\skip57
+\Hy@SectionHShift=\skip59
 ) (/usr/local/texlive/2026/texmf-dist/tex/latex/xcolor/xcolor.sty
 Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
 
@@ -353,29 +360,29 @@ File: dvipsnam.def 2016/06/17 v3.0m Driver-dependent file (DPC,SPQR)
 )
 (/usr/local/texlive/2026/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count317
+\l__color_backend_stack_int=\count318
 )
 (./health_measure_construction.aux)
 \openout1 = `health_measure_construction.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 15.
-LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -413,16 +420,16 @@ LaTeX Font Info:    ... okay on input line 15.
 
 (/usr/local/texlive/2026/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count318
+\scratchcounter=\count319
 \scratchdimen=\dimen188
 \scratchbox=\box60
-\nofMPsegments=\count319
-\nofMParguments=\count320
+\nofMPsegments=\count320
+\nofMParguments=\count321
 \everyMPshowfont=\toks29
-\MPscratchCnt=\count321
+\MPscratchCnt=\count322
 \MPscratchDim=\dimen189
-\MPnumerator=\count322
-\makeMPintoPDFobject=\count323
+\MPnumerator=\count323
+\makeMPintoPDFobject=\count324
 \everyMPtoPDFconversion=\toks30
 ) (/usr/local/texlive/2026/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -433,13 +440,13 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-LaTeX Info: Redefining \microtypecontext on input line 15.
-Package microtype Info: Applying patch `item' on input line 15.
-Package microtype Info: Applying patch `toc' on input line 15.
-Package microtype Info: Applying patch `eqnum' on input line 15.
-Package microtype Info: Applying patch `footnote' on input line 15.
-Package microtype Info: Applying patch `verbatim' on input line 15.
-LaTeX Info: Redefining \microtypesetup on input line 15.
+LaTeX Info: Redefining \microtypecontext on input line 16.
+Package microtype Info: Applying patch `item' on input line 16.
+Package microtype Info: Applying patch `toc' on input line 16.
+Package microtype Info: Applying patch `eqnum' on input line 16.
+Package microtype Info: Applying patch `footnote' on input line 16.
+Package microtype Info: Applying patch `verbatim' on input line 16.
+LaTeX Info: Redefining \microtypesetup on input line 16.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -455,7 +462,7 @@ Package microtype Info: No adjustment of character kerning.
 File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
 (RS)
 )
-Package hyperref Info: Link coloring OFF on input line 15.
+Package hyperref Info: Link coloring OFF on input line 16.
 
 (./health_measure_construction.out) (./health_measure_construction.out)
 \@outlinefile=\write3
@@ -468,105 +475,142 @@ Package hyperref Info: Link coloring OFF on input line 15.
 \tf@toc=\write4
 \openout4 = `health_measure_construction.toc'.
 
- [2] [3] [4]
-<figures/fig_health_measure.png, id=158, 747.9945pt x 267.76035pt>
+ [2] [3{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts
+1.enc}] [4] [5] [6] [7] [8] [9] [10] [11]
+[12] [13]
+<figures/fig_health_measure.png, id=515, 747.9945pt x 267.76035pt>
 File: figures/fig_health_measure.png Graphic file (type png)
 <use figures/fig_health_measure.png>
-Package pdftex.def Info: figures/fig_health_measure.png  used on input line 248
+Package pdftex.def Info: figures/fig_health_measure.png  used on input line 349
 .
 (pdftex.def)             Requested size: 466.34035pt x 166.94122pt.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 257.
+(hyperref)                removing `math shift' on input line 358.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\theta' on input line 257.
+(hyperref)                removing `\theta' on input line 358.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 257.
+(hyperref)                removing `math shift' on input line 358.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 257.
+(hyperref)                removing `math shift' on input line 358.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 257.
+(hyperref)                removing `math shift' on input line 358.
 
-[5 <./figures/fig_health_measure.png>]
-<figures/fig_health_variants.png, id=169, 747.9945pt x 267.399pt>
+[14 <./figures/fig_health_measure.png>]
+<figures/fig_health_variants.png, id=531, 747.9945pt x 267.399pt>
 File: figures/fig_health_variants.png Graphic file (type png)
 <use figures/fig_health_variants.png>
-Package pdftex.def Info: figures/fig_health_variants.png  used on input line 29
-9.
+Package pdftex.def Info: figures/fig_health_variants.png  used on input line 40
+0.
 (pdftex.def)             Requested size: 466.34035pt x 166.71594pt.
- [6]
-<figures/fig_health_cost.png, id=176, 747.9945pt x 267.76035pt>
+ [15 <./figures/fig_health_variants.png>]
+<figures/fig_health_cost.png, id=539, 747.9945pt x 267.76035pt>
 File: figures/fig_health_cost.png Graphic file (type png)
 <use figures/fig_health_cost.png>
-Package pdftex.def Info: figures/fig_health_cost.png  used on input line 347.
+Package pdftex.def Info: figures/fig_health_cost.png  used on input line 449.
 (pdftex.def)             Requested size: 466.34035pt x 166.94122pt.
- [7 <./figures/fig_health_variants.png>] [8{/usr/local/texlive/2026/texmf-dist/
-fonts/enc/dvips/cm-super/cm-super-ts1.enc} <./figures/fig_health_cost.png>]
-Underfull \hbox (badness 2119) in paragraph at lines 443--444
-[]|\OT1/cmr/bx/n/10 (+20) the mea-sure\OT1/cmr/m/n/10 (+20) : \OT1/cmtt/m/n/10 
-health[]measure.parquet \OT1/cmr/m/n/10 (+20) with \OT1/cmtt/m/n/10 theta\OT1/c
-mr/m/n/10 (+20) ,
+ [16 <./figures/fig_health_cost.png>] [17]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 524.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 524.
+
+[18]
+<figures/fig_health_factor.png, id=566, 955.4094pt x 444.09915pt>
+File: figures/fig_health_factor.png Graphic file (type png)
+<use figures/fig_health_factor.png>
+Package pdftex.def Info: figures/fig_health_factor.png  used on input line 556.
+
+(pdftex.def)             Requested size: 466.34035pt x 216.76343pt.
+ [19 <./figures/fig_health_factor.png>] [20]
+<figures/fig_cost_validation.png, id=584, 791.3565pt x 637.78275pt>
+File: figures/fig_cost_validation.png Graphic file (type png)
+<use figures/fig_cost_validation.png>
+Package pdftex.def Info: figures/fig_cost_validation.png  used on input line 63
+6.
+(pdftex.def)             Requested size: 466.34035pt x 375.8409pt.
+ [21] [22 <./figures/fig_cost_validation.png>]
+<figures/fig_cost_convexity.png, id=595, 991.18304pt x 359.9046pt>
+File: figures/fig_cost_convexity.png Graphic file (type png)
+<use figures/fig_cost_convexity.png>
+Package pdftex.def Info: figures/fig_cost_convexity.png  used on input line 653
+.
+(pdftex.def)             Requested size: 466.34035pt x 169.33092pt.
+<figures/fig_cost_age_interaction.png, id=596, 1077.90704pt x 619.71526pt>
+File: figures/fig_cost_age_interaction.png Graphic file (type png)
+<use figures/fig_cost_age_interaction.png>
+Package pdftex.def Info: figures/fig_cost_age_interaction.png  used on input li
+ne 661.
+(pdftex.def)             Requested size: 466.34035pt x 268.11772pt.
+ [23 <./figures/fig_cost_convexity.png>] [24 <./figures/fig_cost_age_interactio
+n.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 686--686
+[]|\OT1/cmtt/m/n/10 descriptives/16[]cost[]convexity.py\OT1/cmr/m/n/10 (+20) ,
  []
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 461.
+(hyperref)                removing `math shift' on input line 702.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 461.
+(hyperref)                removing `math shift' on input line 702.
 
-[9] [10] (./health_measure_construction.aux)
+[25] (./health_measure_construction.bbl [26] [27] [28] [29]) [30]
+(./health_measure_construction.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `health_measure_construction.out' has not cha
 nged.
-(rerunfilecheck)             Checksum: B517F3B4CD90B4B5B9D430BACA3C7B8D;4377.
+(rerunfilecheck)             Checksum: F160360FEDC79AAA52716E8397A5705B;8073.
  ) 
 Here is how much of TeX's memory you used:
- 12538 strings out of 467525
- 195431 string characters out of 5418982
- 676441 words of memory out of 5000000
- 41143 multiletter control sequences out of 15000+600000
- 640153 words of font info for 140 fonts, out of 8000000 for 9000
+ 13344 strings out of 467525
+ 207657 string characters out of 5418982
+ 687696 words of memory out of 5000000
+ 41746 multiletter control sequences out of 15000+600000
+ 645338 words of font info for 189 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,9n,84p,1024b,564s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,11n,84p,1593b,665s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><
 /usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></
 usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></u
 sr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr
-/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/l
-ocal/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/loc
-al/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local
-/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/t
-exlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texl
-ive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive
-/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/
-2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/20
-26/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/202
-6/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2026
-/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on health_measure_construction.pdf (10 pages, 568574 bytes).
+/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/l
+ocal/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/loc
+al/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local
+/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/t
+exlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/tex
+live/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texli
+ve/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/
+2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/202
+6/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2026/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2026/te
+xmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2026/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2026/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2026/texmf-
+dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2026/texmf-di
+st/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on health_measure_construction.pdf (30 pages, 1722025 bytes).
 PDF statistics:
- 288 PDF objects out of 1000 (max. 8388607)
- 233 compressed objects within 3 object streams
- 39 named destinations out of 1000 (max. 500000)
- 31952 words of extra memory for PDF output out of 35830 (max. 10000000)
+ 776 PDF objects out of 1000 (max. 8388607)
+ 681 compressed objects within 7 object streams
+ 146 named destinations out of 1000 (max. 500000)
+ 40316 words of extra memory for PDF output out of 42996 (max. 10000000)
 
