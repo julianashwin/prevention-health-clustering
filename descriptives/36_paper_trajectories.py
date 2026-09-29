@@ -111,10 +111,12 @@ def record(rows, tag, v, fit):
 def main() -> int:
     apply_style()
     rows, missing = [], []
-    row_specs = [(v, tag, spec) for v in ("h", "theta") for tag, spec in SETS]
-    fig = plt.figure(figsize=(13.5, 16.5))
+    # the paper's figure is theta alone; --h the appendix version on h
+    V_ONLY = "h" if "--h" in sys.argv else "theta"
+    row_specs = [(V_ONLY, tag, spec) for tag, spec in SETS]
+    fig = plt.figure(figsize=(13.5, 8.6))
     gs = fig.add_gridspec(2 * len(row_specs), len(KS), height_ratios=[3.0, 0.55] * len(row_specs), hspace=0.32, wspace=0.16,
-                          top=0.97, bottom=0.04)
+                          top=0.95, bottom=0.08)
     for r, (v, tag, spec) in enumerate(row_specs):
         for c, Kc in enumerate(KS):
             ax = fig.add_subplot(gs[2 * r, c]); axc = fig.add_subplot(gs[2 * r + 1, c])
@@ -137,8 +139,9 @@ def main() -> int:
             record(rows, tag, v, fit)
             print(f"{v} {tag} K={Kc}: rhat {fit['rhat']:.4f}, shares {np.round(fit['share'], 3)}"
                   + (f", rho {np.round(fit['rho'], 2)}" if tag == "ssm" else ""))
-    dropped = [f"{name}: chains {', '.join(map(str, ch))} of 4" for name, ch in CHAINS.items() if f"health-{name.split('-')[1]}-{name.split('-')[2]}-{name.split('-')[3]}" not in missing]
-    fig.text(0.01, 0.005,
+    dropped = [f"{name}: chains {', '.join(map(str, ch))} of 4" for name, ch in CHAINS.items()
+               if name.split('-')[1] == V_ONLY and name not in missing]
+    fig.text(0.01, 0.0,
              "Quadratic growth mixtures on the health contract (38,963 people, 334,194 person-ages), parameters at the posterior mean, in "
              "each variant's own units; class 1 is worst health. Line width is proportional to the class share; the legend gives\nthe share "
              "and, under AR(1), the class persistence. Dotted: the observed class mean at each age, the measure averaged over the people observed at that "
@@ -147,8 +150,12 @@ def main() -> int:
              'residuals or an AR(1) latent state plus a one-period "spike"; columns: the number of classes.' + (f" Not yet fitted: {', '.join(missing)}." if missing else "")
              + (f" Posterior mean over the chains that share a mode for {'; '.join(dropped)} (the other chain sat in a worse mode)." if dropped else ""),
              fontsize=7.4, color=INK2, va="top")
-    fig.savefig(FIG / "fig_class_trajectories_by_K.png", bbox_inches="tight")
+    fig.savefig(FIG / ("fig_class_trajectories_by_K.png" if V_ONLY == "theta" else "fig_class_trajectories_by_K_h.png"), bbox_inches="tight")
     plt.close(fig)
+    if V_ONLY == "h":
+        pd.DataFrame(rows).to_csv(DESC / "paper_trajectories_h.csv", index=False)
+        print(f"wrote fig_class_trajectories_by_K_h.png to {FIG}")
+        return 0
 
     # ---- appendix: the deficit index, K = 3 ---------------------------------------
     fig = plt.figure(figsize=(11.5, 4.6))

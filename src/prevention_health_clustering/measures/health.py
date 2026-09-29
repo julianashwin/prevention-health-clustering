@@ -56,6 +56,9 @@ SF_DEFICITS: dict[str, tuple[str, int, bool]] = {
     "rp_less": ("sf3a", 5, True), "rp_kind": ("sf3b", 5, True), "pain": ("sf5", 5, False),
 }
 DEFICIT_COND_CAP = 6
+# one whole deficit, 1/31: the shift in log(frailty + c). Half the smallest positive value, 0.125/31, was tried
+# first and put the zeros so far below the next value up that they drove the young-age variance.
+FRAILTY_SHIFT = 1 / 31
 
 
 def build_health_items(
@@ -115,6 +118,45 @@ def build_deficit_index(items: pd.DataFrame, chronic: pd.DataFrame,
                          "fi10": (1 - fi).to_numpy()})
 
 
+def build_frailty_index(items: pd.DataFrame, chronic: pd.DataFrame,
+                        age_range: tuple[int, int] = (20, 90)) -> pd.DataFrame:
+    """A Rockwood-style frailty index: the share of deficits a person has, 0 = none.
+
+    Every deficit counts once, with equal weight and no grouping, as in the
+    frailty-index literature (Searle et al. 2008): the six SF-12 physical items
+    graded 0 to 1 by response step, each of the eight physical impairment areas
+    as a 0/1 deficit, and each ever-diagnosed condition in the chronic inventory
+    as a 0/1 deficit (31 deficits on the current inventory). A person-wave is
+    scored only when every deficit is observed. Higher is frailer, the opposite
+    orientation of ``h``, ``theta`` and ``fi10``.
+
+    ``log_frailty`` is the log of the index shifted by ``FRAILTY_SHIFT``, one whole
+    deficit (1/31), so the 7% of person-waves with no deficit stay in at the floor
+    rather than being dropped. ``log_frailty_pos`` is the log on positive
+    frailty only, as in Hosseini, Kopecky and Zhao (2022), who model the zeros
+    with a separate probit; it is kept for reference.
+    """
+    d = items[items["age"].notna() & items["age"].between(*age_range)].copy()
+    D = pd.DataFrame(index=d.index)
+    for name, (col, k, reverse) in SF_DEFICITS.items():
+        x = d[col].where(d[col].isin(range(1, k + 1)))
+        D[f"sf_{name}"] = (k - x) / (k - 1) if reverse else (x - 1) / (k - 1)
+    for codes in HEALTH_GROUPS.values():
+        for c in codes:
+            D[f"area_{c}"] = limitation_count(d, (c,)).to_numpy()
+    ever = [c for c in chronic.columns if c.startswith("ever_")]
+    ch = d[["pidp", "wave"]].merge(chronic[["pidp", "wave", *ever]], on=["pidp", "wave"], how="left")
+    for c in ever:
+        D[c] = ch[c].to_numpy()
+    fr = D.mean(axis=1).where(D.notna().all(axis=1))
+    out = pd.DataFrame({"pidp": d["pidp"].to_numpy(), "wave": d["wave"].to_numpy(),
+                        "age": d["age"].to_numpy(), "frailty": fr.to_numpy()})
+    out["log_frailty"] = np.log(out["frailty"] + FRAILTY_SHIFT)
+    out["log_frailty_pos"] = np.log(out["frailty"].where(out["frailty"] > 0))
+    out.attrs["n_deficits"] = D.shape[1]
+    return out
+
+
 def projection_weights(codes: pd.DataFrame, score: np.ndarray) -> tuple[pd.Series, float]:
     """Weights of the transparent twin: the score regressed on standardised codes.
 
@@ -167,6 +209,8 @@ __all__ = [
     "HEALTH_GROUPS",
     "HEALTH_ITEMS",
     "build_deficit_index",
+    "build_frailty_index",
+    "FRAILTY_SHIFT",
     "build_health_items",
     "one_factor_score",
     "projection_weights",

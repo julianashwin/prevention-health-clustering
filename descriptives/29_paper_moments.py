@@ -14,8 +14,14 @@ where it is not, the figures say so and report what the constraint costs.
              four ages), one rho shared by the four bands. The appendix version:
              on h it is admissible in every band with nothing imposed.
 
+--frailty runs the main design on the 31-deficit frailty index and its shifted
+log, log(frailty + 1/31), instead, to fig_exhibit2_main_frailty.png, with the
+csvs suffixed _frailty; the appendix figures are skipped.
+
 Outputs, paper/figures/:
-  fig_exhibit2_main.png       Cases 1 and 4 on theta and h, main design (main text)
+  fig_exhibit2_main.png       Case 4 on theta, main design (main text)
+  fig_exhibit2_case1.png      Case 1 on theta, h, frailty and log frailty, main design (appendix)
+  fig_exhibit2_measures.png     Case 4 on h, frailty and log frailty, main design (appendix)
   fig_exhibit2_2y.png         Cases 1 and 4 on h and theta, 2y design (appendix)
   fig_exhibit2_corr.png       Corr(H, d) by band under every case, both designs (appendix)
 artifacts/descriptives/:
@@ -32,7 +38,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import DESC, FIG, LABEL, VARIANTS  # noqa: E402
+from _paper_common import DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, LABEL, VARIANTS  # noqa: E402
 from _paper_moments import (  # noqa: E402
     BANDS, admissible, cell_names, corr_of, fit_common, fit_constrained, ident_panel, layers, pairs_of,
     pooled_moments, wide,
@@ -54,6 +60,14 @@ DESIGNS = {
 }
 BAND_NAMES = list(BANDS)
 WEAK_VH = 0.05    # V_H below this share of the first variance: the level, and with it Corr(H, d), is not identified
+FRAIL = "--frailty" in sys.argv
+if FRAIL:
+    VARIANTS = FRAILTY_VARIANTS
+    DESIGNS = {"main": DESIGNS["main"]}
+SUFFIX = FRAILTY_SUFFIX if FRAIL else ""
+# the default run fits every measure once: theta for the main figure, h and the frailty indices for the
+# appendix, and the ten-item deficit index still read by the two appendix summaries
+FIT_VARIANTS = VARIANTS if FRAIL else [("theta", LABEL["theta"]), ("h", LABEL["h"]), ("fi10", LABEL["fi10"])] + FRAILTY_VARIANTS
 
 
 def fit_design(W: np.ndarray, spec: dict) -> dict:
@@ -110,8 +124,8 @@ def barchart(path, rows, fits, spec, title, footer):
     """rows: [(variant, case)]; fits: {variant: fit_design output}."""
     i, j = pairs_of(spec["offs"])
     names = cell_names(i, j, int(spec["offs"][1]))
-    fig, axes = plt.subplots(len(rows), 4, figsize=(13, 3.05 * len(rows)), sharey="row",
-                             gridspec_kw={"hspace": 0.95, "wspace": 0.08})
+    fig, axes = plt.subplots(len(rows), 4, figsize=(13, 3.05 * len(rows) if len(rows) > 1 else 4.8), sharey="row",
+                             gridspec_kw={"hspace": 0.95, "wspace": 0.08}, squeeze=False)
     for r, (v, case) in enumerate(rows):
         for c, bn in enumerate(BAND_NAMES):
             ax = axes[r, c]
@@ -124,7 +138,8 @@ def barchart(path, rows, fits, spec, title, footer):
             ax.set_title((f"ages {bn}\n" if r == 0 else "") + tag, fontsize=6.8, loc="left")
             if c == 0:
                 ax.set_ylabel(f"{LABEL[v]}\n{CASE_LAB[case]}", fontsize=8.2)
-    fig.subplots_adjust(top=1 - 0.3 / len(rows), bottom=0.05)
+    fig.subplots_adjust(top=1 - 0.3 / len(rows) if len(rows) > 1 else 0.8,
+                        bottom=0.05 if len(rows) > 1 else 0.26)   # one row: room for the titles and tick labels
     h_, l_ = axes[0, 0].get_legend_handles_labels()
     fig.legend(h_, l_, loc="lower center", ncols=6, fontsize=8,
                bbox_to_anchor=(0.5, 1 - 0.12 / len(rows)))   # no suptitle: the paper's caption names the figure
@@ -135,12 +150,12 @@ def barchart(path, rows, fits, spec, title, footer):
 
 def main() -> int:
     apply_style()
-    d = ident_panel()
+    d = ident_panel(variants=tuple(v for v, _ in FIT_VARIANTS))
     sample = {"people": d["pidp"].nunique(), "person_ages": len(d)}
     print(f"identification panel: {sample['person_ages']:,} person-ages, {sample['people']:,} people")
     fits = {dn: {} for dn in DESIGNS}
     corr_rows, dec_rows = [], []
-    for v, _ in VARIANTS:
+    for v, _ in FIT_VARIANTS:
         W = wide(d, v)
         for dn, spec in DESIGNS.items():
             fits[dn][v] = fit_design(W, spec)
@@ -160,31 +175,44 @@ def main() -> int:
                                      "i": i[c], "j": j[c], "observed": m[c], "fitted": f["fit"][c],
                                      **{k: L[k][c] for k in L}})
     corr = pd.DataFrame(corr_rows)
-    corr.to_csv(DESC / "paper_ident_corr_band.csv", index=False)
-    pd.DataFrame(dec_rows).to_csv(DESC / "paper_ident_decomposition.csv", index=False)
-    pd.DataFrame([sample]).to_csv(DESC / "paper_ident_sample.csv", index=False)
+    corr.to_csv(DESC / f"paper_ident_corr_band{SUFFIX}.csv", index=False)
+    pd.DataFrame(dec_rows).to_csv(DESC / f"paper_ident_decomposition{SUFFIX}.csv", index=False)
+    pd.DataFrame([sample]).to_csv(DESC / f"paper_ident_sample{SUFFIX}.csv", index=False)
     show = corr.assign(val=corr["corr"].round(2).astype(str) + np.where(corr["binds"], "b", "") + np.where(corr["weak"], "w", "")).pivot_table(
         index=["design", "variant", "case"], columns="band", values="val", aggfunc="first")[BAND_NAMES]
     print(show.to_string())
 
-    main_spec, y2_spec = DESIGNS["main"], DESIGNS["2y"]
+    main_spec = DESIGNS["main"]
     common_foot = ("Properly constrained fit: V_H, V_d and noise variances non-negative and |Corr(H,d)| <= 1 imposed in "
                    "the estimation, rho profiled. Where the unconstrained fit was inadmissible the title gives it and the "
                    f"fit cost of the constraint\nin squared error. Where V_H falls below {WEAK_VH:.0%} of the first variance the level, and so Corr(H,d), is not identified. Bars stack the fitted layers; black ticks are the observed "
                    "moments. V(k): the variance at the k-th age; C(k,l): the covariance between ages k and l.")
     main_foot = ("Four ages four years apart, pairwise moments pooled over base ages within each band; a base age enters "
                  "when every cell rests on at least 50 people observed at both of its ages.\n" + common_foot)
-    barchart(FIG / "fig_exhibit2_main.png", [("theta", "case1"), ("theta", "case4"), ("h", "case1"), ("h", "case4")],
-             fits["main"], main_spec, "Exhibit 2: Cases 1 and 4 on theta and h", main_foot)
+    if FRAIL:
+        barchart(FIG / f"fig_exhibit2_main{SUFFIX}.png", [("logfrailty", "case1"), ("logfrailty", "case4"), ("frailty", "case1"), ("frailty", "case4")],
+                 fits["main"], main_spec, "Exhibit 2: Cases 1 and 4 on log frailty and frailty",
+                 "Frailty: the share of 31 equal-weight deficits, higher = frailer; log frailty is log(frailty + 1/31), zeros at the floor. " + main_foot)
+        print(f"wrote fig_exhibit2_main{SUFFIX}.png to {FIG}")
+        return 0
+    y2_spec = DESIGNS["2y"]
+    barchart(FIG / "fig_exhibit2_main.png", [("theta", "case4")], fits["main"], main_spec, "Exhibit 2: Case 4 on theta", main_foot)
+    barchart(FIG / "fig_exhibit2_case1.png", [("theta", "case1"), ("h", "case1"), ("frailty", "case1"), ("logfrailty", "case1")],
+             fits["main"], main_spec, "Exhibit 2, Case 1 on every measure",
+             "Case 1 (i.i.d. noise) on theta, h, the frailty index and log(frailty + 1/31). " + main_foot)
+    barchart(FIG / "fig_exhibit2_measures.png", [("h", "case4"), ("frailty", "case4"), ("logfrailty", "case4")],
+             fits["main"], main_spec, "Exhibit 2, Case 4 on the other measures",
+             "Case 4 (AR(1) plus a one-period spike) on h, the frailty index and log(frailty + 1/31). " + main_foot)
     barchart(FIG / "fig_exhibit2_2y.png", [("h", "case1"), ("h", "case4"), ("theta", "case1"), ("theta", "case4")],
              fits["2y"], y2_spec, "Exhibit 2, two-year design: Cases 1 and 4 on h and theta",
              "Four ages two years apart, balanced moments (people observed at all four ages), one rho shared by the four "
              "bands in Case 4.\n" + common_foot)
 
     # ---- summary: Corr(H, d) by band, every case, both designs -------------------
-    fig, axes = plt.subplots(2, 3, figsize=(12.5, 6.6), sharey=True, gridspec_kw={"hspace": 0.45, "wspace": 0.15})
+    CORR_VARIANTS = [("theta", LABEL["theta"]), ("h", LABEL["h"])] + FRAILTY_VARIANTS
+    fig, axes = plt.subplots(2, len(CORR_VARIANTS), figsize=(15.5, 6.6), sharey=True, gridspec_kw={"hspace": 0.45, "wspace": 0.15})
     for r, dn in enumerate(DESIGNS):
-        for c, (v, lab) in enumerate(VARIANTS):
+        for c, (v, lab) in enumerate(CORR_VARIANTS):
             ax = axes[r, c]
             for case in CASES:
                 q = corr[(corr["variant"] == v) & (corr["design"] == dn) & (corr["case"] == case)].set_index("band")
@@ -200,7 +228,7 @@ def main() -> int:
             ax.set_xticklabels(BAND_NAMES)
             ax.set_ylim(-1.1, 1.1)
             ax.grid(True, axis="y")
-            ax.set_title(f"{lab}, {'4 x 4 years, pairwise' if dn == 'main' else '4 x 2 years, balanced, common rho'}",
+            ax.set_title(f"{lab}\n{'4 x 4 years, pairwise' if dn == 'main' else '4 x 2 years, balanced, common rho'}",
                          loc="left", fontsize=9)
     axes[0, 0].set_ylabel(r"$\mathrm{Corr}(H, d)$")
     axes[1, 0].set_ylabel(r"$\mathrm{Corr}(H, d)$")
@@ -212,7 +240,7 @@ def main() -> int:
              f"is identified, or where V_H is below {WEAK_VH:.0%} of the first variance, so nothing is.", fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / "fig_exhibit2_corr.png", bbox_inches="tight")
     plt.close(fig)
-    print(f"wrote fig_exhibit2_main.png, fig_exhibit2_2y.png and fig_exhibit2_corr.png to {FIG}")
+    print(f"wrote fig_exhibit2_main.png, fig_exhibit2_case1.png, fig_exhibit2_measures.png, fig_exhibit2_2y.png and fig_exhibit2_corr.png to {FIG}")
     return 0
 
 

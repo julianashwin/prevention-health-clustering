@@ -20,7 +20,7 @@
 
 \title{Prevention, treatment and lifecycle health types\\[4pt]
 	\large Paper skeleton --- first full draft, bullet form}
-\author{Julian Ashwin \and \todo{co-authors}}
+\author{}
 \date{September 2026}
 
 \begin{document}
@@ -36,7 +36,7 @@
 	\begin{itemize}
 		\item Include a discussion here of the earnings dynamics literature and how they use the covariance matrix
 		\item Also a discussion of health measurement in economics. 
-		\item On the stochastic specification we're similar to \note{cite: Hosseini et al (2022)} whoc 
+		\item On the stochastic specification we are close to \citet{hosseini2022}, who model log frailty in the PSID as a fixed effect plus an AR(1) plus white noise, with persistence $0.991$. Our $\log(\text{frailty}+1/31)$ on UKHLS reproduces their hump-shaped variance profile, and it behaves like $\theta$ throughout (Section~\ref{subsec:health_moments}).
 	\end{itemize}
 	
 	%% =============================================================================
@@ -76,7 +76,7 @@
 			\end{gathered}
 			\label{eq:linear}
 		\end{equation}
-		\item A key issue that will come up again in relation to costs and when we bring to the data is what the units of health are. The covariance matrix treats health as cardinal, so transformations of a health index that are rank neutral can change the covariance matrix. 
+		\item A key issue that will come up again in relation to costs and when we bring to the data is what the units of health are. The covariance matrix treats health as cardinal, so transformations of a health index that are rank neutral can change the covariance matrix. We report the unbounded latent scale $\theta$ in the main text; its bounded expected-score twin $h$ and two frailty indices are in the appendix, and these are all discussed in more detail in Section~\ref{sec:data}.
 	\end{itemize}
 	
 	
@@ -85,8 +85,7 @@
 	
 	
 	\begin{itemize}
-		\item Cost of poor health $c(h)=(1-h)^2$, full health normalised to one. The quadratic is the second-order approximation to any smooth increasing convex cost and makes the first two moments of health sufficient for every policy object below; Appendix~\ref{app:returns} repeats the returns with the estimated cost curve. 
-		\item \note{On the scale: the covariance channels and the identification results don't rely on a bound. For an unbounded measure like the $\theta$ below, the same algebra goes through with any quadratic; the returns are reported on both scales.}
+		\item Cost of poor health $c(h)=(1-h)^2$, full health normalised to one. The quadratic is the second-order approximation to any smooth increasing convex cost and makes the first two moments of health sufficient for every policy object below. It is the analytic illustration: the prevention exercises in Section~\ref{sec:policy} use the cost curve estimated in pounds on $\theta$ (Figure~\ref{fig:cost}), with the general-cost versions of the results given below.
 		\item Population cost at age $a$: mean gap plus between-type plus within-type variance,
 		\begin{equation}
 			\E[c(h_{i,a})]=(1-\bar h_a)^2+\Var_j(\bar h_{j,a})+\textstyle\sum_j\pi_j\Var(u_{i,a}\mid j).
@@ -126,6 +125,7 @@
 	\end{result}
 	
 	\begin{itemize}
+		\item For a general increasing convex cost $c(\cdot)$ the returns keep their form, with the derivative as the weight: $T(r)=\sum_{a\ge r}\E[-c'(h_{i,a})(h^{\max}-h_{i,a})]$ and $P_j(r)=\sum_{a\ge r}\E[-c'(h_{i,a})\mid j]\,(\bar h_{j,r-1}-\bar h_{j,a})$, to first order in the policy intensity; the quadratic case reproduces Results~\ref{res:treat} and~\ref{res:prev}. On an unbounded scale full health has no natural value, so treatment closes a share $\tau$ of the gap to the healthiest observed score, $h^{\max}$.
 		\item Treatment reaches all realised variance, between and within, but only when gaps are already open. 
 		\item Prevention averts future gaps but must be assigned ex ante; the uniform policy pays the population-average preventable decline and its between-type channel is bounded by deterministic heterogeneity. 
 		\item Measurement error belongs in neither return and is removed by Case~4 below. 
@@ -156,13 +156,13 @@
 			& Policy object & Moments it needs \\
 			\midrule
 			P(i) & $T(r)$, and the mean channel of $P(r)$ & the mean path $\bar h_a$ and the cross-sectional
-			variance $\Var(h_a)$: Figure \ref{fig:exhibit1} panels (a)--(d) 
+			variance $\Var(h_a)$: Figure \ref{fig:exhibit1} panels (a) and (b) 
 			\\~\\
 			P(ii) & the accumulation margin of $P(r)$; the timing profile $r\mapsto P(r)$ & $V_d$ (with
 			$C_{Hd}$): the curvature of the surface
 			\\~\\
 			P(iii) & the pathway margin; targeting on a level or type & $C_{Hd}$, locally $C_{Hd}(a)\equiv
-			\Cov_j(\bar h_{j,a},d_j)$, whose sign says diverging or converging: Exhibit~1 panels (e), (f). For type targetting also need $P_j(r)$ across types, i.e.\ the
+			\Cov_j(\bar h_{j,a},d_j)$, whose sign says diverging or converging: Figure~\ref{fig:exhibit1} panel (c). For type targetting also need $P_j(r)$ across types, i.e.\ the
 			clusters of Section~\ref{sec:types} \\
 			\bottomrule
 		\end{tabular}
@@ -291,7 +291,7 @@
 	The $h$ score is close to a weighted sum of the coded answers: regressing $h$ on the standardised codes gives $R^2 = 0.993$. The parallel is not perfect for two reasons: the uneven gaps between the categories of an ordered item; and an item's best and worst categories are open-ended so they only tell us that a person lies beyond the last threshold.\footnote{The latent scale $\theta$ departs is somewhat further from a weighted sun: regressed on the same codes gives $R^2 = 0.925$. Most of the gap comes from the model not scoring an item's categories as equally spaced: letting each category carry its own score raises the $R^2$ to $0.979$. The rest comes from the items discriminating in different parts of the scale, so that a step on one item counts for more where few others still move.} A linear one-factor model fitted to the same eight codes, treated as continuous, gives a score with a Pearson correlation of $0.995$ with $h$ and $0.998$ with that weighted sum, so on the $[0,1]$ scale the graded-response model's practical content is the weighting rather than the functional form.
 
 	
-	In addition to $\theta$ and $h$ we also construct a deficit index \code{fi10}, an equal-weighted mean of ten deficits each scored from 0 to 1: the six SF-12 physical items by response step, the three impairment groups as the share of their areas mentioned, and the condition count capped at six over six; the index is one minus their mean, so 1 is no deficits. It performs essentially identically to $h$ (Pearson $0.994$, Spearman $0.991$). This measure is in the spirit of frailty indices \citep{mitnitski2001,searle2008}. \note{This is not strictly speaking a frailty index though as we group the items first, otherwise it just ends up weighting items on a more granular scale more than binaries and it overweights chronic conditions as we have more of these than the other variables.}
+	In addition to $\theta$ and $h$ we construct a Rockwood-style frailty index \citep{mitnitski2001,searle2008}: the share of 31 equal-weight deficits a person has, namely the six SF-12 physical items graded 0 to 1 by response step, each of the eight physical impairment areas, and each of the 17 ever-diagnosed conditions (clinical depression among them), so that 0 is no deficit and higher is frailer (Appendix~\ref{app:frailty}). 7\% of person-waves have none. Following \citet{hosseini2022}, who model the log of frailty, we also report $\log(\text{frailty}+1/31)$: adding one deficit's worth keeps the zeros in the sample, where \citet{hosseini2022} drop them into a separate probit.\footnote{Adding half the smallest positive value, $1/248$, instead puts the zeros so far below the next group that they drive the variance at young ages; with $1/31$ the variance profile is smooth.} Both indices rank people much as $\theta$ and $h$ do (Spearman $0.92$ with each), and the two pairs line up: $h$ behaves like the frailty index and $\theta$ like its log (Section~\ref{subsec:health_moments}).
 	
 	\textbf{Relation of our health metric to the economics literature.}
 	\begin{itemize}
@@ -302,10 +302,12 @@
 		\item Item-response models themselves are rare in health economics: \citet{graeber2023} scores latent health from five SOEP items with the graded-response model, \citet{wallace2017} build an item-response index from 21 HRS items, and \citet{meijer2011} estimate the same ordinal factor model on SHARE without calling it one. They are common in the economics of education, for scaling and linking test scores \citep{dashammer2005,daszajonc2010,singh2015,muralidharan2019,jacob2016}, and in the measurement of poverty and deprivation \citep{moffitt2016,corsini2020,farcomeni2025,davis2026}.
 		\item The closest work to ours in health dynamics uses five-category self-assessed health kept categorical and usually collapsed: to three states by \citet{denardi2025} and \citet{capatina2015}, to a bad-health indicator by \citet{halliday2008}, and kept at five by \citet{contoyannis2004}. But this would really limits our study of dynamics and in particular the timing and targetting of prevention. 
 		\item In our case, the choice of methodology relative to a more familiar principal component or linear factor model is innocuous, if we focus on $h$ - a linear factor model estimated on the same data has a Pearson correlation of $0.995$ (Spearman $0.992$) with $h$.
-		\item There is a precedent for modelling the log of a bounded health index, the log frailty of \citet{hosseini2022}; on our data the log deficit, $-\log(1-h)$, is nearly symmetric and its variance profile by age looks like $\theta$'s rather than $h$'s.
+		\item There is a precedent for modelling the log of a bounded health index, the log frailty of \citet{hosseini2022}; on our data $\log(\text{frailty}+1/31)$ has a variance profile by age like $\theta$'s, and the frailty index in levels one like $h$'s.
 		Table \ref{tab:corr} shows the correlation with alternative metrics (UKHLS PCS, MCS, raw chronic count). All of these have theoretical disadvantages over our measure, but PCS is closest.
 	\end{itemize}
 	\note{I think overall conclusion here is that there is no one way to measure health, but for dynamics we kind of need cardinality which we can maybe pin down with costs.} 
+	
+	As our preferred case, we report $\theta$ in the main text. It is the scale the measurement model is defined on; it is unbounded, so the Gaussian dynamic models of Section~\ref{sec:types} fit it without a ceiling (on $h$ the healthiest class collapses under AR(1) plus ``spike''); and its cost curve in pounds is convex. Appendix~\ref{app:measures} repeats the main-text figures on $h$, the frailty index and log frailty, and the text flags where the measure changes a conclusion.
 	
 	
 	
@@ -329,17 +331,18 @@
 	
 	Figure \ref{fig:cost} shows that:
 \begin{itemize}
-	\item Cost rises convexly with poor health on both scales: the quadratic term in the standardised measure, person-clustered, has $t = 10.3$ on $h$ and $19.5$ on $\theta$.\footnote{On costs capped at the 99th percentile, $t = 11.3$ and $36.9$. A quadratic coefficient is driven by the top of the cost distribution, so the capped and uncapped versions are both reported here and below.}
-	\item The relationship is close to age-invariant. The binned curves for the three age bands lie on top of one another; in the sickest pooled tenth mean cost is \pounds2{,}143 at 20--34 and \pounds2{,}136 at 75--90; and the quadratic term is positive within every one of six age bands on both scales. The 75--90 band's curvature is roughly double the others' ($t = 3.0$ on $h$ and $3.6$ on $\theta$), but this difference is driven by the top 1\% of costs and when we cap at 99\% the curvature-age interaction is insignificant ($t = 0.9$ and $0.7$).\footnote{The linear term's interaction with age is specification-sensitive: insignificant in a quadratic with a single health $\times$ age term, mildly negative ($t = -2.7$ on $h$, $-1.5$ on $\theta$, capped) once the curvature is also allowed to vary with age.}
-	\item Mortality also rises steeply and convexly with poor health, roughly log-linearly: pooled across ages with a quadratic in age, the log-odds of death fall by $0.74$ per standard deviation of $h$ and $0.90$ of $\theta$.
-	\item The health-mortality gradient is relatively constant with age, although the slight flattening after 45 is statistically significant ($t=-3.6$ on $h$, $-2.3$ on $\theta$); the level, however, is not age-invariant. Age thus carries mortality risk that the health measure does not capture, which matters for survival but not for cost. \note{This kind of relates to what we were thinking about right at the start in terms of the age-health-mortality relationship...}
+	\item Cost rises convexly with poor health: the quadratic term in standardised $\theta$, person-clustered, has $t = 19.5$ ($36.9$ on costs capped at the 99th percentile).\footnote{A quadratic coefficient is driven by the top of the cost distribution, so the uncapped and capped versions are both reported here and below, uncapped first.}
+	\item The relationship is close to age-invariant. The binned curves for the three age bands lie on top of one another; in the sickest pooled tenth mean cost is \pounds2{,}143 at 20--34 and \pounds2{,}136 at 75--90; and the quadratic term is positive within every one of six age bands. The 75--90 band's curvature is roughly double the others' ($t = 3.6$), but this difference is driven by the top 1\% of costs: when we cap at the 99th percentile the curvature--age interaction is insignificant ($t = 0.7$).\footnote{The linear term's interaction with age is specification-sensitive: insignificant in a quadratic with a single health $\times$ age term, mildly negative ($t = -1.5$, capped) once the curvature is also allowed to vary with age.}
+	\item Mortality also rises steeply with poor health, roughly log-linearly: pooled across ages with a quadratic in age, the log-odds of death fall by $0.90$ per standard deviation of $\theta$.
+	\item The health-mortality gradient is relatively constant with age, although the slight flattening after 45 is statistically significant ($t=-2.3$); the level, however, is not age-invariant. Age thus carries mortality risk that the health measure does not capture, which matters for survival but not for cost. \note{This kind of relates to what we were thinking about right at the start in terms of the age-health-mortality relationship...}
+	\item The same holds on $h$, with one difference on the frailty indices (Appendix~\ref{app:measures}): the curvature has $t = 10.3$ on $h$ and $22.6$ on log frailty, but only $5.8$ on the frailty index in levels ($11.3$, $42$ and $1.2$ capped), which is only mildly convex in cost and close to linear once the top 1\% is capped.
 \end{itemize}
 \note{We can move this figure to the appendix or simplify it, but I wanted to include something for you to have a look at...}
 
 
 \begin{figure}[H]\centering
 	\includegraphics[width=\linewidth]{fig_cost_mortality_age.png}
-	\caption{Cost and mortality against health, by age band. Top: mean annual cost index in equal-width bins of $h$ (a) and $\theta$ (b) within three age bands, with 95\% intervals. Bottom: the one-year death rate in the same bins on a log scale (c, d), with the within-band logit drawn through them. The measures are standardised on the pooled sample, so a bin is the same health at every age.}
+	\caption{Cost and mortality against $\theta$, by age band. (a) Mean annual cost index in equal-width bins of $\theta$ within three age bands, with 95\% intervals. (b) The one-year death rate in the same bins on a log scale, with the within-band logit drawn through it. The measure is standardised on the pooled sample, so a bin is the same health at every age. The same figure on $h$ and the frailty indices is in Appendix~\ref{app:measures}.}
 	\label{fig:cost}
 \end{figure}
 
@@ -351,27 +354,31 @@
 	\subsection{The moments of health over the life course} \label{subsec:health_moments}
 	
 	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_exhibit1.png}
-		\caption{The measure's mean path, variance profile and covariance rows, model-free, $h$ in the left column and $\theta$ in the right. 387,599 person-waves; five-year centred rolling means; each covariance row starts on the diagonal at a five-year base age and runs nine years.}
+		\includegraphics[width=0.55\linewidth]{fig_exhibit1.png}
+		\caption{The measure's mean path, variance profile and covariance rows, model-free, on $\theta$. 387,599 person-waves; five-year centred rolling means; each covariance row starts on the diagonal at a five-year base age and runs nine years. The same figure on $h$, the frailty index and log frailty is in Appendix~\ref{app:measures}.}
 		\label{fig:exhibit1}
 	\end{figure}
 	
 	\begin{itemize}
-		\item From panels a/b we see that the mean accelerates down: the decline steeps after 50 and again after 70. $\E(d)$ rises with age, which on its own says intervene late: the mean channel of $P(r)$ is largest where the preventable decline is largest.
-		\item From panels c/d we see that variance flattens: rises steeply to about 60 and then stops growing, with a dip at 65-70. On $\theta$ it falls after 62. Under stationary noise this says the local covariance $C_{Hd}(a)$ has reached zero by 60 and $\Var(d)$ is falling: interventions on dispersion pay early. 
-		\item From panels e/f we can see signs of divergence then convergence: every row drops sharply in its first year (the one-year spike, health not carried even one year, possibly measurement error). After this the younger rows run flatter while the older rows fall more steeply. 
+		\item From panel (a) the mean accelerates down: $\theta$ falls by about $0.014$ standard deviations a year between 30 and 50, $0.020$ between 50 and 70, and $0.038$ after 70. $\E(d)$ rises with age, which on its own says intervene late: the mean channel of $P(r)$ is largest where the preventable decline is largest.
+		\item From panel (b) the variance rises by about 60\% between 30 and 60, peaks at 62, and falls by a fifth by 85. Under stationary noise this says the local covariance $C_{Hd}(a)$ has reached zero around 60 and turned negative after it: interventions on dispersion pay early.
+		\item From panel (c) we see divergence then convergence: every row drops sharply in its first year, by 40\% at base age 20 and about 20\% at 50--60 (the one-year ``spike'', health not carried even one year). After this the younger rows run flatter while the older rows fall more steeply.
+		\item The shape of the variance profile depends on the measure as Section~\ref{sec:data} anticipated (Appendix~\ref{app:measures}).
+		\item On $\log(\text{frailty}+1/31)$ the pattern is very similar, with variance rising by a factor of $1.70$ from 30 to 60 and falling to $0.70$ of its 60 level by 85, against $1.62$ and $0.78$ on $\theta$.
+		\item On $h$ and the frailty index, variance continues to increase after 60, but at a markedly slower rate. The bounded measures keep dispersion growing into old age; the unbounded ones have it peak around 60 and then compress.
+		\item Across all three alternative indices, panels (a) and (c) show the same stylised facts.
 		\item One stationary noise process cannot produce both. Either the noise moves with age or the local $C_{Hd}$ has changed sign: divergence among the young, compression among the old. 
 		\item This has implications for timing and targeting: intervene early and target the low early in life; later in life the covariance turns against targeting on levels so not much use targetting on low.
 		\item Cautions carried to the next section: composition (who survives to be measured), floors and cohort pooling are all in these curves; the type models will use within-person information.
 		\item The covariance rows in Figure \ref{fig:exhibit1} are based on pairwise covariances. Covariance rows on balanced samples, i.e. each row over the people observed at all of its ages, are shown in Appendix~\ref{app:descriptive} (Figure~\ref{fig:ex1balanced}).
 	\end{itemize}
 	
-	\subsection{Exhibit 2: the linear approximation on real data} \label{subsec:lin_ident}
+	\subsection{The linear approximation on real data} \label{subsec:lin_ident}
 	
 	\todo{Decide which cases, if any, that we should present here. We have four main cases and also a decision on whether we should use pairwise or balanced moments.}
 	
 	\begin{itemize}
-		\item Figure~\ref{fig:ex2main} shows the $V_H$, $C_{Hd}$ and $V_d$ identified from pairwise moments on four ages four years apart (so over a 12 year span. To account for the non-linearity we show this pooled within four bands. We show Case 1 (iid noise) and Case 4 (AR(1) + spike) as these are the simplest and most general cases we've looked at in detail. 
+		\item Figure~\ref{fig:ex2main} shows the $V_H$, $C_{Hd}$ and $V_d$ identified from pairwise moments on four ages four years apart (so over a 12 year span. To account for the non-linearity we show this pooled within four bands. We show Case 4 (AR(1) + spike), the most general case we've looked at in detail; Case 1 (iid noise), the simplest, is in Appendix~\ref{app:descriptive} (Figure~\ref{fig:ex2case1}). 
 		\item These are not computed by solving the just-identified propositions cell by cell, but by least squares on the ten pooled moments of each band. 
 		\item Given $H_a = H + a\,d$ the covariance of the measure at offsets $i$ and $j$ years from the base age is $V_H + (i+j)\,C_{Hd} + ij\,V_d$ plus the noise. 
 		\item Under Case1, the noise is one variance on the diagonal; 
@@ -380,13 +387,14 @@
 		\item Each case is therefore overidentified, ten moments against four or five parameters, and the bars in Figure \ref{fig:ex2main} stack the fitted layers against the observed moment in every cell, so the misfit is visible. 
 		\item $\Corr(H,d) = C_{Hd}/\sqrt{V_H V_d}$ stated in each subtitle is calculated from the fitted coefficients.
 		\item There are many different ways to represent this (i.e. the health metric, the gap between ages, pairwise or balanced moments, the noise case) and the details vary, but relatively consistently $C_{Hd}$ gets more negative with age, see a few more in Figures \ref{fig:ex2corr} and \ref{fig:ex2twoyear}. 
-		\item For Case 4, on $\theta$, $\Corr(H,d)$ runs $+0.45$, $+0.78$, $-0.56$, $-0.53$, $\rho$ $0.85$--$0.94$, with no constraint binding. On $h$ it runs $+0.43$, $+0.63$, $-0.31$; at 75--90 $V_H$ goes to zero and nothing is identified.
-		\item For Case 1, $\Corr(H,d)$ is (almost) negative in every band, but does clearly get more negative. \note{I chose this specification because it works nicely for Case 4, but there are plenty that work nicely for Case 1 as well}.
+		\item For Case 4, on $\theta$, $\Corr(H,d)$ runs $+0.45$, $+0.78$, $-0.56$, $-0.53$ across the four bands, with $\rho$ $0.85$--$0.94$ and no constraint binding.
+		\item For Case 1 (Figure~\ref{fig:ex2case1}), $\Corr(H,d)$ is negative in every band ($-0.22$, $-0.02$, $-0.42$, $-0.48$), but it clearly gets more negative with age. \note{I chose this specification because it works nicely for Case 4, but there are plenty that work nicely for Case 1 as well}.
+		\item On the other measures the sign path is the same, but whether it fits as cleanly depends on the specification (Appendix~\ref{app:measures}). Under Case 1, log frailty almost reproduces $\theta$ ($-0.14$, $0.00$, $-0.44$, $-0.48$). Under Case 4, $h$ runs $+0.43$, $+0.63$, $-0.31$, and at 75--90 $V_H$ goes to zero so nothing is identified; log frailty runs $+0.48$, $+1.00$, $-1.00$, $-0.92$, with the admissibility constraint binding at 40--60 and 60--75; the frailty index runs $+0.40$, $+0.98$, $-0.22$, and at 75--90 the constraint binds with $V_H$ near zero.
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_exhibit2_main.png}
-		\caption{Exhibit 2: the ten moments of four ages four years apart in each band, pairwise moments, decomposed into the fitted layers under Case~1 (rows 1 and 3) and Case~4 (rows 2 and 4), on $\theta$ and on $h$. Properly constrained fit: variances non-negative and $|\Corr(H,d)|\le1$ imposed in the estimation. A base age enters when every cell rests on at least 50 people observed at both of its ages.}
+		\caption{The linear approximation on $\theta$: the ten moments of four ages four years apart in each band, pairwise moments, decomposed into the fitted layers under Case~4. Properly constrained fit: variances non-negative and $|\Corr(H,d)|\le1$ imposed in the estimation. A base age enters when every cell rests on at least 50 people observed at both of its ages. Case~1 is in Appendix~\ref{app:descriptive}, and Case~4 on $h$, the frailty index and log frailty in Appendix~\ref{app:measures}.}
 		\label{fig:ex2main}
 	\end{figure}
 	
@@ -399,9 +407,9 @@
 	
 	\begin{itemize}
 		\item The health-dynamics literature generally works with the old (HRS, ELSA) or short windows; \citet{denardi2025} splice the PSID early in life with the HRS later, but health is modelled only for the older people; \citet{hosseini2022} build a frailty index on the PSID. 
-		\item The prevention framework says $H_{55}$ is an \emph{outcome} of the dynamics before 55, not an input. And the data say the dynamics differ across the lifecycle (Exhibit~1): starting in late middle age misses the divergence phase. So this is why we focus on the full lifecycle.
-		\item \textbf{How.} Overlapping cohorts observed over 15 waves: cohort-independent types with cohort-dependent shares. First non-parametric (partial K-means), then parametric (Bayesian mixtures), then against observables.
-		\item \textbf{Four challenges} addressed along the way: (1) power and type categorisation (functional forms, stochastic structure, several dimensions); (2) mortality and attrition; (3) cohort effects; (4) units and bounds (ceiling, floor, cardinalisation).
+		\item The prevention framework says $H_{55}$ is an \emph{outcome} of the dynamics before 55, not an input. And the data say the dynamics differ across the lifecycle (Figure~\ref{fig:exhibit1}): starting in late middle age misses the divergence phase. So this is why we focus on the full lifecycle.
+		\item \textbf{How.} Overlapping cohorts observed over 15 waves: cohort-independent types with cohort-dependent shares. First non-parametric (partial K-means), then a parametric refinement (Bayesian mixtures) that separates persistent deviations from one-period ``spikes'', then against observables. Everything is on $\theta$; the $h$ versions, and the K-means types on the two frailty indices, are in the appendix.
+		\item \textbf{Four challenges} addressed along the way: (1) power and type categorisation (functional forms, stochastic structure, several dimensions); (2) mortality and attrition; (3) cohort effects; (4) units and bounds (ceiling, floor, cardinalisation), which is why we work on $\theta$ and repeat the analysis on the bounded measures in the appendix.
 	\end{itemize}
 	
 	\subsection{(A) Non-parametric types: partial K-means}
@@ -414,42 +422,42 @@
 		\item We focus on means because they are what the policy objects use and what the interventions considered shift.
 	\end{itemize}
 
-	Figure~\ref{fig:clusters} shows the cluster results on $h$ and $\theta$; the deficit index and predicted cost are in Appendix~\ref{app:clusters_fi10}.
+	Figure~\ref{fig:clusters} shows the cluster results on $\theta$; $h$, the two frailty indices and predicted cost are in Appendix~\ref{app:measures}.
 	\begin{itemize}
-		\item $h$ three ordered, non-crossing, fanning paths, shares 10 / 28 / 61\%; the worst type starts below the others at 20 and falls fastest to 60. 
-		\item The deficit index gives the same typology (ARI $0.90$, 97\% of people in the same type). So does clustering on predicted cost, the pooled cost curve evaluated at each person's score, which is a cost-anchored cardinalisation of the measure (ARI $0.76$ with the $h$ types, 91\% in the same type, against $0.31$ with the $\theta$ types): the cost anchor lands on the bounded side of the $h$--$\theta$ contrast. 
-		\item $\theta$ looks a bit different does not: shares 18 / 43 / 40\% and ARI $0.37$ with the $h$ typology, because $\theta$ stretches the healthy end and K-means then splits the healthy majority. \note{This is the units challenge showing up immediately; the paper needs a position on it.}
-		\item The stochastic part (middle row): within-type deviations are persistent, with lag-1 autocorrelation $0.62$ in the worst type and $0.42$--$0.44$ elsewhere, decaying to $0.15$--$0.23$ at nine years (the middle type to zero). Suggests that a final model should probably include some persistence (and that it might differ by type).
-		\item Composition: the worst type's share of observed person-waves rises with age on $h$ (7\% at 20 to 14\% at 85). This is selection into the observed sample, not people changing type. Mortality selection should work in the other direction. \note{And for $\theta$ in the AR(1)+spike model, this pattern does somewhat reverse and we get a falling share of the unhealthy type by age.}
+		\item On $\theta$, three ordered, non-crossing paths, shares 18 / 43 / 40\%. The worst type starts below the others at 20 and falls fastest to 60, by 1.2 standard deviations against 0.4 for the best type; after 60 the order reverses, the worst type falling 0.3 by 85 and the other two about 0.8. Divergence and then convergence is visible in the type paths themselves.
+		\item The choice of health metric matters a bit (Appendix~\ref{app:measures}), but the overall shape looks very similar across each of the four we consider.
+		\item On $h$ K-means isolates a 10\% sick tail (shares 10 / 28 / 61\%) instead of splitting the healthy majority, and agrees with the $\theta$ types at ARI $0.37$ (71\% in the same type): $\theta$ stretches the healthy end. The frailty index lands with $h$ (ARI $0.61$, 86\%) and log frailty with $\theta$ (ARI $0.44$, 78\%, shares 21 / 41 / 38\%).
+		\item The stochastic part (middle panel): within-type deviations are persistent, with lag-1 autocorrelation $0.64$ in the worst type and $0.37$--$0.38$ elsewhere, decaying by nine years to $0.24$, $0.16$ and $0.03$ (the middle type). Suggests that a final model should include some persistence, and that it might differ by type.
+		\item Composition: on $\theta$ the worst type's share of observed person-waves is 22\% at 20, falls to 13\% at 50 and recovers to 18\% by 70. This is selection into the observed sample, not people changing type. \note{And for $\theta$ in the AR(1)+spike model, this pattern does somewhat reverse and we get a falling share of the unhealthy type by age.}
 	\end{itemize}
 	
 	
 	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_clusters.png}
-		\caption{Structure's Figure 3. Partial K-means types ($K=3$) on $h$ and $\theta$; the deficit index and predicted cost are in Appendix~\ref{app:clusters_fi10}. Top: type means with the within-type $\pm1$ sd band; middle: autocorrelation of within-type deviations by lag; bottom: type composition of the person-waves observed at each age.}
+		\includegraphics[width=0.55\linewidth]{fig_clusters.png}
+		\caption{Partial K-means types ($K=3$) on $\theta$. Top: type means with the within-type $\pm1$ sd band; middle: autocorrelation of within-type deviations by lag; bottom: type composition of the person-waves observed at each age. The same figure on $h$ and the two frailty indices is in Appendix~\ref{app:measures}, and on predicted cost in Appendix~\ref{app:clusters_predcost}.}
 		\label{fig:clusters}
 	\end{figure}
 
 	
 	Figure~\ref{fig:decomp} shows the key moments based on the estimated K-means clusters. 
 	\begin{itemize}
-		\item The key messages are relatively consistent across $h$ and $\theta$: 
-		\item Top row: between type variance increases then flattens off/falls. \note{within type variance is satisfyingly flat for $\theta$}
-		\item Middle row: Roughly a U shape in $\Var_j(d_{j,a})$, so slopes are most consistent in middle age. 
-		\item Bottom row: $\Cov_j(\bar h_{j,a},d_{j,a})$ goes from positive to negative - this is divergence and then convergence, so P(ii) and P(iii). 
+		\item Top panel: the between-type share of the cross-sectional variance rises from 48\% at 30 to 65\% at 70 and falls back to 57\% by 85. \note{within type variance is satisfyingly flat for $\theta$}
+		\item Middle panel: roughly a U shape in $\Var_j(d_{j,a})$, lowest at about 48, so slopes are most consistent in middle age.
+		\item Bottom panel: $\Cov_j(\bar h_{j,a},d_{j,a})$ goes from positive to negative at about 59: divergence and then convergence, so P(ii) and P(iii).
+		\item The key messages are relatively consistent across $h$ and $\theta$ (Appendix~\ref{app:measures}).
 		\item \note{Between-type shares are partly mechanical: the clusters are chosen to maximise them. The comparison that is not mechanical is with observables in Section~\ref{sec:observables}.}
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_cluster_decomposition.png}
-		\caption{Structure's Figure 4. Between versus within by age. (a) Cross-sectional variance split by type composition; (b) between-type variance of the one-year change of the smoothed type paths; (c) the level-change covariance across types. The deficit index is in Appendix~\ref{app:decomp_fi10}.}
+		\includegraphics[width=0.55\linewidth]{fig_cluster_decomposition.png}
+		\caption{Between versus within by age, on $\theta$. (a) Cross-sectional variance split by type composition; (b) between-type variance of the one-year change of the smoothed type paths; (c) the level-change covariance across types. The same figure on $h$ and the two frailty indices is in Appendix~\ref{app:measures}.}
 		\label{fig:decomp}
 	\end{figure}
 
 Small robustness exercise:
 \begin{itemize}
 	\item Cohort adjustment within K-means (Appendix~\ref{app:kmeans}): regresses the score on single-year age dummies and birth-decade dummies, subtracting the decade shifts (so identifies the decade effects from the overlapping ages). 
-	\item Re-clustering leaves the typology unchanged (adjusted Rand index $0.90$ to $0.96$, at least 97\% of people assigned the same type). The shifts themselves are zero for cohorts born before 1960 and negative only from the 1970s on. \note{worth noting that he Bayesian model does pick up more meaningful cohort effects, which I have not really thought about in depth yet.}
+	\item Re-clustering leaves the typology unchanged (adjusted Rand index $0.90$ on $\theta$, $0.96$ on $h$; at least 97\% of people keep their type). The shifts themselves are zero for cohorts born before 1960 and negative only from the 1970s on. \note{worth noting that he Bayesian model does pick up more meaningful cohort effects, which I have not really thought about in depth yet.}
 \end{itemize}
 	
 	\subsection{(B) Parametric types: Bayesian mixtures} \label{subsec:parametric}
@@ -462,20 +470,14 @@ Small robustness exercise:
 	so a class is a path and a residual scale common to the classes. The class indicator is marginalised: person $i$'s likelihood is $\sum_k\pi_k\prod_a N\bigl(y_{ia}\mid\mu_k(a),\sigma^2\bigr)$ over their observed ages, and their posterior class probabilities follow from the fitted parameters. Labels are identified by ordering the intercepts, $\alpha_1<\dots<\alpha_K$, so class 1 is worst health. Priors are weakly informative on the standardised scale: $\pi\sim\mathrm{Dirichlet}(1.5)$, $\alpha_k\sim N(0,1.5^2)$, $\beta_k\sim N(0,1)$, $\gamma_k\sim N(0,0.05^2)$ and $\sigma\sim N(0.7,0.5^2)$ truncated below at $0.05$. Estimation is by Hamiltonian Monte Carlo (the no-U-turn sampler) in Stan: four chains of 1,000 warm-up and 1,000 sampling iterations, with convergence judged by the split-$\hat R$ of the structural parameters.
 	
 
-	Figure~\ref{fig:bayesbase} shows the Bayesian equivalent of the partial K-means:
+	Figure~\ref{fig:bayes}(a) shows the Bayesian equivalent of the partial K-means:
 	\begin{itemize}
-		\item Same data as the partial K-means, fitting on both $h$ and $\theta$, with deficit index in the appendix. 
-		\item The baseline $K=3$ mixture (quadratic paths, independent residuals, no AR term) was fitted on each variant; all three converged (max $\hat R\le1.003$, 2.4--3.3 h each).
-		\item : the mixture and the K-means types are the same typology. Shares agree to a few points ($.10/.25/.65$ against $.10/.28/.61$ on $h$; $.15/.44/.41$ against $.18/.43/.40$ on $\theta$), the class paths track the type means, and person by person the two assign 94--95\% of people to the same class (ARI $0.82$--$0.85$, mean maximum posterior $0.93$--$0.95$).
-		\item The $h$ / $\theta$ split is therefore a property of the scale, not of the method: on $h$ and the deficit index both methods isolate a 10\% sick tail, on $\theta$ both split the healthy majority.
-		\item The composition strips move the same way under both: on $h$ the worst class grows with age among the observed person-waves, from 5\% at 20 to 14\% at 85 under the mixture and 7\% to 14\% under K-means; on $\theta$ it grows from 13\% at 30 to 16\% at 85 under the mixture. 
+		\item Same data as the partial K-means, fitted on $\theta$; the $h$ version is in Appendix~\ref{app:measures}. We have not yet fit the mixtures on the frailty indices.
+		\item The baseline $K=3$ mixture (quadratic paths, independent residuals, no AR term) converged (max $\hat R = 1.001$, about 3 h).
+		\item The mixture and the K-means types are the same typology. Shares agree to a few points ($.15/.44/.41$ against $.18/.43/.40$), the class paths track the type means, and person by person 95\% of people are in the same class (ARI $0.85$, mean maximum posterior $0.93$).
+		\item The same holds on $h$ (ARI $0.82$, 94\% in the same class): there both methods isolate a 10\% sick tail, where on $\theta$ both split the healthy majority, so the $h$--$\theta$ split is a property of the scale, not of the method.
+		\item The composition strips move the same way under both methods: on $\theta$ the worst class is 13\% of the observed person-waves at 30 and 16\% at 85 under the mixture, against 16\% and 18\% under K-means.
 	\end{itemize}
-	
-	\begin{figure}[H]\centering
-		\includegraphics[width=0.66\linewidth]{fig_bayes_base.png}
-		\caption{Structure's Figure 5, first version on the paper's measure. Baseline $K=3$ mixture class paths (solid, width proportional to the share) and the K-means type means (dashed red) in each variant's units, with the observed class means, the measure averaged at each age over the people observed there weighted by their posterior class probabilities, dotted; class composition of the observed person-waves by age under each method; and the posterior-weighted share of each K-means type in each mixture class. The deficit index is in Appendix~\ref{app:bayes_fi10}.}
-		\label{fig:bayesbase}
-	\end{figure}
 	
 
 	
@@ -486,43 +488,46 @@ Small robustness exercise:
 	\end{equation}
 	where $g$ is the gap in years since the person's previous observation, the state starts from its stationary distribution $u\sim N\bigl(0,\sigma^2/(1-\rho_{k}^2)\bigr)$, and the persistence $\rho_k$ is class-specific while the innovation scale $\sigma$ and the ``spike'' scale $\sigma_\varepsilon$ are common. The two variances are identified off the autocorrelation function, $\rho^{g}$ times the state's share of the variance, so $\rho$ comes from the ratio of successive autocorrelations and the ``spike'' from their level; each person's likelihood is computed by the Kalman filter, class by class, and the rest is as in the baseline. Priors add $\rho_k\sim\mathrm{Beta}(2,2)$ and $\sigma_\varepsilon\sim N(0,0.4^2)$ truncated below at $0.01$.
 	
-	Figure \ref{fig:bayesssm} shows the AR(1) plus measurement error specification
+	Figure~\ref{fig:bayes}(b) shows the AR(1) plus ``spike'' specification:
 	\begin{itemize}
-		\item The same three variants under the paper's stochastic specification, AR(1) plus measurement error, on the same contract; all converged (max $\hat R\le1.003$, 4--8 h each).
+		\item The same specification on $\theta$ (and on $h$ for the appendix), on the same contract; converged (max $\hat R = 1.002$, 4--8 h).
 		\item On $\theta$ the story carries over. Shares $.25/.47/.29$, persistence $.96/.90/.87$, a ``spike'' of $0.42$ against a state innovation of $0.23$: between a fifth and a half of the variance around each class's path is the ``spike'' (signal shares $0.78$, $0.63$ and $0.56$), the worst class starts within half a standard deviation of the middle and falls away, and the composition drift reverses: the worst class is 26\% of the observed person-waves at 30 and 17\% at 85, against $13\%\to16\%$ under the baseline.
-		\item On $h$ (and the deficit index) the trajectories look pretty different \note{when we go to $K=4$ then we start getting a convergence again though}. Agreement with the K-means types falls to ARI $0.46$, with half of K-means type 2 reassigned to the worst class.
-		\item \note{Look into and think about the parallels to \citet{hosseini2022} here - they model log frailty in the PSID as an individual fixed effect plus an AR(1) plus a white-noise term}
-		\item \note{There is a bit of an issue with $h$ for the dynamic model: a bounded scale with a hard ceiling is not something a Gaussian AR(1) plus measurement error model can fit, whatever its merits for the cost function. The cleanest resolution is $\theta$, at least for the mixtures.}
+		\item Agreement with the K-means types falls to ARI $0.42$ (77\% in the same class), and classification is less certain (mean maximum posterior $0.69$ against $0.93$).
+		\item On $h$ (Appendix~\ref{app:measures}) the healthiest class collapses: its persistence is $0.25$, against $0.96$ and $0.78$ for the other two, and agreement with the K-means types falls to ARI $0.46$, with half of K-means type 2 reassigned to the worst class. This bounded-scale problem is one reason we report $\theta$. \note{when we go to $K=4$ then we start getting a convergence again though}
+		\item The specification is close to that of \citet{hosseini2022}, who model log frailty as a fixed effect plus an AR(1) plus white noise. Our classes play the role of a coarse fixed effect, and their persistence of $0.991$ compares with our $0.87$--$0.96$.
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
-		\includegraphics[width=0.66\linewidth]{fig_bayes_ssm.png}
-		\caption{As Figure~\ref{fig:bayesbase}, for the AR(1) plus measurement error fits. The deficit index is in Appendix~\ref{app:bayes_fi10}.}
-		\label{fig:bayesssm}
+		\includegraphics[width=\linewidth]{fig_bayes_mixtures.png}
+		\caption{$K=3$ mixtures on $\theta$: (a) independent residuals, (b) an AR(1) latent state plus a one-period ``spike'', with the class persistence in the legend. Top: class paths at the posterior mean (solid, width proportional to the share), the observed class means, the measure averaged at each age over the people observed there weighted by their posterior class probabilities (dotted), and the partial K-means type means on the same rows (dashed red). Bottom: the posterior class composition of the person-waves observed at each age. The same figure on $h$ is in Appendix~\ref{app:measures}.}
+		\label{fig:bayes}
 	\end{figure}
 	
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_class_trajectories_by_K.png}
-		\caption{Fitted class trajectories and shares on the paper's measure by number of classes. Rows: $h$ and $\theta$, each under independent residuals and under an AR(1) latent state plus a one-period ``spike''; columns: $K=3$, $4$ and $5$. Line width is proportional to the class share, the legend gives the share and, under AR(1), the class persistence; dotted lines are the observed class means, the measure averaged at each age over the people observed there weighted by their posterior class probabilities; and the strip beneath each panel is the posterior class composition of the person-waves observed at each age. The ten-deficit index, at $K=3$, is in Appendix~\ref{app:trajfi10}. \todo{$K=5$ under AR(1) plus ``spike'' on $h$ is still running.}}
+		\caption{Fitted class trajectories and shares on $\theta$ by number of classes. Rows: independent residuals and an AR(1) latent state plus a one-period ``spike''; columns: $K=3$, $4$ and $5$. Line width is proportional to the class share, the legend gives the share and, under AR(1), the class persistence; dotted lines are the observed class means, the measure averaged at each age over the people observed there weighted by their posterior class probabilities; and the strip beneath each panel is the posterior class composition of the person-waves observed at each age. The same figure on $h$ is in Appendix~\ref{app:measures}.}
 		\label{fig:trajK}
 	\end{figure}
 	
 	\paragraph{Extensions: $K$, dimensions, mortality.}
 	\begin{itemize}
-		\item $K=4$ and $K=5$ (Figure~\ref{fig:trajK}) converge cleanly on every specification (max $\hat R\le1.004$). Under independent residuals the fourth class is a new sickest group, 6\% of people on $h$ and 10\% on $\theta$, and the healthy majority is left alone. Under AR(1) plus ``spike'' the split goes the other way: on $\theta$ the three $K=3$ classes barely move and the new class is a small healthy group, 8\% with persistence $0.70$; on $h$ the top two classes, over half the sample, come out with persistence $0.52$ and $0.19$, so the bounded-scale collapse of the top class is not resolved by a fourth class but spreads to a second one. Classification certainty falls with each added class, from a mean maximum posterior of $0.95$ at $K=3$ to $0.90$ at $K=4$ on $h$ under independent residuals, and from $0.69$ to $0.66$ on $\theta$ under AR(1) plus ``spike''.
-		\item At $K=5$, independent residuals keep splitting at the bottom: the fifth class is a still-sicker tail, 4\% on $h$ and 6\% on $\theta$. Under AR(1) plus ``spike'' on $\theta$ the three large classes are unchanged from $K=3$ and $K=4$, with persistence $0.86$--$0.94$, and the two new classes are both small and healthy, 7\% and 6\%, one with persistence $0.07$: the bounded-scale collapse reaches $\theta$ too at $K=5$, in a small class rather than half the sample. \todo{$K=5$ under AR(1) plus ``spike'' on $h$ still running.}
-		\item Multidimensional model (Figure~\ref{fig:multidim}): physical GRM, mental GRM (without the depression diagnosis, which recovers a quarter of the sample) and the chronic count as a negative binomial, one shared class structure; 38,268 people. Extra channels stabilise the classes against the AR term (shares $.19/.38/.42$ across all variants); persistence is much less class-graded than a single channel implies ($.73/.61/.60$). Mental trajectories rise with age for every class, fastest for the healthiest physical type. The count channel separates the classes most sharply (4.5 vs 0.7 conditions at 80).
-		\item Mortality as a channel (per-wave logit hazard, quadratic in age; 1,996 deaths): strongly graded by class, odds 7 times higher in the worst class than the best at 55, converging to $2.4\times$ by 85, and it leaves the typology exactly unchanged (shares and intercepts to three decimals). It describes survival by class; it does not define the classes. This is where the survivor-bias discussion lives. \note{The AR(1) plus measurement error multidimensional fits split into two modes on the physical-channel ordering constraint; provisional until the constraint moves to the chronic channel.}
-		\item Windows (Figure~\ref{fig:windows}, K-means version): types refitted on twenty-year windows agree with the lifecycle typology at ARI $0.80$--$0.83$ up to the 60--80 window and $0.66$ at 70--90; backward-expanding windows from 90 reach ARI $0.82$ once the window starts at 60 and $0.95$ from 30. What a late window sees are the types after the divergence phase: the worst type's share rises from 5\% (20--40) to 20\% (70--90) as the window moves. \todo{Bayesian version of this figure for the main text; move the K-means version to the appendix.}
+		\item $K=4$ and $K=5$ (Figure~\ref{fig:trajK}) converge cleanly on every specification (max $\hat R\le1.004$). Under independent residuals each added class is a new sickest group, 10\% of people at $K=4$ and a further 6\% at $K=5$, and the healthy majority is left alone.
+		\item Under AR(1) plus ``spike'' the split goes the other way. At $K=4$ the three $K=3$ classes barely move and the new class is a small healthy group, 8\% with persistence $0.70$. At $K=5$ the three large classes are unchanged, with persistence $0.86$--$0.94$, and the two new classes are both small and healthy, 7\% and 6\%, one with persistence $0.07$: a collapse like $h$'s reaches $\theta$ too at $K=5$, but in a small class rather than half the sample. Classification certainty falls from a mean maximum posterior of $0.69$ at $K=3$ to $0.66$ at $K=4$.
+		\item On $h$ (Appendix~\ref{app:measures}) the healthiest-class collapse spreads rather than resolves as classes are added: the top two classes have persistence $0.52$ and $0.19$ at $K=4$, and $0.39$ and $0.18$ at $K=5$, covering about half the sample.
+		\item Multidimensional model (Figure~\ref{fig:multidim}): the physical measure ($\theta$; $h$ in Appendix~\ref{app:measures}) and a mental GRM (the three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis) as Gaussian channels, plus mortality, one shared class structure; the health contract's people with a mental score on every row, 38,181 people and 2,045 deaths. Under AR(1) plus ``spike'' the persistence is class and channel specific while the innovation and ``spike'' scales are common to the classes; the hazard is Gompertz--Makeham, $\lambda_k(a)=c+b_k e^{\vartheta_k(a-55)}$, integrated over each row's years at risk, with class-specific level and slope and a common Makeham constant.
+		\item The physical typology survives the extra channels. Under AR(1) plus ``spike'' the classes are $.19/.51/.31$ with physical persistence $.94/.91/.87$, and 77\% of people land in the same class as under the single-channel fit. On $h$ (Appendix~\ref{app:measures}) the healthiest class keeps its collapse, persistence $0.28$, even though its mental persistence is $0.86$.
+		\item Mental health is faster and noisier than physical health in every class: persistence $.93/.88/.81$ against $.94/.91/.87$ on $\theta$, and a ``spike'' of $0.54$ against $0.42$, so the signal share of the mental channel is $0.45$--$0.67$ against $0.56$--$0.74$. A shared persistence across channels, as in earlier versions, would have been wrong. The worst physical class sits two thirds of a standard deviation below the middle class on mental health at 55 and recovers half of that by 90; the healthiest class improves with age.
+		\item Mortality is strongly graded by class and converges with age: the yearly hazard of the worst class is 10.6 times the best class's at 55 and 3.3 times at 85 under AR(1) plus ``spike'' (7.1 and 2.7 under independent residuals), the sickest class having the flattest Gompertz slope ($0.09$ against $0.13$ per year). The Makeham constant is below $10^{-4}$ in every fit. Mortality describes survival by class; it does not define the classes. This is where the survivor-bias discussion lives.
+		\item Note that in the AR(1) plus ``spike'' case, the class composition by age now looks like it reflects mortality selection. We need to look into this a bit more, but it is certainly promising!
+		\item Windows (Figure~\ref{fig:windows}, K-means version): types refitted on twenty-year windows agree with the lifecycle typology at ARI $0.74$--$0.83$ up to the 60--80 window and $0.61$ at 70--90; backward-expanding windows from 90 reach ARI $0.76$ once the window starts at 60 and $0.93$ from 30. What a late window sees are the types after the divergence phase: the worst type's share rises from 15\% (20--40) to 27\% (70--90) as the window moves. \todo{Bayesian version of this figure for the main text; move the K-means version to the appendix.}
 	\end{itemize}
 	
 
-	\todo{The multidimensional model is not yet updated on the new}
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_multidim_trajectories.png}
-		\caption{Structure's Figure 6b (placeholder). Class trajectories and shares for the multidimensional fits: one row per variant, one column per channel. \todo{add the mortality hazard panel (\code{fig\_multidim\_mortality.png}) as a fourth column.}}
+		\caption{Multidimensional $K=3$ mixtures on $\theta$: rows are AR(1) plus ``spike'' and independent residuals; columns are the physical and mental class paths at the posterior mean in each channel's units (dotted: the observed class means, posterior-weighted), the class-specific Gompertz--Makeham yearly hazard on a log scale (circles: the posterior-weighted crude death rate by five-year band), and the posterior class composition of the person-waves observed at each age. Under AR(1) plus ``spike'' the legend gives each class's persistence on that channel. The same figure on $h$ is in Appendix~\ref{app:measures}.}
 		\label{fig:multidim}
 	\end{figure}
 	
@@ -530,18 +535,18 @@ Small robustness exercise:
 	\todo{Expanding windows are currently only on the K-means - will take a bit of time to run them on the Bayesian}
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_windows.png}
-		\caption{Structure's Figure 7 (K-means version). Types over sliding twenty-year windows (a) and windows expanding backwards from 90 (b), against the lifecycle typology in grey; (c) agreement with the lifecycle assignment.}
+		\caption{Partial K-means types on $\theta$ over sliding twenty-year windows (a) and windows expanding backwards from 90 (b), against the lifecycle typology in grey; (c) agreement with the lifecycle assignment. The same figure on $h$ is in Appendix~\ref{app:measures}.}
 		\label{fig:windows}
 	\end{figure}
 	
 	\paragraph{Robustness (appendix).}
 	
 	\begin{itemize}
-		\item \textbf{Cohort effects.} The three AR(1) plus measurement error fits were repeated with one level shift per birth decade, common to the classes (Appendix~\ref{app:cohort}). With fifteen waves the panel observes each person over at most a fifteen-year span, so a cohort's level is identified from the overlap of neighbouring decades at the ages they share.
-		\item \textbf{The typology is unaffected.} Shares, persistence and the measurement-error scale agree with the fits without cohort effects to two or three decimals on every variant, and the class paths keep their shape; the worst class is a little steeper once the decade shifts carry part of the level. Whatever cohort variation there is, it is not what separates the classes.
-		\item \textbf{The cohort effects themselves should not be read strongly.} The fit reports a monotone decline between the 1950s and the 2000s of about a third of a standard deviation on $h$ and the deficit index, and twice that on $\theta$. But the raw decade profiles line up almost exactly at the ages they share, and subtracting the estimated shifts opens gaps that were not there. Over a fifteen-year window age and birth year are nearly collinear, and a decade dummy is close to a linear function of age within it, so with a single quadratic age path per class the dummies absorb the curvature the quadratic cannot follow. With single-year age dummies in place of the quadratic, the pre-1960 shifts vanish and only the post-1970 cohorts decline (Appendix~\ref{app:kmeans_cohort}), so the mixture's shifts should not be read as cohort effects.
-		\item \textbf{Specification.} The same $K=3$ fits with an AR(1) in the class residual but no ``spike'' give persistence of $0.79/0.28/0.40$ on $\theta$ and $0.84/0.39/0.38$ on $h$, against $0.87$--$0.96$ on $\theta$ once the one-period term is separated: without it $\rho$ has to absorb the one-period noise and is pulled down.
-		\item \todo{still to do: a bounded observation model (scores at the maximum treated as censored, or the GRM posterior sd passed through as known measurement variance).}
+		\item \textbf{Cohort effects.} The AR(1) plus ``spike'' fits were repeated with one level shift per birth decade, common to the classes (Appendix~\ref{app:cohort}). With fifteen waves the panel observes each person over at most a fifteen-year span, so a cohort's level is identified from the overlap of neighbouring decades at the ages they share.
+		\item \textbf{The typology is unaffected.} Shares, persistence and the ``spike'' scale agree with the fits without cohort effects to two or three decimals on every variant, and the class paths keep their shape; the worst class is a little steeper once the decade shifts carry part of the level. Whatever cohort variation there is, it is not what separates the classes.
+		\item \textbf{The cohort effects themselves should not be read strongly.} The fit reports a monotone decline between the 1950s and the 2000s of about two thirds of a standard deviation on $\theta$ (a third on $h$). But the raw decade profiles line up almost exactly at the ages they share, and subtracting the estimated shifts opens gaps that were not there. Over a fifteen-year window age and birth year are nearly collinear, and a decade dummy is close to a linear function of age within it, so with a single quadratic age path per class the dummies absorb the curvature the quadratic cannot follow. With single-year age dummies in place of the quadratic, the pre-1960 shifts vanish and only the post-1970 cohorts decline (Appendix~\ref{app:kmeans_cohort}), so the mixture's shifts should not be read as cohort effects.
+		\item \textbf{Specification.} The same $K=3$ fits with an AR(1) in the class residual but no ``spike'' give persistence of $0.79/0.28/0.40$ on $\theta$, against $0.87$--$0.96$ once the one-period term is separated: without it $\rho$ has to absorb the one-period noise and is pulled down.
+		\item \todo{still to do for the bounded measures in the appendix: a bounded observation model (scores at the ceiling of $h$ or the floor of frailty treated as censored).}
 	\end{itemize}
 	
 	\subsection{(C) Types against observables}
@@ -549,84 +554,83 @@ Small robustness exercise:
 	
 	\begin{itemize}
 		\item Figure~\ref{fig:obs}, in the layout of the earlier PCS version: (a) the three types; (b) every cell of highest qualification $\times$ sex $\times$ white/other ethnic group $\times$ income tercile, 40 groups with at least 30 people at an age; (c) education; (d) deciles of the person's mean within-wave rank of equivalised household net income (both built from the raw files, \code{data\_cleaning/06\_build\_observables.py}). Region is left out of (b) because twelve regions empty most cells; add it if the point needs making with more lines.
-		\item Gradients exist and are in the expected order: at 50, $0.86$ for degree holders against $0.78$ for no qualification; $0.89$ for the top income decile against $0.75$ for the bottom, with the income gap widest in the mid-fifties. But even the 40-way partition spans a band of $0.14$ to $0.20$ in $h$ across ages 30 to 70, against $0.31$ to $0.45$ between the types (\code{paper\_observables\_gradients.csv}). The between-group share of the cross-sectional variance is 3\% for education, 4--8\% for income deciles, 5--10\% for the 40 cells, against 52--69\% for the types; the observable partitions are essentially independent of the types (ARI $0.01$--$0.05$).
+		\item Gradients exist and are in the expected order: at 50, $\theta$ is $0.21$ for degree holders against $-0.20$ for no qualification, and $0.44$ for the top income decile against $-0.39$ for the bottom, with the income gap widest at 55 ($0.87$ standard deviations).
+		\item But even the 40-way partition spans a band of $0.9$ to $1.1$ standard deviations across ages 30 to 70, against $1.5$ to $2.0$ between the types.
+		\item The between-group share of the cross-sectional variance is 3\% for education, 5--8\% for income deciles and 6--9\% for the 40 cells, against 48--65\% for the types; the observable partitions are essentially independent of the types (ARI $0.01$--$0.03$).
 		\item \note{The between-share comparison is partly mechanical (the types maximise it); the fairer statements are the ARI, the type composition of each observable group, and the predictive comparison below.}
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_observables.png}
-		\caption{Lifecycle trajectories of $h$ by (a) health type, (b) 40 observable partitions, (c) education and (d) income decile, on the clustered people; cells with fewer than 30 people suppressed.}
+		\caption{Lifecycle trajectories of $\theta$ by (a) health type, (b) 40 observable partitions, (c) education and (d) income decile, on the clustered people; cells with fewer than 30 people suppressed. The same figure on $h$ is in Appendix~\ref{app:measures}.}
 		\label{fig:obs}
 	\end{figure}
 	
-	\note{Check that these are done on held-out versions - last two observations per person held out, 29,901 people}
 	\paragraph{Predictive value.}
 	\begin{itemize}
-		\item Rebuilt as a forecast on the paper's measure (\code{descriptives/33\_paper\_prediction.py}): on the health contract's people, every pair of adjacent waves is one observation, the predictors are what is known at $t$ and the outcomes are at $t+1$: $h_{t+1}$, death before the next wave, an in-patient stay in the year before the $t+1$ interview, and the GP-visit band at $t+1$. People are split 70/30, fitted on the 70, scored on the 30. Predictor sets are the objects the paper uses: the observables of Figure~\ref{fig:obs}, the K-means types, the baseline and AR(1) plus measurement error class posteriors, the measure at $t$ and its lag, and their combinations, each with a quadratic in age (Figure~\ref{fig:pred}, Table~\ref{tab:pred}).
-		\item \textbf{Observables predict almost nothing; any health summary predicts a lot.} Education, income and sex add $0.05$ of $R^2$ for $h_{t+1}$ and $0.03$ for GP visits over age; the types add $0.55$--$0.60$ and $0.14$--$0.16$.
-		\item \textbf{The current score beats the types, and the types add little to it.} $h_t$ alone reaches $R^2=0.72$ for $h_{t+1}$, AUC $0.90$ for death and $0.70$ for admission; adding the AR(1) plus measurement error classes to it gains $0.05$ of $R^2$ for $h_{t+1}$, nothing for death or admission, and $0.02$ for GP visits. The lag $h_{t-1}$ buys about as much as the classes do for $h_{t+1}$: the classes summarise the history, and the history is what matters.
-		\item \textbf{Death is the outcome health predicts least beyond age.} Age alone gives AUC $0.86$; the best set reaches $0.90$. Utilisation is the opposite: age gives $0.59$ and $0.01$, health does nearly all the work. Prevention targeted on these measures should expect to move utilisation far more readily than mortality.
-		\item \note{Caveat carried over: class posteriors and K-means labels are from fits on every wave, including $t+1$, so the class rows test the class-to-outcome link out of sample but not the whole pipeline. The measure rows are clean forecasts.}
+		\item Rebuilt on the held-out fits (\code{descriptives/33\_paper\_prediction.py}): every Bayesian fit was refitted with each person's last two observed rows held out (the 29,901 people with at least five rows on the health contract; 26,664 people are in both the single-channel and the multidimensional held-out samples and the exercise runs on them). One prediction per person and horizon from the last fitted row $t$, with outcomes at the two held rows $t+1$ and $t+2$: the measure, the cost proxy in pounds (the flat-cost index capped at its 99th percentile, waves 7--15), and employment (employed or self-employed, people aged 20--64 at $t$). Class posteriors and the models' own forecasts are computed from the fitted window alone and carried to the outcome's age, so nothing after $t$ informs them. People are split 70/30, fitted on the 70 and scored on the 30 (Figure~\ref{fig:pred}, Table~\ref{tab:pred}).
+		\item \textbf{Observables predict almost nothing about health or cost, but more than health about employment.} Education, income and sex add $0.06$ of $R^2$ for $\theta_{t+1}$ and $0.01$ for cost over age, against $0.48$--$0.54$ and $0.08$--$0.09$ for the held-out classes. For employment they lift the AUC from $0.64$ to $0.78$, against $0.74$--$0.76$ for any health summary, and the two together reach $0.82$. Employment at $t$ alone reaches $0.90$: once current status is known, health adds little to the labour-market outcome.
+		\item \textbf{The current score and the classes carry about the same information, and the model's forecast beats both.} $\theta_t$ alone reaches $R^2=0.69$ for $\theta_{t+1}$ and $0.14$ for cost, against $0.68$ and $0.12$ for the AR(1) plus ``spike'' classes, and adding the classes to the score gains $0.03$ for health and nothing for cost. The model's own forecast of $\theta_{t+1}$, the class-weighted path plus the filtered state carried forward, one number per person, does better than the score plus its lag ($R^2=0.74$ against $0.73$): the classes summarise the history, and the history is what matters.
+		\item \textbf{Two waves ahead the ranking is unchanged.} $R^2$ for $\theta_{t+2}$ is $0.61$ for the iid classes, $0.66$ for the AR(1) plus ``spike'' classes, $0.66$ for $\theta_t$ and $0.71$ for the model forecast, against $0.62$, $0.68$, $0.69$ and $0.74$ one wave ahead; for cost the score falls from $0.14$ to $0.11$ while the classes hold at $0.12$. The classes lose less over the extra wave than the current score does and draw level with it at $t+2$, but only the forecast, which carries the filtered state forward, stays clear.
+		\item The multidimensional classes and forecast match the single-channel ones ($R^2$ $0.61$ and $0.74$ for $\theta_{t+1}$ against $0.68$ and $0.74$; $0.11$ for cost against $0.12$): the mental channel and the mortality hazard neither help nor hurt the physical forecast. The same holds on $h$ ($0.63$ and $0.77$ against $0.68$ and $0.78$; Figure~\ref{fig:pred_h}).
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_prediction.png}
-		\caption{Out-of-sample gain over an age-only quadratic in predicting next wave's $h$, death before the next wave, an in-patient stay and the GP-visit band, from each set of predictors known at $t$.}
+		\caption{Out-of-sample gain over an age-only quadratic in predicting the measure, the cost proxy in pounds and employment (ages 20--64) one and two waves ahead, from each set of predictors known at $t$, on $\theta$, with every class posterior and forecast from a fit that held out the two target rows. In the employment panel the dashed ($t+1$) and dotted ($t+2$) lines mark age plus employment at $t$. The same figure on $h$ is in Appendix~\ref{app:measures}.}
 		\label{fig:pred}
 	\end{figure}
 	
-	\begin{table}[H]\centering\small
+	\begin{table}[H]\centering\footnotesize
 		\input{tables/tab_prediction}
-		\caption{Out-of-sample scores by predictor set and outcome; $R^2$ for the continuous outcomes, AUC for the binary ones.}
+		\caption{Out-of-sample scores by predictor set, outcome and horizon, on the held-out fits on $\theta$; $R^2$ for the continuous outcomes, AUC for employment. The same table on $h$ is in Appendix~\ref{app:measures}.}
 		\label{tab:pred}
 	\end{table}
+	
+	\paragraph{Predicting death.}
+	\begin{itemize}
+		\item The held-out design cannot predict death at a fixed horizon: everyone at $t$ has two more rows, and $t+2$ is by construction everyone's last interview. So mortality is shown two ways (Figure~\ref{fig:predmort}, \code{descriptives/41\_paper\_mortality\_prediction.py}). On the full-sample fits, death before the next wave at every person-wave at risk (308,949 person-waves, 1,267 deaths): the single-channel classes never saw the death record, and the multidimensional class is taken from the physical and mental channels only, with the full-likelihood version, which has seen the decedent's event, shown as an upper bound. On the held-out fits, death after the last interview against leaving the panel alive, predicted from $t$ (13,516 people, 7\% deaths), with the multidimensional posterior from survival through the fitted window only.
+		\item \textbf{Death is the outcome health predicts least beyond age.} On $\theta$, at every person-wave, age alone gives AUC $0.85$; any class adds about $0.03$ ($0.88$), the current score $0.05$ ($0.90$), and the classes add nothing on top of the score. The multidimensional class from the health channels alone does as well as the single-channel classes, and so does its own class-weighted Gompertz--Makeham hazard, one number per person; letting the class see the death record buys about $0.01$. On the held-out comparison the ordering is the same, from $0.80$ for age to $0.83$ for the classes or the score. Utilisation is the opposite case: health does nearly all the work there, so prevention targeted on these measures should expect to move costs far more readily than mortality.
+	\end{itemize}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=0.62\linewidth]{fig_prediction_mortality.png}
+		\caption{Predicting death, AUC gain over an age-only quadratic. (a, c) Every person-wave at risk on the full-sample fits: death before the next wave. (b, d) The held-out fits: death after the last interview against leaving the panel alive, predicted from the last fitted row. On $\theta$; the same figure on $h$ is in Appendix~\ref{app:measures}.}
+		\label{fig:predmort}
+	\end{figure}
 	
 	%% =============================================================================
 	\section{Prevention exercises}
 	\label{sec:policy}
 	%% =============================================================================
 	
-	\note{First pass, on the K-means types, all three variants: the framework's returns computed from the smoothed type paths and the population moments of the clustered people, $c(h)=(1-h)^2$, horizon 90, no survival weighting, no discounting. $\theta$ is mapped affinely to $[0,1]$ by its sample range so that the same gap is defined.}
+	We price the returns of Section~\ref{sec:framework} on the $K=3$ AR(1) plus ``spike'' classes on $\theta$ (Figure~\ref{fig:bayes}(b)), with the independent-residuals classes alongside for comparison. The cost function is the curve estimated in pounds on $\theta$ (Figure~\ref{fig:cost}), a cubic fitted to the uncapped cost index over waves 7--15, and the returns take the general-cost form of Section~\ref{sec:policy_fw}. Class shares and paths are the fitted mixture at its posterior mean; $\E[-c'(\theta)\mid j]$ at each age is the posterior-weighted mean over the person-waves observed there; treatment closes a share $\tau$ of the gap to the healthiest observed score. Returns are pounds of lifetime cost to 90 per unit of policy intensity, with no survival weighting and no discounting. The K-means versions and the quadratic cost are in Appendix~\ref{app:returns}; the same exercise on $h$ is in Appendix~\ref{app:measures}.
 	
 	\begin{itemize}
-		\item \textbf{Prevention versus treatment} (Figure~\ref{fig:returns}, Table~\ref{tab:returns}). $P(r)/T(r)$ falls from about $0.35$ at $r=30$ to $0.20$ at 50 and $0.17$ at 70 on $h$, and the same on $\theta$ and the deficit index. Two thirds of $T$ is the mean gap and one third the variance (mostly within type after 60); $P$ is almost entirely its mean channel once past 40.
-		\item \textbf{Timing.} The between-type covariance channel of $P(r)$ is positive for a start at 30 (divergence still to come), and negative from about 45 on, reaching $-40\%$ of $P(50)$ on $h$: starting later, the compression among types works \emph{against} uniform prevention. This is Exhibit~1's sign change priced.
-		\item \textbf{Targeting.} At $r=30$ the worst type's return is ten times the best type's on $h$ ($11.8$ vs $1.1$; uniform $3.5$), so type targeting collects $2.4\times$ the uniform return; by 50 the middle type has the highest return and the type gain falls to $0.8\times$, by 70 to $0.8\times$. On $\theta$ the gains are smaller ($1.0\times$ at 30, $0.3\times$ later) because its typology splits the healthy majority rather than isolating the sick tail. \note{The units challenge again: which typology the policy exercise rests on is a substantive choice.}
+		\item \textbf{Prevention versus treatment} (Figure~\ref{fig:returnsbayes}, Table~\ref{tab:returnsbayes}). On the AR(1) plus ``spike'' classes, uniform prevention from 30 is worth \pounds35{,}000 of lifetime cost per unit of $\mu$ against \pounds81{,}000 for treatment per unit of $\tau$, so $P(r)/T(r)$ is $0.43$; it falls to $0.29$ at 50 and $0.16$ at 70.
+		\item \textbf{Timing.} On the AR(1) plus ``spike'' classes the between-class channel of $P(r)$ is positive at every start age: $+35\%$ of $P(30)$, $+25\%$ of $P(50)$ and $+7\%$ of $P(70)$. On the independent-residuals classes it is $+13\%$ at 30 and turns negative by 50 ($-8\%$), reaching $-42\%$ at 70: the sign change of Figure~\ref{fig:exhibit1} priced. Once the one-period noise is absorbed, the classes fan out for longer, and divergence keeps working for uniform prevention into old age.
+		\item \textbf{Targeting.} From 30 the worst class's return is \pounds72{,}000, against \pounds35{,}000 uniform and \pounds5{,}600 for the best class, so class targeting collects about twice the uniform return (a gain of 107\%). From 50 the worst class still has the highest return and the gain is 32\%; from 70 the middle class does, and the gain is 50\%. On the independent-residuals classes the gains are 151\%, 49\% and 50\%.
 		\item Skeleton for the full version:
 		\begin{itemize}
-			\item the same objects on the Bayesian types, with posterior uncertainty, once refitted;
-			\item survival-weighted sums $\sum_{a\ge r}S(a\mid r)(\cdot)$ using the class hazards, both ways (the sickest die, prevention raises survival);
-			\item targeting on observables versus on early health history versus on the type (the ceiling), priced by the targeting identity of Section~\ref{sec:framework}, using the Section~\ref{sec:observables} partitions;
-			\item the additive-prevention robustness check (the multiplicative $(1-\mu)d$ favours decliners by construction), and prevention as moving a person to a better type;
-			\item cost sides: $\mu$ and $\tau$ carry no prices, so cross-instrument comparisons are composition-only; state this or attach unit costs from the cost index.
+			\item posterior uncertainty, from the draws;
+			\item survival-weighted sums $\sum_{a\ge r}S(a\mid r)(\cdot)$ using the Gompertz--Makeham class hazards of the multidimensional model, both ways (the sickest die, prevention raises survival);
+			\item targeting on observables versus on early health history versus on the class, priced by the targeting identity of Section~\ref{sec:framework}, using the Section~\ref{sec:observables} partitions;
+			\item the additive-prevention robustness check (the multiplicative $(1-\mu)d$ favours decliners by construction), and prevention as moving a person to a better class;
+			\item cost sides: the returns are now in pounds of lifetime cost per unit of intensity, so comparing instruments still needs the cost of delivering a unit of $\mu$ or $\tau$;
+			\item \note{$T(r)$ is computed on the observed cross-section, so it includes the one-period ``spike'' variance: whether treatment should act on the persistent part only is the open question of Section~\ref{sec:policy_fw}.}
 		\end{itemize}
-		
-		
-		\item \textbf{On the AR(1) plus measurement error classes} (Figure~\ref{fig:returnsssm}, Table~\ref{tab:returnsssm}) the picture shifts in the direction the composition strips suggested. The worst class is larger (27\% on $h$) and its path steeper, so the between-type channel of $P(r)$ is \emph{positive} for starts at 30 and 50 on every variant ($+24\%$ of $P(30)$ on $h$, $+30\%$ on $\theta$) and turns negative only from about 60 on $h$ and the deficit index, while on $\theta$ it is still slightly positive at 70 ($+5\%$); $P/T$ is higher ($0.44$ at 30 on $h$ against $0.34$ on the K-means types); and type targeting is worth $1.9\times$ the uniform return at 30 on $h$ and $0.9\times$ on $\theta$, declining more slowly with $r$ than on the K-means types. The difference is the classes themselves: once the year-to-year noise is absorbed, the types fan out more and for longer.
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_returns.png}
-		\caption{Returns to prevention and treatment by start age $r$, from the K-means types, one column per variant. Top: $P_j(r)$ by type and the uniform $P(r)$; middle: $T(r)$, $P(r)$ and its mean channel (log scale); bottom: $P/T$ and the gain from type targeting relative to the uniform return.}
-		\label{fig:returns}
+		\includegraphics[width=\linewidth]{fig_returns_bayes.png}
+		\caption{Returns to prevention and treatment by start age $r$ on $\theta$, in pounds of lifetime cost under the estimated cost curve: (left) the AR(1) plus ``spike'' classes, (right) the independent-residuals classes. Top: $P_j(r)$ by class and the uniform $P(r)$; middle: $T(r)$, $P(r)$ and its mean channel (log scale); bottom: $P/T$, the gain from class targeting relative to the uniform return, and the between-class share of $P(r)$.}
+		\label{fig:returnsbayes}
 	\end{figure}
 	
-	\begin{table}[H]\centering\footnotesize
-		\input{tables/tab_returns}
-		\caption{Returns at three start ages. Cov.\ channel share is the between-type channel of $P(r)$ as a share of $P(r)$; type gain is $(\max_jP_j-P)/P$.}
-		\label{tab:returns}
-	\end{table}
-	
-	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_returns_ssm.png}
-		\caption{As Figure~\ref{fig:returns}, on the AR(1) plus measurement error classes: shares and quadratic paths at the posterior mean, the population moments from the same people.}
-		\label{fig:returnsssm}
-	\end{figure}
-	
-	\begin{table}[H]\centering\footnotesize
-		\input{tables/tab_returns_ssm}
-		\caption{As Table~\ref{tab:returns}, on the AR(1) plus measurement error classes.}
-		\label{tab:returnsssm}
+	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
+		\input{tables/tab_returns_bayes}
+		\caption{Returns at three start ages on $\theta$, in pounds of lifetime cost under the estimated cost curve. The between-class share is the between-class channel of $P(r)$ as a share of $P(r)$; the class gain is $(\max_jP_j-P)/P$.}
+		\label{tab:returnsbayes}
 	\end{table}
 	
 	%% =============================================================================
@@ -736,9 +740,18 @@ Small robustness exercise:
 	
 		\begin{table}[H]\centering\small
 		\input{tables/tab_measure_correlations}
-		\caption{Correlations of the three variants with the comparison metrics, 385,427 person-waves.}
+		\caption{Correlations of $\theta$, $h$, the frailty index and log frailty with the comparison metrics, 385,427 person-waves. The two frailty indices are negated, so higher is healthier on every column.}
 		\label{tab:corr}
 	\end{table}
+	
+	
+	\subsection{The frailty indices} \label{app:frailty}
+	
+	The frailty index counts 31 deficits, each scored 0 to 1 and weighted equally: the six SF-12 physical items (general health, moderate activities, climbing stairs, accomplished less, limited in kind, pain), graded by response step; the eight physical impairment areas of Section~\ref{app:health_vars} (mobility, lifting, dexterity, co-ordination, continence, personal care, hearing, sight), each 0 or 1; and the 17 ever-diagnosed conditions of the UKHLS inventory (asthma, arthritis, congestive heart failure, coronary heart disease, angina, heart attack, stroke, emphysema, hyper- and hypothyroidism, chronic bronchitis, liver condition, cancer, diabetes, epilepsy, high blood pressure, clinical depression), each 0 or 1. The index is the share of deficits present, so higher is frailer. 7\% of person-waves have none: 12\% in the twenties, 6\% in the fifties and under 1\% past 80.
+	
+	Log frailty is $\log(\text{frailty}+1/31)$. The shift matters mainly at young ages, where the zeros are: with half the smallest positive value, $1/248$, the zeros sit so far below the next group up that the variance at 25 is $1.15$ and the profile peaks at 48, against $0.29$ and a peak at 61 with $1/31$.
+	
+	The index differs from that of \citet{hosseini2022} in three ways. They score 28 deficits, all 0/1, including high BMI, smoking and mental and cognitive impairments; they exclude self-rated health; and they model the zeros with a separate probit rather than shifting them.
 	
 	
 	\subsection{A proxy measure for healtcare costs} 		\label{app:cost}
@@ -778,7 +791,7 @@ Small robustness exercise:
 		\label{fig:costconvex}
 	\end{figure}
 	
-	\textbf{The costing assumptions do not matter, and neither does the health ruler for the sign.} All twelve variants of the sensitivity grid --- one spell, two spells, one per five nights; maternity in or out; flat or condition-weighted; top band at 15 or 30 --- are convex in pounds on the health measure's $\theta$, with person-clustered $t$ between $19$ and $39$. Winsorising at the 99th percentile halves the magnitude and changes nothing else; the sickest-to-healthiest ratio stays between $8.2\times$ and $14.4\times$. The spell ambiguity, which looked like the most damaging gap in the data, is not binding. Convexity also holds on every health measure in the figure: $h$, the UKHLS PCS, the SF-6D utility and the mental-health $\theta$, with the smallest $t$ at $10.3$. What the horizontal ruler sets is the size of the bend per standard deviation, not its sign: the quadratic term is \pounds201 on $\theta$ against \pounds113 on $h$, and \pounds106 against \pounds35 on capped costs.
+	\textbf{The costing assumptions do not matter, and neither does the health measure for the sign.} All twelve variants of the sensitivity grid --- one spell, two spells, one per five nights; maternity in or out; flat or condition-weighted; top band at 15 or 30 --- are convex in pounds on the health measure's $\theta$, with person-clustered $t$ between $19$ and $39$. Winsorising at the 99th percentile halves the magnitude and changes nothing else; the sickest-to-healthiest ratio stays between $8.2\times$ and $14.4\times$. The spell ambiguity, which looked like the most damaging gap in the data, is not binding. Convexity also holds on every health measure in the figure: $h$, the UKHLS PCS, the SF-6D utility and the mental-health $\theta$, with the smallest $t$ at $10.3$. What the horizontal measure sets is the size of the bend per standard deviation, not its sign: the quadratic term is \pounds201 on $\theta$ against \pounds113 on $h$, and \pounds106 against \pounds35 on capped costs.
 	
 	\begin{figure}[H]
 		\includegraphics[width=\linewidth]{fig_cost_age_interaction}
@@ -786,7 +799,7 @@ Small robustness exercise:
 		\label{fig:costage}
 	\end{figure}
 	
-	\textbf{In pounds, the health--cost relationship is close to age-invariant on every ruler.} At a fixed level of health the index is nearly flat in age, shallow-U-shaped with a midlife minimum: the sickest tenth costs \pounds2{,}143 at 20--34 and \pounds2{,}136 at 75--90, and the sickest-to-healthiest ratio is $10$--$14\times$ at every age. The full-range gradient does rise, \pounds357 to \pounds741 per standard deviation of $\theta$ and \pounds526 to \pounds672 per standard deviation of $h$, but in a pooled quadratic whose slope and curvature both interact with age, on costs capped at the 99th percentile, the curvature does not change with age ($t=0.7$ on $\theta$, $0.9$ on $h$) and the slope flattens mildly ($t=-1.5$ on $\theta$, $-2.7$ on $h$); uncapped, the 75--90 band's curvature is roughly double the others' ($t=3.6$ and $3.0$), a difference carried by the top 1\% of costs. Ageing raises cost by moving people down a fixed curve, 2.5\% of the 20--34 band in the sickest pooled tenth against 24.7\% of the 75--90 band, not by changing its shape. Two cautions push the same way: the age profile is understated threefold, and UKHLS does not follow people into care homes, so the sickest old are under-represented in a way the sickest young are not.
+	\textbf{In pounds, the health--cost relationship is close to age-invariant on every measure.} At a fixed level of health the index is nearly flat in age, shallow-U-shaped with a midlife minimum: the sickest tenth costs \pounds2{,}143 at 20--34 and \pounds2{,}136 at 75--90, and the sickest-to-healthiest ratio is $10$--$14\times$ at every age. The full-range gradient does rise, \pounds357 to \pounds741 per standard deviation of $\theta$ and \pounds526 to \pounds672 per standard deviation of $h$, but in a pooled quadratic whose slope and curvature both interact with age, on costs capped at the 99th percentile, the curvature does not change with age ($t=0.7$ on $\theta$, $0.9$ on $h$) and the slope flattens mildly ($t=-1.5$ on $\theta$, $-2.7$ on $h$); uncapped, the 75--90 band's curvature is roughly double the others' ($t=3.6$ and $3.0$), a difference carried by the top 1\% of costs. Ageing raises cost by moving people down a fixed curve, 2.5\% of the 20--34 band in the sickest pooled tenth against 24.7\% of the 75--90 band, not by changing its shape. Two cautions push the same way: the age profile is understated threefold, and UKHLS does not follow people into care homes, so the sickest old are under-represented in a way the sickest young are not.
 	
 	
 	\subsubsection{Validation of cost proxy against published profiles}
@@ -810,19 +823,108 @@ Small robustness exercise:
 	The index's purpose is the gradient in \emph{health}, and there it is strong: $13.1\times$ between the least and most healthy decile on the whole index, $31.1\times$ on the in-patient tier, against an age gradient of $2.5\times$. The caveat is that the age profile is understated by roughly a factor of three, so the index should not be used for anything whose answer depends on the age gradient: lifetime cost projections, discounting, or the timing of prevention returns. For those, report the in-patient tier alone or wait for linkage.
 	
 	
+	\section{The main figures on the other measures} \label{app:measures}
+	
+	Figures~\ref{fig:cost} to~\ref{fig:decomp} are repeated here on $h$, the 31-deficit frailty index and $\log(\text{frailty}+1/31)$, defined in Section~\ref{sec:data} and Appendix~\ref{app:frailty}. The later figures are repeated on $h$ only, since the mixtures have not yet been fitted on the frailty indices.
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_cost_mortality_age_measures.png}
+		\caption{As Figure~\ref{fig:cost}, on $h$ (left), the frailty index (middle) and log frailty (right). Top: mean annual cost in equal-width bins within three age bands; bottom: the one-year death rate on a log scale with the within-band logit. Higher is healthier on $h$ and frailer on the two frailty indices.}
+		\label{fig:cost_measures}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_exhibit1_measures.png}
+		\caption{As Figure~\ref{fig:exhibit1}, on $h$ (left), the frailty index (middle) and log frailty (right): mean path, variance profile and covariance rows, model-free. Higher is healthier on $h$ and frailer on the two frailty indices.}
+		\label{fig:exhibit1_measures}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_exhibit2_measures.png}
+		\caption{As Figure~\ref{fig:ex2main}, Case~4 on $h$ (top), the frailty index (middle) and log frailty (bottom). Titles flag the bands where the admissibility constraint binds or $V_H$ is below 5\% of the first variance.}
+		\label{fig:ex2measures}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_clusters_measures.png}
+		\caption{As Figure~\ref{fig:clusters}, the partial K-means types on $h$ (left), the frailty index (middle) and log frailty (right). Type 1 is worst health on every measure, so it is the top line on the two frailty indices.}
+		\label{fig:clusters_measures}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_cluster_decomposition_measures.png}
+		\caption{As Figure~\ref{fig:decomp}, between versus within on $h$ (left), the frailty index (middle) and log frailty (right).}
+		\label{fig:decomp_measures}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_bayes_mixtures_h.png}
+		\caption{As Figure~\ref{fig:bayes}, the $K=3$ mixtures on $h$: (a) independent residuals, (b) AR(1) plus ``spike''. Under (b) the healthiest class collapses to a persistence of $0.25$.}
+		\label{fig:bayes_h}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_class_trajectories_by_K_h.png}
+		\caption{As Figure~\ref{fig:trajK}, on $h$. The $K=5$ fit under AR(1) plus ``spike'' is read over the three chains that share a mode; the fourth sat in a mode about 310 log-posterior units worse.}
+		\label{fig:trajK_h}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_multidim_trajectories_h.png}
+		\caption{As Figure~\ref{fig:multidim}, on $h$. Under AR(1) plus ``spike'' one of four chains sat in the mode with the class 2 and 3 intercepts pressed together on the ordering constraint, about 2,950 log-posterior units below the other three; the fit is read over the three chains that agree (split $\hat R$ $1.003$).}
+		\label{fig:multidim_h}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_windows_h.png}
+		\caption{As Figure~\ref{fig:windows}, the partial K-means types on $h$ over sliding and backward-expanding windows.}
+		\label{fig:windows_h}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_observables_h.png}
+		\caption{As Figure~\ref{fig:obs}, on $h$.}
+		\label{fig:obs_h}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_prediction_h.png}
+		\caption{As Figure~\ref{fig:pred}, on $h$.}
+		\label{fig:pred_h}
+	\end{figure}
+	
+	\begin{table}[H]\centering\footnotesize
+		\input{tables/tab_prediction_h}
+		\caption{As Table~\ref{tab:pred}, on $h$.}
+		\label{tab:pred_h}
+	\end{table}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=0.62\linewidth]{fig_prediction_mortality_h.png}
+		\caption{As Figure~\ref{fig:predmort}, on $h$.}
+		\label{fig:predmort_h}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_returns_bayes_h.png}
+		\caption{As Figure~\ref{fig:returnsbayes}, on $h$, with the cost curve estimated on $h$.}
+		\label{fig:returnsbayes_h}
+	\end{figure}
+	
+	
 	\section{Additional descriptive figures} \label{app:descriptive}
 	
 	\note{Here include extra figures/robustness for Sections \ref{subsec:health_moments} \ref{subsec:lin_ident}}
 	
 \begin{figure}[H]\centering
 	\includegraphics[width=\linewidth]{fig_exhibit1_balanced.png}
-	\caption{Exhibit 1's covariance rows on pairwise and on balanced samples. Top: each cell over the people observed at both of its ages, as in Figure~\ref{fig:exhibit1}. Bottom: each row over the people observed at every one of its ten ages, which keeps between 719 and 4,757 people per row and nothing from age 80. Dotted red is the smoothed variance profile. The balanced rows sit below it throughout, and flatten after 60 on $h$: people observed ten years running are healthier and more stable than the cross-section at the same age. The one-year spike and the sign of the rows' slopes are the same on both.}
+	\caption{The covariance rows of Figure~\ref{fig:exhibit1} on pairwise and on balanced samples. Top: each cell over the people observed at both of its ages, as in Figure~\ref{fig:exhibit1}. Bottom: each row over the people observed at every one of its ten ages, which keeps between 719 and 4,757 people per row and nothing from age 80. Dotted red is the smoothed variance profile. The balanced rows sit below it throughout, and flatten after 60 on $h$: people observed ten years running are healthier and more stable than the cross-section at the same age. The one-year spike and the sign of the rows' slopes are the same on both.}
 	\label{fig:ex1balanced}
 \end{figure}
 
 \begin{figure}[H]\centering
 	\includegraphics[width=0.55\linewidth]{fig_exhibit1_cost.png}
-	\caption{The cost index through Exhibit 1, in pounds capped at the 99th percentile; waves 7--15, rows run eight years.}
+	\caption{The cost index through the moments of Figure~\ref{fig:exhibit1}, in pounds capped at the 99th percentile; waves 7--15, rows run eight years.}
 	\label{fig:ex1cost}
 \end{figure}
 
@@ -833,14 +935,20 @@ Small robustness exercise:
 
 	
 	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_exhibit2_case1.png}
+		\caption{Figure~\ref{fig:ex2main} under Case~1, i.i.d.\ noise, on $\theta$, $h$, the frailty index and log frailty (rows), in the design of Figure~\ref{fig:ex2main}.}
+		\label{fig:ex2case1}
+	\end{figure}
+	
+	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_exhibit2_corr.png}
-		\caption{Exhibit 2, summary: the implied $\Corr(H,d)$ by age band under Cases 1 to 4, for the three variants. Top: the main design, four ages four years apart on pairwise moments. Bottom: four ages two years apart on balanced moments, with one $\rho$ shared by the four bands. Open circles mark bands where the admissibility constraint binds, or where $V_H$ is below 5\% of the first variance.}
+		\caption{Summary of Figure~\ref{fig:ex2main}: the implied $\Corr(H,d)$ by age band under Cases 1 to 4, for $\theta$, $h$, the frailty index and log frailty. Top: the main design, four ages four years apart on pairwise moments. Bottom: four ages two years apart on balanced moments, with one $\rho$ shared by the four bands. Open circles mark bands where the admissibility constraint binds, or where $V_H$ is below 5\% of the first variance.}
 		\label{fig:ex2corr}
 	\end{figure}
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_exhibit2_2y.png}
-		\caption{Exhibit 2 on the two-year design: four ages two years apart, balanced moments, Cases 1 and 4 on $h$ and $\theta$, with one $\rho$ shared by the four bands in Case~4. On $h$ this is admissible in every band with nothing imposed.}
+		\caption{Figure~\ref{fig:ex2main} on the two-year design: four ages two years apart, balanced moments, Cases 1 and 4 on $h$ and $\theta$, with one $\rho$ shared by the four bands in Case~4. On $h$ this is admissible in every band with nothing imposed.}
 		\label{fig:ex2twoyear}
 	\end{figure}
 	
@@ -848,20 +956,12 @@ Small robustness exercise:
 	
 	\section{Additional K-means exercises} \label{app:kmeans}
 	
-	\subsection{The types on the deficit index and on predicted cost}
-	\label{app:clusters_fi10}
+	\subsection{The types on predicted cost}
+	\label{app:clusters_predcost}
 	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_clusters_fi10_cost.png}
-		\caption{As Figure~\ref{fig:clusters}, for the ten-deficit index (left) and for partial K-means on each person's predicted cost (right): type means with the within-type $\pm1$ sd band, the autocorrelation of within-type deviations by lag, and the type composition by age. Predicted cost is the pooled cost curve on $h$, a cubic in the standardised score fitted to costs capped at the 99th percentile over waves 7--15 and made monotone, evaluated at every contract row: a cost-anchored cardinalisation of the measure. The deficit index tracks $h$ throughout; so does predicted cost, whether the curve is fitted on $h$ or on $\theta$ (the two agree at an adjusted Rand index of $0.91$), which puts the cost anchor on the bounded side of the $h$--$\theta$ contrast.}
-		\label{fig:clustersfi10}
-	\end{figure}
-	
-	\subsection{Between versus within on the deficit index}
-	\label{app:decomp_fi10}
-	\begin{figure}[H]\centering
-		\includegraphics[width=0.5\linewidth]{fig_cluster_decomposition_fi10.png}
-		\caption{As Figure~\ref{fig:decomp}, for the ten-deficit index: (a) cross-sectional variance split by type composition; (b) between-type variance of the one-year change of the smoothed type paths; (c) the level--change covariance across types. It tracks $h$ throughout.}
-		\label{fig:decompfi10}
+		\includegraphics[width=0.55\linewidth]{fig_clusters_predcost.png}
+		\caption{As Figure~\ref{fig:clusters}, for partial K-means on each person's predicted cost: type means with the within-type $\pm1$ sd band, the autocorrelation of within-type deviations by lag, and the type composition by age. Predicted cost is the pooled cost curve on $h$, a cubic in the standardised score fitted to costs capped at the 99th percentile over waves 7--15 and made monotone, evaluated at every contract row: a cost-anchored cardinalisation of the measure. It lands on the bounded side of the $h$--$\theta$ contrast: ARI $0.76$ with the $h$ types and $0.31$ with the $\theta$ types.}
+		\label{fig:clusterspredcost}
 	\end{figure}
 	
 	\subsection{Cohort adjustment}
@@ -873,10 +973,10 @@ Small robustness exercise:
 		\item Subtract each person's decade shift from every one of their scores, and rerun partial K-means with $K=3$ and 50 seeded starts on the adjusted profiles.
 		\item Compare the adjusted typology with the unadjusted one person by person, and the two sets of decade shifts with each other.
 	\end{itemize}
-	Figure~\ref{fig:kmeanscohort} has the result. The decade shifts under flexible age are zero for every cohort born before 1960, within one standard error, and turn negative only from the 1970s on: $-0.11$, $-0.21$, $-0.28$ and $-0.35$ standard deviations of $\theta$ for the 1970s to 2000s. Those cohorts are observed only when young, so a cohort effect and a period effect cannot be told apart there. The mixture's quadratic specification attributes shifts to the earlier decades as well, which is what a quadratic does when the age profile is not quadratic. The typology is unaffected: the adjusted Rand index between the adjusted and unadjusted types is $0.956$ on $h$, $0.903$ on $\theta$ and $0.949$ on the deficit index, at least 97\% of people keep their type, and the type shares move by at most half a percentage point.
+	Figure~\ref{fig:kmeanscohort} has the result. The decade shifts under flexible age are zero for every cohort born before 1960, within one standard error, and turn negative only from the 1970s on: $-0.11$, $-0.21$, $-0.28$ and $-0.35$ standard deviations of $\theta$ for the 1970s to 2000s. Those cohorts are observed only when young, so a cohort effect and a period effect cannot be told apart there. The mixture's quadratic specification attributes shifts to the earlier decades as well, which is what a quadratic does when the age profile is not quadratic. The typology is unaffected: the adjusted Rand index between the adjusted and unadjusted types is $0.903$ on $\theta$ and $0.956$ on $h$, at least 97\% of people keep their type, and the type shares move by at most half a percentage point.
 	
 	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_kmeans_cohort.png}
+		\includegraphics[width=0.75\linewidth]{fig_kmeans_cohort.png}
 		\caption{Cohort adjustment within partial K-means, one column per variant. Top: birth-decade level shifts relative to the 1950s from OLS on single-year age dummies plus decade dummies, with 95\% person-clustered intervals, against the mixture's quadratic-plus-decade estimates. Middle: K-means type means by age, on the unadjusted scores (dashed) and on the scores net of the OLS shifts, re-clustered (solid). Bottom: the share of people in the worst and the best type by birth decade, unadjusted (dashed, open circles) and cohort-adjusted (solid, filled squares).}
 		\label{fig:kmeanscohort}
 	\end{figure}
@@ -884,26 +984,10 @@ Small robustness exercise:
 	
 	\section{Additional Bayesian results} \label{app:bayesian}
 	
-	\subsection{The mixtures against the K-means types on the deficit index}
-	\label{app:bayes_fi10}
-	\begin{figure}[H]\centering
-		\includegraphics[width=0.46\linewidth]{fig_bayes_base_fi10.png}\hfill
-		\includegraphics[width=0.46\linewidth]{fig_bayes_ssm_fi10.png}
-		\caption{As Figures~\ref{fig:bayesbase} and~\ref{fig:bayesssm}, for the ten-deficit index: the baseline fit (left) and the AR(1) plus measurement error fit (right), each against the K-means types on the same people. It reproduces $h$ throughout.}
-		\label{fig:bayesfi10}
-	\end{figure}
-	
-		\subsection{Class trajectories on the ten-deficit index}
-	\label{app:trajfi10}
-	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_trajectories_fi10.png}
-		\caption{As Figure~\ref{fig:trajK} at $K=3$, for the ten-deficit index: it reproduces $h$ throughout, including the ceiling collapse of the top class under AR(1) plus measurement error.}
-	\end{figure}
-	
 	\subsection{Birth-decade cohort effects}
 	\label{app:cohort}
 	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_cohort.png}
+		\includegraphics[width=0.62\linewidth]{fig_cohort.png}
 		\caption{The AR(1) plus measurement error fits with a shared birth-decade level shift, one column per variant. Row 1: class paths with the shifts, evaluated at the 1950s (solid), against the fits without them (dashed). Row 2: the observed mean of the variant by age within each birth decade. Row 3: the same profiles net of the estimated decade shift. Row 4: the shifts relative to the 1950s with 95\% posterior intervals, in the variant's units. Contract people, cells of at least 50 person-waves.}
 		\label{fig:cohort}
 	\end{figure}
@@ -915,20 +999,59 @@ Small robustness exercise:
 	\label{app:returns}
 	
 	
-	\subsection{The returns under the estimated cost curve}
+	\subsection{The estimated cost curve}
+	\label{app:costcurve}
+	
 	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_returns_cost.png}
-		\caption{Figure~\ref{fig:returns} with $c(\cdot)$ the polynomial fitted to the capped cost index on each variant in place of $(1-h)^2$. Top row: the same polynomial refitted within six age bands against the pooled fit, the age-invariance check; second row: the pooled fit against twentieths. Then $T(r)=\sum_{a\ge r}\E[-c'(h_a)(1-h_a)]$ and $P_j(r)=\sum_{a\ge r}\E[-c'(h_a)\mid j](\bar h_{j,r-1}-\bar h_{j,a})$, in pounds of lifetime cost per unit of intensity. The quadratic case of this code reproduces Figure~\ref{fig:returns} to 0.1\%.}
-		\label{fig:returnscost}
+		\includegraphics[width=\linewidth]{fig_cost_curve.png}
+		\caption{The cost curve Section~\ref{sec:policy} prices with: the cost index in pounds against $\theta$, a cubic fitted to uncapped costs. (a) The same polynomial refitted within six age bands against the pooled fit; (b) the pooled fit on uncapped costs and on costs capped at the 99th percentile, against the mean cost in twentieths of $\theta$.}
+		\label{fig:costcurve}
 	\end{figure}
-	\begin{table}[H]\centering\footnotesize
-		\input{tables/tab_returns_cost}
-		\caption{Returns in pounds under the estimated cost curve, as Table~\ref{tab:returns}.}
-	\end{table}
+	
 	\begin{itemize}
-		\item The estimated curve is close to age-invariant: refitted within age bands it lies on top of the pooled curve from 20 to 74, and only the 75--90 band sits above it, by about 10\% at a given health level (\code{paper\_cost\_curve\_by\_band.csv}). Costing health rather than age is therefore defensible for the returns, with a modest understatement of late-life cost.
-		\item In pounds, treatment from 30 is worth about \pounds31,000 of lifetime cost per unit of $\tau$ on $h$ and uniform prevention \pounds11,000, a ratio of $0.37$ falling to $0.21$ at 70: the same shape as under the quadratic.
-		\item The estimated curve is steeper at the bottom than $(1-h)^2$, so it weights the sick more. That raises the worst type's return (\pounds29,000 at 30 against \pounds5,700 for the best type), raises the type-targeting gain to $1.5\times$ the uniform return at 30 on $h$ ($1.1\times$ on $\theta$), and makes the between-type channel of $P(r)$ negative already at 30 on $h$.
+		\item The estimated curve is close to age-invariant in shape. Refitted within six age bands it stays within about 12\% of the pooled curve on average from 20 to 74, with a shallow U in age (lowest at 45--54, 12\% below the pooled curve), and only the 75--90 band sits clearly above it, by 25\%. Costing health rather than age is therefore defensible for the returns, with an understatement of late-life cost.
+		\item Capping at the 99th percentile flattens the curve at the sick end, where the capped fit is a quadratic, and lowers every return by about a third (Appendix~\ref{app:returns_capped}).
+	\end{itemize}
+	
+	\subsection{K-means types under the estimated cost curve}
+	\label{app:returns_kmeans}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=0.55\linewidth]{fig_returns_bayes_kmeans.png}
+		\caption{As Figure~\ref{fig:returnsbayes}, on the partial K-means types on $\theta$: type shares and smoothed type means, with the same uncapped cost curve.}
+		\label{fig:returnskmeans}
+	\end{figure}
+	
+	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
+		\input{tables/tab_returns_bayes_kmeans}
+		\caption{As Table~\ref{tab:returnsbayes}, on the K-means types.}
+		\label{tab:returnskmeans}
+	\end{table}
+	
+	\begin{itemize}
+		\item On the K-means types $P(r)/T(r)$ is $0.35$ at 30, $0.20$ at 50 and $0.14$ at 70, below the $0.43$, $0.29$ and $0.16$ of the AR(1) plus ``spike'' classes.
+		\item The between-type channel is $+20\%$ of $P(30)$ and turns negative from about 40 ($-13\%$ at 50, $-5\%$ at 70), as on the independent-residuals classes: the K-means types converge after midlife, where the AR(1) plus ``spike'' classes keep fanning out.
+		\item Type targeting gains 148\% over the uniform return from 30, 51\% from 50 and 35\% from 70.
+	\end{itemize}
+	
+	\subsection{The capped cost curve}
+	\label{app:returns_capped}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_returns_bayes_capped.png}
+		\caption{As Figure~\ref{fig:returnsbayes}, with the cost curve fitted to costs capped at the 99th percentile.}
+		\label{fig:returnscapped}
+	\end{figure}
+	
+	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
+		\input{tables/tab_returns_bayes_capped}
+		\caption{As Table~\ref{tab:returnsbayes}, with the capped cost curve.}
+		\label{tab:returnscapped}
+	\end{table}
+	
+	\begin{itemize}
+		\item With costs capped at the 99th percentile every return falls by about a third, treatment from 30 from \pounds81{,}000 to \pounds52{,}000 and uniform prevention from \pounds35{,}000 to \pounds22{,}000, but the ratios barely move: on the AR(1) plus ``spike'' classes $P/T$ is $0.42$, $0.30$ and $0.17$ at 30, 50 and 70, the between-class shares are $+31\%$, $+23\%$ and $+6\%$, and the class-targeting gains 90\%, 28\% and 47\%.
+		\item The one change is at 50, where the middle class rather than the worst has the highest return under the capped curve.
 	\end{itemize}
 	
 	

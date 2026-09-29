@@ -27,6 +27,11 @@ Figure (fig_bayes_base.png), one column per variant:
   row 4  the cross-tabulation: share of each K-means type in each Bayesian
          class (posterior-weighted)
 Table (tab_bayes_base.tex): shares under both methods, the agreement.
+
+`combined` on the command line draws the paper's figure instead (fig_bayes_mixtures.png, theta;
+with --h, fig_bayes_mixtures_h.png for the appendix): independent residuals left, AR(1) plus
+"spike" right, class paths against the K-means type means above the class composition. It
+needs both fit sets and the K-means labels, and reads nothing the per-set runs write.
 Also writes paper_bayes_base_classes.csv and paper_bayes_base_posteriors.parquet.
 """
 
@@ -150,5 +155,52 @@ def main() -> int:
     return 0
 
 
+def combined(v: str = "theta") -> int:
+    """The paper's mixture figure: one variant, independent residuals (left) and AR(1) plus
+    "spike" (right). Top: class paths (solid, width = share), observed class means (dotted)
+    and the K-means type means (dashed red); bottom: the posterior class composition of the
+    person-waves observed at each age. Reads both fit sets directly."""
+    apply_style()
+    d = load_measure([v])
+    ages = np.arange(MIN_AGE, MAX_AGE + 1); A = (ages - 55) / 10
+    L = load_labels(v)
+    s = d[d["pidp"].isin(L.index)].assign(cluster=lambda x: x["pidp"].map(L))
+    t = s.groupby(["cluster", "age"])[v].agg(["mean", "count"]).reset_index()
+    km_share = np.array([(L == c).mean() for c in range(K)])
+    lab = {"theta": r"$\theta$", "h": "$h$"}[v]
+    fig, axes = plt.subplots(2, 2, figsize=(10, 7.2), gridspec_kw={"height_ratios": [3.2, 0.7], "hspace": 0.32, "wspace": 0.2}, sharey="row")
+    for j, (fs, name) in enumerate((("base", "independent residuals"), ("ssm", 'AR(1) + "spike"'))):
+        r = bayes_fit(ARTIFACTS_DIR / ("health-base" if fs == "base" else "health-ssm") / f"health-{v}-{fs}", v, K)
+        obs = observed_class_means(r["post"], v, K)
+        ax = axes[0, j]
+        for k in range(K):
+            mu = r["mom"]["mean"] + r["mom"]["sd"] * (r["coef"][k, 0] + r["coef"][k, 1] * A + r["coef"][k, 2] * A ** 2)
+            lk = f"class {k + 1} ({r['theta'][k]:.0%}" + (f", $\\rho$ {r['rho'][k]:.2f})" if fs == "ssm" else ")")
+            ax.plot(ages, mu, color=CLUSTER[k], lw=1.2 + 4 * r["theta"][k], label=lk)
+            ax.plot(obs.index, obs[f"class{k + 1}"].to_numpy(), color=CLUSTER[k], lw=1.0, ls=":")
+            q = t[(t["cluster"] == k) & (t["count"] >= MIN_SUPPORT)]
+            ax.plot(q["age"], q["mean"], color=KMEANS_RED[k], lw=1.1, ls="--", label=f"K-means type {k + 1} ({km_share[k]:.0%})" if j == 0 else None)
+        ax.set_title(f"({'ab'[j]}) {lab}, {name}", loc="left", fontsize=10)
+        ax.legend(fontsize=7, loc="lower left", ncols=2 if j == 0 else 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
+        ax = axes[1, j]
+        comp = r["comp"].reindex(columns=[f"class{k + 1}" for k in range(K)])
+        ax.stackplot(comp.index, *[comp[c] for c in comp.columns], colors=CLUSTER, alpha=0.9)
+        ax.set_ylim(0, 1); ax.set_yticks([]); ax.set_xlim(MIN_AGE, MAX_AGE); ax.spines["left"].set_visible(False)
+        ax.set_title("class composition by age", loc="left", fontsize=8.5); ax.set_xlabel("age")
+        print(f"{v} {fs}: shares {np.round(r['theta'], 3)}" + (f", rho {np.round(r['rho'], 2)}" if fs == "ssm" else ""))
+    fig.text(0.01, 0.0,
+             f"K = 3 quadratic growth mixtures on {'theta' if v == 'theta' else 'h'} on the health contract (38,963 people, 334,194 person-ages), parameters at the posterior mean; "
+             "class 1 is worst health. Left: independent residuals;\nright: an AR(1) latent state plus a one-period \"spike\", with the class persistence in the legend. "
+             "Line width is proportional to the class share. Dotted: the observed class mean at each age, the measure averaged over\nthe people observed there weighted by their "
+             "posterior class probabilities. Dashed red: the partial K-means type means on the same rows. Bottom: the posterior class composition of the person-waves observed at each age.",
+             fontsize=7.2, color=INK2, va="top")
+    out = FIG / ("fig_bayes_mixtures.png" if v == "theta" else f"fig_bayes_mixtures_{v}.png")
+    fig.savefig(out, bbox_inches="tight")
+    print(f"wrote {out}")
+    return 0
+
+
 if __name__ == "__main__":
+    if "combined" in sys.argv:
+        sys.exit(combined("h" if "--h" in sys.argv else "theta"))
     sys.exit(main())

@@ -19,12 +19,29 @@ CONTRACT = PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1
 MIN_AGE, MAX_AGE, K = 20, 90, 3
 AGES = np.arange(MIN_AGE, MAX_AGE + 1)
 VARIANTS = [("h", "$h$"), ("theta", r"$\theta$"), ("fi10", "deficit index")]
-LABEL = dict(VARIANTS)
+# comparison rulers, run with --frailty: the 31-deficit Rockwood-style index and its shifted
+# log, log(frailty + 1/31), which keeps the zeros at the floor; higher = frailer
+FRAILTY_VARIANTS = [("frailty", "frailty index"), ("logfrailty", "log frailty")]
+LABEL = dict(VARIANTS + FRAILTY_VARIANTS)
+HEALTHIER_HIGH = {"h": True, "theta": True, "fi10": True, "ws": True, "frailty": False, "logfrailty": False}
+FRAILTY_SUFFIX = "_frailty"
+
+
+def read_scores(variants) -> pd.DataFrame:
+    """Person-wave scores for any mix of the measure's variants and the frailty rulers."""
+    variants = list(variants)
+    base = [v for v in variants if v not in ("frailty", "logfrailty")]
+    d = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "health_measure.parquet", columns=["pidp", "wave", "age", *base])
+    fr = [v for v in variants if v in ("frailty", "logfrailty")]
+    if fr:
+        f = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "frailty_index.parquet",
+                            columns=["pidp", "wave", "frailty", "log_frailty"]).rename(columns={"log_frailty": "logfrailty"})
+        d = d.merge(f[["pidp", "wave", *fr]], on=["pidp", "wave"], how="left")
+    return d
 
 
 def load_measure(variants=("h", "theta", "fi10")) -> pd.DataFrame:
-    d = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "health_measure.parquet",
-                        columns=["pidp", "wave", "age", *variants])
+    d = read_scores(variants)
     return d[d["age"].between(MIN_AGE, MAX_AGE)].assign(age=lambda x: x["age"].astype(int))
 
 

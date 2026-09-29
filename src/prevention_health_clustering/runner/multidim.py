@@ -23,6 +23,10 @@ person's FULL window and is never held out -- a decedent's single event sits
 by construction at their last observed wave, so holding out the last rows
 would delete every event from the likelihood rather than test the channel.
 ``full_end`` carries that window into Stan.
+
+Cohort. ``cohort="decade"`` adds birth-decade level shifts to each Gaussian
+channel, common to the classes (the univariate model's cohort_by_class 0),
+with the oldest decade as the zero reference; ``"none"`` switches them off.
 """
 
 from __future__ import annotations
@@ -35,6 +39,7 @@ import numpy as np
 import pandas as pd
 
 from prevention_health_clustering.config import DEFAULT_AGE_CENTER, DEFAULT_AGE_SCALE
+from prevention_health_clustering.runner.fit import _cohort_ids
 
 GAUSS_CHANNELS = ("theta", "theta_ment_nodepr")
 ARCHIVED_CHANNELS = ("theta_phys_func", "theta_ment_nodepr")
@@ -65,6 +70,8 @@ def build_multidim_payload(
     grainsize: int = 0,
     gomp_slope_prior: tuple[float, float] = (0.09, 0.03),
     makeham_prior_scale: float = 0.001,
+    cohort: str = "none",
+    cohort_prior_scale: float = 0.15,
 ) -> MultidimPayload:
     frame = long.sort_values(["pidp", "age"]).reset_index(drop=True)
     missing = [c for c in gauss_channels if c not in frame.columns]
@@ -145,6 +152,12 @@ def build_multidim_payload(
     else:
         mort_log_mean = -5.0
 
+    if cohort != "none" and "birthy" not in frame.columns:
+        raise KeyError("cohort shifts need a birthy column")
+    cohort_id, n_cohort = _cohort_ids(
+        frame["birthy"] if cohort != "none" else pd.Series(np.zeros(len(frame))),
+        cohort)
+
     if channel_weight is None:
         channel_weight = (1.0,) * (len(gauss_channels) + 2)
 
@@ -161,6 +174,9 @@ def build_multidim_payload(
         "hold_start": hold_start.tolist(),
         "hold_end": hold_end.tolist(),
         "full_end": hi.tolist(),
+        "N_cohort": int(n_cohort),
+        "cohort_id": cohort_id.tolist(),
+        "cohort_prior_scale": float(cohort_prior_scale),
         "ar_mode": int(ar_mode),
         "age_gap": (np.concatenate([[0.0], np.maximum(
             np.diff(age), 1.0)]).tolist()
@@ -272,6 +288,8 @@ def multidim_inits(payload: MultidimPayload, *, jitter: float = 0.15,
                        for k in range(K)] for c in range(C)],
             "sigma_raw": [[max(sigma + j(0.05), 0.1)] * C],
         }
+        init["cohort_free"] = [[float(j(0.02)) for _ in range(d["N_cohort"] - 1)]
+                               for _ in range(C)]
         if d["use_chronic"] == 1:
             init["coef_chronic_raw"] = [
                 [chronic_coefs[k, 0] + j(0.1)]

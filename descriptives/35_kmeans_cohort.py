@@ -30,7 +30,8 @@ import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import DESC, FIG, K, LABEL, MAX_AGE, MIN_AGE, VARIANTS, load_labels, load_measure  # noqa: E402
+from _paper_common import DESC, FIG, K, LABEL, MAX_AGE, MIN_AGE, load_labels, load_measure  # noqa: E402
+VARIANTS = [("theta", r"$\theta$"), ("h", "$h$")]
 from _style import BLUE, CLUSTER, INK2, INK3, ORANGE, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import PROCESSED_DATA_DIR  # noqa: E402
@@ -93,7 +94,7 @@ def main() -> int:
             adj[v] = lab
     pd.DataFrame(adj).to_parquet(DESC / "paper_kmeans_cohort_labels.parquet")
 
-    fig, axes = plt.subplots(3, 3, figsize=(13, 10.5), gridspec_kw={"hspace": 0.45, "wspace": 0.28})
+    fig, axes = plt.subplots(3, len(VARIANTS), figsize=(4.4 * len(VARIANTS), 10.5), gridspec_kw={"hspace": 0.45, "wspace": 0.28})
     summ = []
     for j, (v, lab) in enumerate(VARIANTS):
         sh = shifts_df[shifts_df["variant"] == v].set_index("decade")

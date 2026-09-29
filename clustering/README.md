@@ -49,8 +49,14 @@ ssm-holdout, on `multidim_health_20_89_minobs3_v1`
 (`data_cleaning/08_build_multidim_health_contract.py`).
 `runs/multidim_health_queue.py` (launcher `multidim_health_launch.sh`) runs
 theta-ssm-mort, h-ssm-mort, theta-base-mort, h-base-mort one at a time into
-`artifacts/multidim-health/`; `runs/multidim_mode_check.py` reads a running
-fit's chains for a mode split. The archived four-channel fits in
+`artifacts/multidim-health/`; `runs/multidim_health_ho_queue.py` (launcher
+`multidim_health_ho_launch.sh`) refits the two state-space versions with each
+person's last two rows held out, for the prediction exercise;
+`runs/multidim_health_cohort_queue.py` (launcher
+`multidim_health_cohort_launch.sh`) fits theta-ssm-mort-cohort and its
+held-out twin with `--cohort decade` (birth-decade level shifts on both
+Gaussian channels, common to the classes, oldest decade = 0);
+`runs/multidim_mode_check.py` reads a running fit's chains for a mode split. The archived four-channel fits in
 `artifacts/multidim*` were run by the previous version of the script
 (logit-quadratic hazard, one persistence per class) and no longer match the
 Stan source.

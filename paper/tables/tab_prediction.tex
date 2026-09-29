@@ -1,15 +1,22 @@
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrrrrr}
 \toprule
-predictors at $t$ & $h_{t+1}$ ($R^2$) & death before $t+1$ (AUC) & in-patient stay, $t+1$ (AUC) & GP visits, $t+1$ ($R^2$) \\
+predictors at $t$ & \multicolumn{2}{c}{health, measure ($R^2$)} & \multicolumn{2}{c}{cost proxy (\pounds) ($R^2$)} & \multicolumn{2}{c}{employed, ages 20-64 (AUC)} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+ & $t+1$ & $t+2$ & $t+1$ & $t+2$ & $t+1$ & $t+2$ \\
 \midrule
-age & 0.115 & 0.858 & 0.586 & 0.012 \\
-+ observables & 0.169 & 0.863 & 0.605 & 0.038 \\
-+ K-means type & 0.687 & 0.881 & 0.678 & 0.156 \\
-+ baseline class & 0.711 & 0.881 & 0.684 & 0.165 \\
-+ AR(1)+ME class & 0.665 & 0.882 & 0.695 & 0.173 \\
-+ h(t) & 0.724 & 0.901 & 0.700 & 0.163 \\
-+ h(t), h(t-1) & 0.764 & 0.896 & 0.703 & 0.168 \\
-+ AR(1)+ME class, h(t) & 0.771 & 0.901 & 0.705 & 0.187 \\
-+ all & 0.771 & 0.903 & 0.707 & 0.192 \\
+\multicolumn{7}{l}{\emph{on $\theta$}} \\
+age & 0.140 & 0.167 & 0.032 & 0.027 & 0.643 & 0.666 \\
++ observables & 0.197 & 0.219 & 0.039 & 0.033 & 0.777 & 0.782 \\
++ iid class & 0.618 & 0.605 & 0.111 & 0.110 & 0.753 & 0.758 \\
++ AR(1)+``spike'' class & 0.677 & 0.661 & 0.124 & 0.115 & 0.760 & 0.766 \\
++ multidim class & 0.609 & 0.601 & 0.112 & 0.103 & 0.756 & 0.764 \\
++ theta(t) & 0.689 & 0.661 & 0.144 & 0.112 & 0.741 & 0.752 \\
++ theta(t), theta(t-1) & 0.730 & 0.699 & 0.145 & 0.116 & 0.754 & 0.755 \\
++ AR(1)+``spike'' forecast & 0.743 & 0.714 & 0.144 & 0.123 & 0.754 & 0.759 \\
++ multidim forecast & 0.740 & 0.711 & 0.143 & 0.121 & 0.755 & 0.760 \\
++ AR(1)+``spike'' class, theta(t) & 0.722 & 0.697 & 0.148 & 0.123 & 0.760 & 0.767 \\
++ multidim class, theta(t) & 0.715 & 0.689 & 0.148 & 0.121 & 0.759 & 0.768 \\
++ all & 0.723 & 0.697 & 0.148 & 0.124 & 0.816 & 0.813 \\
+\quad benchmark: age, employed($t$) &  &  &  &  & 0.897 & 0.889 \\
 \bottomrule
 \end{tabular}

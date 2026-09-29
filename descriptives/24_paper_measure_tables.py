@@ -1,6 +1,6 @@
 """The measure section's small tables: comparison metrics, mortality, cost by age.
 
-1. Correlations of the three variants (theta, h, fi10) with the measures the
+1. Correlations of theta, h and the two frailty indices (negated) with the measures the
    paper compares against: the UKHLS PCS and MCS, and the chronic-condition
    count (negated so higher = better), on the person-waves where both exist.
 2. Mortality: the log-odds of dying before the next wave per standard
@@ -28,6 +28,8 @@ from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DI
 MEAS = PROCESSED_DATA_DIR / "measures"
 TAB = ROOT_DIR / "paper" / "tables"
 VARIANTS = [("theta", r"$\theta$"), ("h", "$h$"), ("fi10", "deficit index")]
+# the paper's correlation table: theta, h and the two frailty indices, the frailty indices negated so higher is healthier
+CORR_VARIANTS = [("theta", r"$\theta$"), ("h", "$h$"), ("neg_frailty", "frailty index (negated)"), ("neg_logfrailty", "log frailty (negated)")]
 BANDS = [(20, 44), (45, 64), (65, 90)]
 COST_BANDS = [(20, 34), (35, 44), (45, 54), (55, 64), (65, 74), (75, 90)]
 
@@ -71,23 +73,25 @@ def main() -> int:
     ch = ch.assign(n_chronic=ch[ncols].sum(axis=1))[["pidp", "wave", "n_chronic"]]
     d = hm.merge(sf, on=["pidp", "wave"], how="left").merge(ch, on=["pidp", "wave"], how="left")
     d["neg_chronic"] = -d["n_chronic"]
+    fr = pd.read_parquet(MEAS / "frailty_index.parquet", columns=["pidp", "wave", "frailty", "log_frailty"])
+    d = d.merge(fr, on=["pidp", "wave"], how="left").assign(neg_frailty=lambda x: -x["frailty"], neg_logfrailty=lambda x: -x["log_frailty"])
     rows = []
 
     # 1. correlations
     comp = [("sf12pcs_dv", "UKHLS PCS"), ("sf12mcs_dv", "UKHLS MCS"), ("neg_chronic", "chronic count (negated)")]
-    corr = pd.DataFrame({lab: [d[[v, c]].corr().iloc[0, 1] for c, _ in comp] for v, lab in VARIANTS},
+    corr = pd.DataFrame({lab: [d[[v, c]].corr().iloc[0, 1] for c, _ in comp] for v, lab in CORR_VARIANTS},
                         index=[n for _, n in comp])
-    corr.loc["Spearman, vs $h$"] = [d[[v, "h"]].corr(method="spearman").iloc[0, 1] for v, _ in VARIANTS]
+    corr.loc[r"Spearman, vs $\theta$"] = [d[[v, "theta"]].corr(method="spearman").iloc[0, 1] for v, _ in CORR_VARIANTS]
     n_corr = d[["sf12pcs_dv", "n_chronic"]].notna().all(axis=1).sum()
     with open(TAB / "tab_measure_correlations.tex", "w") as f:
-        f.write("\\begin{tabular}{l" + "r" * len(VARIANTS) + "}\n\\toprule\n")
-        f.write(" & " + " & ".join(lab for _, lab in VARIANTS) + " \\\\\n\\midrule\n")
+        f.write("\\begin{tabular}{l" + "r" * len(CORR_VARIANTS) + "}\n\\toprule\n")
+        f.write(" & " + " & ".join(lab for _, lab in CORR_VARIANTS) + " \\\\\n\\midrule\n")
         for r, row in corr.iterrows():
             f.write(f"{r} & " + " & ".join(f"{x:.3f}" for x in row) + " \\\\\n")
         f.write("\\bottomrule\n\\end{tabular}\n")
     for r, row in corr.iterrows():
-        for v, _ in VARIANTS:
-            rows.append({"table": "corr", "row": r, "variant": v, "value": row[[l for vv, l in VARIANTS if vv == v][0]]})
+        for v, _ in CORR_VARIANTS:
+            rows.append({"table": "corr", "row": r, "variant": v, "value": row[[l for vv, l in CORR_VARIANTS if vv == v][0]]})
     print(f"correlations on {n_corr:,} person-waves\n", corr.round(3).to_string())
 
     # 2. mortality

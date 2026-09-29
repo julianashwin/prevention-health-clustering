@@ -38,8 +38,8 @@ OFFS4 = np.array([0, 2, 4, 6])
 
 
 def ident_panel(variants=("theta", "h", "fi10"), min_obs: int = 4) -> pd.DataFrame:
-    d = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "health_measure.parquet",
-                        columns=["pidp", "wave", "age", *variants])
+    from _paper_common import read_scores
+    d = read_scores(variants)
     d = d[d["age"].notna()].assign(age=lambda x: x["age"].astype(int)).sort_values(["pidp", "wave"])
     dage = d.groupby("pidp")["age"].diff()
     dwave = d.groupby("pidp")["wave"].diff()

@@ -83,6 +83,8 @@ def main(argv=None) -> int:
     parser.add_argument("--no-mortality", action="store_true", default=True)
     parser.add_argument("--with-mortality", dest="no_mortality", action="store_false")
     parser.add_argument("--with-chronic", action="store_true")
+    parser.add_argument("--cohort", choices=["none", "decade"], default="none",
+                        help="birth-decade level shifts on the Gaussian channels, common to the classes")
     parser.add_argument("--init-jitter", type=float, default=0.15)
     parser.add_argument("--max-persons", type=int, default=0, help="smoke test: first N people only")
     args = parser.parse_args(argv)
@@ -100,14 +102,15 @@ def main(argv=None) -> int:
         holdout_last_k=args.holdout_last_k if cfg["holdout"] else None,
         min_person_obs=min_obs, use_chronic=args.with_chronic,
         use_mortality=not args.no_mortality,
-        emit_person_quantities=cfg["holdout"])
+        emit_person_quantities=cfg["holdout"], cohort=args.cohort)
     d = payload.data
     n_held = sum(d["hold_end"][i] - d["hold_start"][i] + 1
                  for i in range(d["N_person"]) if d["hold_end"][i] > 0)
     print(f"[{args.variant} {'+'.join(channels)}] {d['N_person']:,} persons, {d['N_obs']:,} rows, "
           f"ar_mode={d['ar_mode']}, held-out {n_held:,}, "
           f"chronic {'on' if d['use_chronic'] else 'off'}, "
-          f"mortality {'on' if d['use_mortality'] else 'OFF'} ({int(np.sum(d['mort_y'])):,} events)",
+          f"mortality {'on' if d['use_mortality'] else 'OFF'} ({int(np.sum(d['mort_y'])):,} events), "
+          f"cohorts {d['N_cohort']}",
           flush=True)
 
     inits = multidim_inits(payload, jitter=args.init_jitter, n_chains=args.chains)
@@ -137,12 +140,14 @@ def main(argv=None) -> int:
                 + ["makeham[1]"] if d["use_mortality"] else [])
              + ([f"rho[{k},{c}]" for k in range(1, K + 1) for c in range(1, C + 1)] if d["ar_mode"] else [])
              + ([f"sigma_meas[{c}]" for c in range(1, C + 1)] if d["ar_mode"] == 2 else [])
+             + [f"cohort_effect[{c},{j}]" for c in range(1, C + 1) for j in range(2, d["N_cohort"] + 1)]
              + ["lp__"])
     draws = fit.draws_pd(vars=["theta", "coef", "sigma", "lp__"]
                          + (["coef_chronic", "phi_chronic"] if d["use_chronic"] else [])
                          + (["log_b", "gomp_slope", "makeham"] if d["use_mortality"] else [])
                          + (["rho"] if d["ar_mode"] else [])
-                         + (["sigma_meas"] if d["ar_mode"] == 2 else []))
+                         + (["sigma_meas"] if d["ar_mode"] == 2 else [])
+                         + (["cohort_effect"] if d["N_cohort"] > 1 else []))
     summary, worst, worst_name = {}, 0.0, ""
     per_chain = {}
     for n in names:
@@ -156,6 +161,10 @@ def main(argv=None) -> int:
     g = lambda n: summary[n]["mean"]  # noqa: E731
     print("  theta " + " ".join(f"{g(f'theta[{k}]'):.3f}" for k in range(1, K + 1)))
     print("  per-chain lp__ " + " ".join(f"{v:.1f}" for v in per_chain["lp__"]))
+    if d["N_cohort"] > 1:
+        for c in range(1, C + 1):
+            print(f"  cohort shifts, channel {c} ({payload.channels[c - 1]}; oldest decade = 0): "
+                  + " ".join(f"{g(f'cohort_effect[{c},{j}]'):+.3f}" for j in range(2, d["N_cohort"] + 1)))
     hazard = {}
     if d["use_mortality"]:
         print("  Gompertz log level at 55 by class " + " ".join(f"{g(f'log_b[{k}]'):+.2f}" for k in range(1, K + 1)))
@@ -188,6 +197,9 @@ def main(argv=None) -> int:
               "n_person": int(d["N_person"]), "n_obs": int(d["N_obs"]), "held_rows": int(n_held),
               "use_chronic": int(d["use_chronic"]), "use_mortality": int(d["use_mortality"]),
               "mort_events": int(np.sum(d["mort_y"])),
+              "cohort": args.cohort, "n_cohort": int(d["N_cohort"]),
+              "cohort_decades": (sorted(int(v) for v in (long["birthy"].dropna() // 10 * 10).unique())
+                                 if args.cohort == "decade" else []),
               "chains": args.chains, "warmup": args.warmup, "sampling": args.sampling,
               "wall_hours": wall / 3600, "max_structural_rhat": worst, "worst_param": worst_name,
               "channel_moments": payload.channel_moments, "params": summary,

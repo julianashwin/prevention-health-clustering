@@ -28,7 +28,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import AGES, DESC, FIG, K, MAX_AGE, MIN_AGE, VARIANTS, load_measure  # noqa: E402
+from _paper_common import AGES, DESC, FIG, K, MAX_AGE, MIN_AGE, load_measure  # noqa: E402
+VARIANTS = [("theta", r"$\theta$"), ("h", "$h$")]
 from _style import CLUSTER, INK2, INK3, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
@@ -56,7 +57,7 @@ def main() -> int:
     A = (AGES - 55) / 10
     cmap = plt.get_cmap("viridis")
     dec_col = {dec: cmap(i / (len(DECADES) - 2)) for i, dec in enumerate(DECADES[1:])}
-    fig, axes = plt.subplots(4, 3, figsize=(13, 14), gridspec_kw={"hspace": 0.42, "wspace": 0.28})
+    fig, axes = plt.subplots(4, len(VARIANTS), figsize=(4.4 * len(VARIANTS), 14), gridspec_kw={"hspace": 0.42, "wspace": 0.28})
     rows = []
     for j, (v, lab) in enumerate(VARIANTS):
         mom = mom_all[v]

@@ -26,6 +26,12 @@
  * last observed wave, so holding out the last rows would remove every event
  * from the likelihood rather than test the channel.
  *
+ * COHORT. Optional birth-cohort level shifts on each Gaussian channel,
+ * common to the classes (as in the univariate model with cohort_by_class 0):
+ * cohort_effect[c][j] is added to every class mean of channel c for rows
+ * with cohort_id j, with the first (oldest) cohort pinned to zero. N_cohort
+ * = 1 switches it off. Mortality carries no cohort term.
+ *
  * IDENTIFICATION. As in the Gaussian model: an ordered intercept on the
  * anchor Gaussian channel, which must carry likelihood weight.
  *
@@ -46,6 +52,7 @@ functions {
       int filter_start,
       int K, int C, int P,
       array[] vector y, matrix X,
+      array[] int cohort_id, array[] vector cohort_effect,
       int ar_mode, vector age_gap,
       vector log_weight,
       array[] matrix coef, matrix sigma, matrix rho, vector sigma_meas,
@@ -64,20 +71,23 @@ functions {
         real part = 0;
         if (ar_mode == 0) {
           for (n in row_start:row_end) {
-            part += normal_lpdf(y[c][n] | dot_product(X[n], coef[c][k]),
+            part += normal_lpdf(y[c][n] | dot_product(X[n], coef[c][k])
+                                          + cohort_effect[c][cohort_id[n]],
                                 sigma[k, c]);
           }
         } else if (ar_mode == 1) {
           real rho_kc = rho[k, c];
           real mu_prev = 0;
           for (n in row_start:row_end) {
-            real mu = dot_product(X[n], coef[c][k]);
+            real mu = dot_product(X[n], coef[c][k])
+                      + cohort_effect[c][cohort_id[n]];
             if (n == row_start && prev_row == 0) {
               part += normal_lpdf(y[c][n] | mu,
                                   sigma[k, c] / sqrt(1 - square(rho_kc)));
             } else {
               if (n == row_start) {
-                mu_prev = dot_product(X[prev_row], coef[c][k]);
+                mu_prev = dot_product(X[prev_row], coef[c][k])
+                          + cohort_effect[c][cohort_id[prev_row]];
               }
               real gap = age_gap[n];
               real rho_gap = pow(rho_kc, gap);
@@ -98,7 +108,8 @@ functions {
           real a = 0;
           real Pv = v_stat;
           for (n in f0:row_end) {
-            real mu = dot_product(X[n], coef[c][k]);
+            real mu = dot_product(X[n], coef[c][k])
+                      + cohort_effect[c][cohort_id[n]];
             if (n > f0) {
               real gap = age_gap[n];
               real rho_gap = pow(rho_kc, gap);
@@ -172,6 +183,7 @@ functions {
       array[] int person_slice, int start, int end,
       int K, int C, int P,
       array[] vector y, matrix X,
+      array[] int cohort_id, array[] vector cohort_effect,
       int ar_mode, vector age_gap,
       vector log_weight,
       array[] matrix coef, matrix sigma, matrix rho, vector sigma_meas,
@@ -190,7 +202,7 @@ functions {
       int idx = person_slice[i];
       vector[K] class_lp = person_window_loglik(
           fit_start[idx], fit_end[idx], 1, 0, fit_start[idx], K, C, P, y, X,
-          ar_mode, age_gap, log_weight, coef, sigma, rho, sigma_meas,
+          cohort_id, cohort_effect, ar_mode, age_gap, log_weight, coef, sigma, rho, sigma_meas,
           use_chronic, chronic_obs, chronic_y, coef_chronic, phi_chronic,
           channel_weight);
       if (use_mortality == 1) {
@@ -220,6 +232,10 @@ data {
   array[N_person] int<lower=0, upper=N_obs> hold_start;
   array[N_person] int<lower=0, upper=N_obs> hold_end;
   array[N_person] int<lower=1, upper=N_obs> full_end;
+
+  int<lower=1> N_cohort;
+  array[N_obs] int<lower=1, upper=N_cohort> cohort_id;
+  real<lower=0> cohort_prior_scale;
 
   int<lower=0, upper=2> ar_mode;
   vector<lower=0>[ar_mode == 0 ? 0 : N_obs] age_gap;
@@ -288,6 +304,9 @@ parameters {
   matrix[use_chronic == 1 ? K : 0, P] coef_chronic_raw;
   vector<lower=0>[use_chronic == 1 ? 1 : 0] phi_chronic;
 
+  // Class-invariant cohort shifts, reference cohort pinned to zero.
+  array[C] vector[N_cohort - 1] cohort_free;
+
   vector[use_mortality == 1 ? K : 0] log_b_raw;
   vector<lower=0>[use_mortality == 1 ? K : 0] gomp_slope;
   vector<lower=0>[use_mortality == 1 ? 1 : 0] makeham;
@@ -299,8 +318,10 @@ transformed parameters {
   matrix[use_chronic == 1 ? K : 0, P] coef_chronic = coef_chronic_raw;
   vector[use_mortality == 1 ? K : 0] log_b = log_b_raw + mort_log_mean;
   vector[K] log_weight = log(theta);
+  array[C] vector[N_cohort] cohort_effect;
 
   for (c in 1:C) {
+    cohort_effect[c] = append_row(rep_vector(0.0, 1), cohort_free[c]);
     for (k in 1:K) {
       coef[c][k, 1] = c == anchor_channel
           ? anchor_intercept[k]
@@ -328,6 +349,9 @@ model {
     }
   }
   to_vector(sigma_raw) ~ lognormal(log(sigma_prior_location), sigma_prior_scale);
+  for (c in 1:C) {
+    cohort_free[c] ~ normal(0, cohort_prior_scale);
+  }
   if (ar_mode != 0) {
     to_vector(rho) ~ beta(rho_prior_alpha, rho_prior_beta);
   }
@@ -346,7 +370,7 @@ model {
 
   target += reduce_sum(
       partial_sum_lpmf, person_index, grainsize,
-      K, C, P, y, X, ar_mode, age_gap, log_weight, coef, sigma, rho,
+      K, C, P, y, X, cohort_id, cohort_effect, ar_mode, age_gap, log_weight, coef, sigma, rho,
       sigma_meas, use_chronic, chronic_obs, chronic_y, coef_chronic,
       phi_chronic, use_mortality, mort_age, mort_gap, mort_obs, mort_y,
       log_b, gomp_slope, makeham, channel_weight,
@@ -364,7 +388,7 @@ generated quantities {
     for (i in 1:N_person) {
       vector[K] fitted_lp = person_window_loglik(
           fit_start[i], fit_end[i], 1, 0, fit_start[i], K, C, P, y, X,
-          ar_mode, age_gap, log_weight, coef, sigma, rho, sigma_meas,
+          cohort_id, cohort_effect, ar_mode, age_gap, log_weight, coef, sigma, rho, sigma_meas,
           use_chronic, chronic_obs, chronic_y, coef_chronic, phi_chronic,
           channel_weight);
       if (use_mortality == 1) {
@@ -381,11 +405,12 @@ generated quantities {
       if (hold_start[i] > 0) {
         vector[K] hold_lp = person_window_loglik(
             hold_start[i], hold_end[i], 0, fit_end[i], fit_start[i], K, C, P,
-            y, X, ar_mode, age_gap, log_weight, coef, sigma, rho, sigma_meas,
+            y, X, cohort_id, cohort_effect, ar_mode, age_gap, log_weight, coef, sigma, rho, sigma_meas,
             use_chronic, chronic_obs, chronic_y, coef_chronic, phi_chronic,
             channel_weight);
         vector[K] hold_lp_marg = person_window_loglik(
-            hold_start[i], hold_end[i], 0, 0, 0, K, C, P, y, X, ar_mode,
+            hold_start[i], hold_end[i], 0, 0, 0, K, C, P, y, X,
+            cohort_id, cohort_effect, ar_mode,
             age_gap, log_weight, coef, sigma, rho, sigma_meas,
             use_chronic, chronic_obs, chronic_y, coef_chronic, phi_chronic,
             channel_weight);

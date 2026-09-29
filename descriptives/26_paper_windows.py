@@ -32,9 +32,11 @@ MIN_SUPPORT = 25
 
 def main() -> int:
     apply_style()
-    fig, axes = plt.subplots(2, 3, figsize=(12.5, 7.2), gridspec_kw={"wspace": 0.25, "hspace": 0.35})
+    # the paper's figure is theta alone; --h the appendix version
+    V_ONLY = "h" if "--h" in sys.argv else "theta"
+    fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.9), gridspec_kw={"wspace": 0.25}, squeeze=False)
     rows = []
-    for i, v in enumerate(["h", "theta"]):
+    for i, v in enumerate([V_ONLY]):
         full_lab = load_labels(v)
         full_tr = load_trajectories(v)
         for col, (wins, name) in enumerate([(SLIDING, "sliding twenty-year windows"),
@@ -60,8 +62,7 @@ def main() -> int:
                              "worst_share": float((lab == 0).mean())})
             ax.set_title(f"({'ab'[col]}) {LABEL[v]}: {name}", loc="left", fontsize=9.5)
             ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-            if i == 1:
-                ax.set_xlabel("age")
+            ax.set_xlabel("age")
         ax = axes[i, 2]
         r = pd.DataFrame(rows)
         r = r[r["variant"] == v]
@@ -73,16 +74,16 @@ def main() -> int:
         ax.set_ylim(0, 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
         ax.set_title(f"(c) {LABEL[v]}: agreement with the lifecycle typology", loc="left", fontsize=9.5)
         ax.legend(loc="lower left", fontsize=7.5)
-        if i == 1:
-            ax.set_xlabel("age")
+        ax.set_xlabel("age")
     fig.text(0.01, -0.01,
              "Each window refits K = 3 on the people observed at least three times inside it. Coloured lines: the "
              "window's type means over its own age range (tick at the start); grey: the full 20-90 typology.\n"
              "Panel (c): adjusted Rand index between a window's assignment and the lifecycle assignment, on the "
              "people both contain.", fontsize=7.4, color=INK2, va="top")
-    fig.savefig(FIG / "fig_windows.png")
+    sfx = "" if V_ONLY == "theta" else "_h"
+    fig.savefig(FIG / f"fig_windows{sfx}.png", bbox_inches="tight")
     out = pd.DataFrame(rows)
-    out.to_csv(DESC / "paper_windows_agreement.csv", index=False)
+    out.to_csv(DESC / f"paper_windows_agreement{sfx}.csv", index=False)
     print(out.round(3).to_string(index=False))
     return 0
 

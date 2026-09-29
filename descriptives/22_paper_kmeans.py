@@ -22,7 +22,10 @@ on h evaluated at every contract row (_paper_common.load_predicted_cost_rows): t
 cost-anchored cardinalisation of the measure, for the appendix comparison.
 
 --full-only runs the lifecycle fits; --windows-only the windows; --variants h,cost
-restricts either to the named variants.
+restricts either to the named variants. --frailty runs only the lifecycle fits on the
+comparison rulers, the 31-deficit frailty index and log(frailty + 1/31) (contract columns
+``frailty``, ``logfrailty``; higher = frailer, so type 1 is the highest), and adds
+them to the same output files under their own variant keys.
 Nothing here reads anything but the contract's long.csv.
 """
 
@@ -50,6 +53,8 @@ SLIDING = [(20, 40), (30, 50), (40, 60), (50, 70), (60, 80), (70, 90)]
 BACKWARD = [(60, 90), (50, 90), (40, 90), (30, 90)]
 VARIANTS = ["h", "theta", "fi10"]
 EXTRA = ["predcost"]             # lifecycle run only
+FRAILTY = ["frailty", "logfrailty"]   # comparison rulers, --frailty only
+WORSE_HIGH = {"predcost", "frailty", "logfrailty"}
 OUT = ARTIFACTS_DIR / "descriptives"
 
 _panel: pd.DataFrame | None = None
@@ -59,7 +64,7 @@ def panel() -> pd.DataFrame:
     global _panel
     if _panel is None:
         p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
-                        usecols=["pidp", "age", *VARIANTS])
+                        usecols=["pidp", "age", *VARIANTS, *FRAILTY])
         _panel = p[p["age"].between(*FULL)].assign(age=lambda x: x["age"].astype(int))
     return _panel
 
@@ -74,7 +79,7 @@ def run(task: tuple[str, int, int]):
     w = w[w.notna().sum(axis=1) >= MIN_OBS]
     lab = pd.Series(partial_kmeans(w, n_clusters=K), index=w.index)
     # type 1 is worst health: lowest score, or for the cost index the highest cost
-    order = w.mean(axis=1).groupby(lab).mean().sort_values(ascending=(variant != "predcost")).index
+    order = w.mean(axis=1).groupby(lab).mean().sort_values(ascending=(variant not in WORSE_HIGH)).index
     lab = lab.map({old: new for new, old in enumerate(order)}).astype(int)
     long = p[p["pidp"].isin(w.index)].assign(cluster=lambda x: x["pidp"].map(lab))
     traj = (long.groupby(["cluster", "age"])[variant].agg(["mean", "std", "count"])
@@ -97,9 +102,11 @@ def main() -> int:
     if "--variants" in sys.argv:
         only = sys.argv[sys.argv.index("--variants") + 1].split(",")
     tasks = []
-    if "--windows-only" not in sys.argv:
+    if "--frailty" in sys.argv:
+        tasks = [(v, *FULL) for v in FRAILTY]
+    elif "--windows-only" not in sys.argv:
         tasks += [(v, *FULL) for v in VARIANTS + EXTRA if only is None or v in only]
-    if "--full-only" not in sys.argv:
+    if "--full-only" not in sys.argv and "--frailty" not in sys.argv:
         tasks += [(v, lo, hi) for v in ("h", "theta") if only is None or v in only for lo, hi in dict.fromkeys(SLIDING + BACKWARD)]
     print(f"{len(tasks)} runs", flush=True)
     with Pool(int(os.environ.get("KMEANS_PROCS", "3"))) as pool:
