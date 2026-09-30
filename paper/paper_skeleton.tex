@@ -515,8 +515,9 @@ Small robustness exercise:
 		\item $K=4$ and $K=5$ (Figure~\ref{fig:trajK}) converge cleanly on every specification (max $\hat R\le1.004$). Under independent residuals each added class is a new sickest group, 10\% of people at $K=4$ and a further 6\% at $K=5$, and the healthy majority is left alone.
 		\item Under AR(1) plus ``spike'' the split goes the other way. At $K=4$ the three $K=3$ classes barely move and the new class is a small healthy group, 8\% with persistence $0.70$. At $K=5$ the three large classes are unchanged, with persistence $0.86$--$0.94$, and the two new classes are both small and healthy, 7\% and 6\%, one with persistence $0.07$: a collapse like $h$'s reaches $\theta$ too at $K=5$, but in a small class rather than half the sample. Classification certainty falls from a mean maximum posterior of $0.69$ at $K=3$ to $0.66$ at $K=4$.
 		\item On $h$ (Appendix~\ref{app:measures}) the healthiest-class collapse spreads rather than resolves as classes are added: the top two classes have persistence $0.52$ and $0.19$ at $K=4$, and $0.39$ and $0.18$ at $K=5$, covering about half the sample.
-		\item Multidimensional model (Figure~\ref{fig:multidim}): the physical measure ($\theta$; $h$ in Appendix~\ref{app:measures}) and a mental GRM (the three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis) as Gaussian channels, plus mortality, one shared class structure; the health contract's people with a mental score on every row, 38,181 people and 2,045 deaths. Under AR(1) plus ``spike'' the persistence is class and channel specific while the innovation and ``spike'' scales are common to the classes; the hazard is Gompertz--Makeham, $\lambda_k(a)=c+b_k e^{\vartheta_k(a-55)}$, integrated over each row's years at risk, with class-specific level and slope and a common Makeham constant.
+		\item Multidimensional model (Figure~\ref{fig:multidim}): the physical measure ($\theta$; $h$ in Appendix~\ref{app:measures}) and a mental GRM (the three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis; Appendix~\ref{app:mental} looks at it on its own) as Gaussian channels, plus mortality, one shared class structure; the health contract's people with a mental score on every row, 38,181 people and 2,045 deaths. Under AR(1) plus ``spike'' the persistence is class and channel specific while the innovation and ``spike'' scales are common to the classes; the hazard is Gompertz--Makeham, $\lambda_k(a)=c+b_k e^{\vartheta_k(a-55)}$, integrated over each row's years at risk, with class-specific level and slope and a common Makeham constant.
 		\item The physical typology survives the extra channels. Under AR(1) plus ``spike'' the classes are $.19/.51/.31$ with physical persistence $.94/.91/.87$, and 77\% of people land in the same class as under the single-channel fit. On $h$ (Appendix~\ref{app:measures}) the healthiest class keeps its collapse, persistence $0.28$, even though its mental persistence is $0.86$.
+		\item With one level shift per birth decade on both channels, common to the classes (Figure~\ref{fig:multidim_cohort} in Appendix~\ref{app:cohort}), the multidimensional fit is unchanged: shares $.18/.50/.32$, physical persistence $.94/.90/.86$, the same ``spike'' scales, a class-1 to class-3 hazard ratio of $11.5$ at 55 and $3.2$ at 85 against $10.6$ and $3.3$ without the shifts, and 76\% of people in their single-channel class. The shifts themselves fall monotonically from the 1920s to the 2000s, by $0.9$ sd on $\theta$ and $1.3$ sd on the mental score, with the caveat on reading them as cohort effects set out below.
 		\item Mental health is faster and noisier than physical health in every class: persistence $.93/.88/.81$ against $.94/.91/.87$ on $\theta$, and a ``spike'' of $0.54$ against $0.42$, so the signal share of the mental channel is $0.45$--$0.67$ against $0.56$--$0.74$. A shared persistence across channels, as in earlier versions, would have been wrong. The worst physical class sits two thirds of a standard deviation below the middle class on mental health at 55 and recovers half of that by 90; the healthiest class improves with age.
 		\item Mortality is strongly graded by class and converges with age: the yearly hazard of the worst class is 10.6 times the best class's at 55 and 3.3 times at 85 under AR(1) plus ``spike'' (7.1 and 2.7 under independent residuals), the sickest class having the flattest Gompertz slope ($0.09$ against $0.13$ per year). The Makeham constant is below $10^{-4}$ in every fit. Mortality describes survival by class; it does not define the classes. This is where the survivor-bias discussion lives.
 		\item Note that in the AR(1) plus ``spike'' case, the class composition by age now looks like it reflects mortality selection. We need to look into this a bit more, but it is certainly promising!
@@ -542,7 +543,7 @@ Small robustness exercise:
 	\paragraph{Robustness (appendix).}
 	
 	\begin{itemize}
-		\item \textbf{Cohort effects.} The AR(1) plus ``spike'' fits were repeated with one level shift per birth decade, common to the classes (Appendix~\ref{app:cohort}). With fifteen waves the panel observes each person over at most a fifteen-year span, so a cohort's level is identified from the overlap of neighbouring decades at the ages they share.
+		\item \textbf{Cohort effects.} The AR(1) plus ``spike'' fits, single-channel and multidimensional, were repeated with one level shift per birth decade, common to the classes (Appendix~\ref{app:cohort}). With fifteen waves the panel observes each person over at most a fifteen-year span, so a cohort's level is identified from the overlap of neighbouring decades at the ages they share.
 		\item \textbf{The typology is unaffected.} Shares, persistence and the ``spike'' scale agree with the fits without cohort effects to two or three decimals on every variant, and the class paths keep their shape; the worst class is a little steeper once the decade shifts carry part of the level. Whatever cohort variation there is, it is not what separates the classes.
 		\item \textbf{The cohort effects themselves should not be read strongly.} The fit reports a monotone decline between the 1950s and the 2000s of about two thirds of a standard deviation on $\theta$ (a third on $h$). But the raw decade profiles line up almost exactly at the ages they share, and subtracting the estimated shifts opens gaps that were not there. Over a fifteen-year window age and birth year are nearly collinear, and a decade dummy is close to a linear function of age within it, so with a single quadratic age path per class the dummies absorb the curvature the quadratic cannot follow. With single-year age dummies in place of the quadratic, the pre-1960 shifts vanish and only the post-1970 cohorts decline (Appendix~\ref{app:kmeans_cohort}), so the mixture's shifts should not be read as cohort effects.
 		\item \textbf{Specification.} The same $K=3$ fits with an AR(1) in the class residual but no ``spike'' give persistence of $0.79/0.28/0.40$ on $\theta$, against $0.87$--$0.96$ once the one-period term is separated: without it $\rho$ has to absorb the one-period noise and is pulled down.
@@ -991,6 +992,12 @@ Small robustness exercise:
 		\caption{The AR(1) plus measurement error fits with a shared birth-decade level shift, one column per variant. Row 1: class paths with the shifts, evaluated at the 1950s (solid), against the fits without them (dashed). Row 2: the observed mean of the variant by age within each birth decade. Row 3: the same profiles net of the estimated decade shift. Row 4: the shifts relative to the 1950s with 95\% posterior intervals, in the variant's units. Contract people, cells of at least 50 person-waves.}
 		\label{fig:cohort}
 	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_multidim_trajectories_cohort.png}
+		\caption{As Figure~\ref{fig:multidim}, the AR(1) plus ``spike'' row on $\theta$, with one level shift per birth decade on the physical and the mental channel, common to the classes. Class paths and the observed class means are drawn at the 1950s birth decade, every score net of its estimated decade shift.}
+		\label{fig:multidim_cohort}
+	\end{figure}
 	
 	
 	
@@ -1059,4 +1066,61 @@ Small robustness exercise:
 	
 	\bibliographystyle{plainnat}
 	\bibliography{references}
+	\section{Mental health} \label{app:mental}
+
+	The mental GRM: the three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis, the second channel of the multidimensional model of Section~\ref{subsec:parametric}, here on its own. Higher is better; standardised on the pooled sample. The K-means and the mixtures use the multidimensional contract's rows, the health contract's people with a mental score on every row (38,181 people), so they share a sample with the multidimensional fits.
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_cost_mortality_age_mental.png}
+		\caption{As Figure~\ref{fig:cost}, on the mental GRM.}
+		\label{fig:cost_mental}
+	\end{figure}
+
+	\begin{itemize}
+		\item Cost is convex in mental health too: the pooled curvature has $t = 21.4$ against $36.9$ on $\theta$, and the slope is about half of $\theta$'s (\pounds$144$ against \pounds$279$ per sd at the mean). Unlike $\theta$, the gradient steepens with age ($t = 22$ on the slope-by-age interaction, against $-1.5$ on $\theta$): a low mental score costs little at 20--44 and a lot at 65--90.
+		\item Mortality falls with mental health at every age, with a gradient of $0.57$ log-odds per sd against $0.90$ on $\theta$, and it weakens with age ($t = -3.0$), where on $\theta$ it is stable.
+	\end{itemize}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=0.45\linewidth]{fig_exhibit1_mental.png}
+		\caption{As Figure~\ref{fig:exhibit1}, on the mental GRM: mean path, variance profile and covariance rows, model-free.}
+		\label{fig:exhibit1_mental}
+	\end{figure}
+
+	\begin{itemize}
+		\item The mean path is nothing like the physical one: flat at about $-0.08$ from 20 to 55, then up by $0.3$ sd to a peak at about 70, then down again. The variance is flat at $0.85$--$0.93$ across the whole age range, against the hump on $\theta$.
+		\item Roughly half of the variance is one-period: every covariance row drops from about $0.9$ on the diagonal to $0.45$--$0.55$ a year later, then decays slowly. On $\theta$ the first-year drop is about a fifth. This is the fast mental channel of the multidimensional fits, where its ``spike'' share is $0.34$--$0.55$ by class.
+	\end{itemize}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_exhibit2_main_mental.png}
+		\caption{As Figure~\ref{fig:ex2main}, Cases 1 and 4 on the mental GRM.}
+		\label{fig:exhibit2_mental}
+	\end{figure}
+
+	\begin{itemize}
+		\item Under Case 1, $\Corr(H,d)$ is negative in every band ($-0.39$, $-0.19$, $-0.51$, $-0.46$): the shocks pull back towards the level throughout, with no positive-correlation band in mid-life as on $\theta$. Under Case 4 the fit is not clean: $-0.30$ at 25--40 with $\rho = 0.90$, but at 40--60 and 75--90 the constraint binds ($+1$ and $-1$) and at 60--75 the persistence falls to $0.55$. With half the variance one-period, the four-year moments leave little to identify the persistent part from.
+	\end{itemize}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=0.45\linewidth]{fig_clusters_mental.png}
+		\caption{As Figure~\ref{fig:clusters}, partial K-means types ($K=3$) on the mental GRM, on the multidimensional contract's rows.}
+		\label{fig:clusters_mental}
+	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=0.45\linewidth]{fig_cluster_decomposition_mental.png}
+		\caption{As Figure~\ref{fig:decomp}, between versus within by age, on the mental GRM types.}
+		\label{fig:decomp_mental}
+	\end{figure}
+
+	\begin{itemize}
+		\item The type shares are almost those of $\theta$ ($.20/.42/.38$ against $.18/.43/.40$), but the paths are flat and parallel, at about $-1.1$, $-0.15$ and $+0.65$, each carrying the mid-life dip and the rise after 60 of the mean path; the gaps between the types hardly move with age.
+		\item The types are different people. Agreement with the $\theta$ typology on the 38,181 shared people is ARI $0.14$ with 58\% in the same type ($0.14$ and 54\% against $h$), against ARI $0.37$--$0.71$ between the physical measures.
+		\item The between-type share of the variance is $45$--$52$\% at every age, against a rise from $49$\% at 25 to $64$--$66$\% at 55--70 on $\theta$. Within-type autocorrelation at one year is $0.26$--$0.39$ against $0.37$--$0.64$ on $\theta$, and is near zero by six years for the middle type: the persistent part of mental health is smaller, consistent with the covariance rows of Figure~\ref{fig:exhibit1_mental}.
+		\item The level-change covariance across types is positive from the late twenties to the late fifties and negative from about 58 to 70, then small: the types fan out slowly in mid-life and close up around retirement, when the mean rises.
+	\end{itemize}
+
+	\todo{Bayesian mixtures on the mental GRM (independent residuals, AR(1) plus ``spike'', and with birth-decade shifts) to follow once the fits land; they are queued behind the multidimensional cohort fits.}
+
 \end{document}

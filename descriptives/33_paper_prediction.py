@@ -35,7 +35,7 @@ version. Predictors at t, each set carrying a quadratic in age:
   + multidim class, v(t)
   + all                  AR(1)+"spike" class, v(t), observables
 People are split 70/30 on a fixed hash; models fitted on the 70, scored on
-the 30; binary outcomes report AUC, continuous ones R-squared. Both rulers (h
+the 30; binary outcomes report AUC, continuous ones R-squared. Both measures (h
 and theta) are run on the same people, the intersection of the held-out
 samples. A multidimensional fit that has not finished leaves its rows blank.
 
@@ -383,7 +383,7 @@ def main() -> int:
             for r in rows:
                 f.write(" & ".join(r) + " \\\\\n")
             f.write("\\bottomrule\n\\end{tabular}\n")
-        # figure: gain over age, one row per ruler, one panel per outcome, paired bars for the horizons
+        # figure: gain over age, one row per measure, one panel per outcome, paired bars for the horizons
         fig, axes = plt.subplots(len(VSEL), len(OUT), figsize=(12.5, 5.2 * len(VSEL)), sharey="row", squeeze=False)
         cols = [INK2, CLUSTER[2], CLUSTER[1], CLUSTER[0], ORANGE, ORANGE, VERM, VERM, PURPLE, PURPLE, GREEN]
         for r, v in enumerate(VSEL):

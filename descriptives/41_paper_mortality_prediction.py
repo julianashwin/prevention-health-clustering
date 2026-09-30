@@ -19,7 +19,7 @@ model's own hazard, the class-weighted Gompertz-Makeham hazard at the
 person's age with the Gaussian-only posterior, enters as a single predictor.
 
 Predictor sets, each with a quadratic in age; people split 70/30 on a fixed
-hash, fitted on the 70, scored on the 30; AUC. Both rulers, on the people in
+hash, fitted on the 70, scored on the 30; AUC. Both measures, on the people in
 both the health and the multidim contracts.
 
 The figure's lower row is the held-out comparison from 33_paper_prediction.py

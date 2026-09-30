@@ -32,21 +32,23 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import FRAILTY_SUFFIX, MAX_AGE, MIN_AGE, draw_exhibit1_row, profile_rows, profile_rows_balanced, read_scores  # noqa: E402
+from _paper_common import FRAILTY_SUFFIX, MENTAL_SUFFIX, MAX_AGE, MIN_AGE, draw_exhibit1_row, profile_rows, profile_rows_balanced, read_scores  # noqa: E402
 from _style import INK2, VERM, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR, ROOT_DIR  # noqa: E402
 
 FRAIL = "--frailty" in sys.argv
 RULERS = "--measures" in sys.argv
+MENTAL = "--mental" in sys.argv    # the mental GRM alone, one column
 LAB = {"h": "$h$ (expected score, 0-1)", "theta": r"$\theta$ (latent, pooled $N(0,1)$)",
-       "frailty": "frailty index (share of 31 deficits)", "logfrailty": "log(frailty + 1/31)"}
+       "frailty": "frailty index (share of 31 deficits)", "logfrailty": "log(frailty + 1/31)",
+       "mental": r"mental $\theta$ (latent, pooled $N(0,1)$)"}
 # the paper's Exhibit 1 is theta, one column; --measures the appendix version on the other three measures;
 # --frailty the two frailty indices; the balanced-rows appendix figure stays on h and theta
-VARIANTS = [(v, LAB[v]) for v in (["h", "frailty", "logfrailty"] if RULERS else ["frailty", "logfrailty"] if FRAIL else ["theta"])]
+VARIANTS = [(v, LAB[v]) for v in (["h", "frailty", "logfrailty"] if RULERS else ["frailty", "logfrailty"] if FRAIL else ["mental"] if MENTAL else ["theta"])]
 BAL_VARIANTS = [(v, LAB[v]) for v in ("h", "theta")]
-SUFFIX = "_measures" if RULERS else FRAILTY_SUFFIX if FRAIL else ""
-EXTRA = RULERS or FRAIL
+SUFFIX = "_measures" if RULERS else FRAILTY_SUFFIX if FRAIL else MENTAL_SUFFIX if MENTAL else ""
+EXTRA = RULERS or FRAIL or MENTAL
 MIN_CELL, ROW_LEN = 100, 9
 
 
@@ -69,7 +71,8 @@ def main() -> int:
         ax.set_xlabel("age")
     fig.text(0.01, -0.01,
              ("Frailty: the share of 31 equal-weight deficits (six SF-12 physical items graded 0-1, eight impairment areas, the ever-diagnosed conditions), higher = frailer; "
-              f"log frailty is log(frailty + 1/31), one whole deficit added, so the {(d['frailty'] == 0).mean():.0%} of person-waves with no deficit sit at the floor.\n" if EXTRA else "") +
+              f"log frailty is log(frailty + 1/31), one whole deficit added, so the {(d['frailty'] == 0).mean():.0%} of person-waves with no deficit sit at the floor.\n" if (RULERS or FRAIL) else "") +
+             ("The mental GRM: three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis; higher = better.\n" if MENTAL else "") +
              (f"{len(d):,} person-waves, {d['pidp'].nunique():,} people, ages 20-90. Profiles are five-year centred "
               "rolling means; cells with fewer than 100 person-waves\nare dropped. Each covariance row starts on the "
               "diagonal at its five-year base-age bin (dotted: the variance profile)\nand runs nine years. Rows two and "

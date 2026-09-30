@@ -27,7 +27,12 @@ into `artifacts/health-ssm/`; `runs/health_cohort_queue.py` (launched by
 the same three with a shared birth-decade level shift, into
 `artifacts/health-ssm-cohort/`; `runs/health_next_queue.py` (launched by
 `runs/health_next_launch.sh`) the AR(1)-without-measurement-error comparison
-and the held-out twins, into `artifacts/health-next/`.
+and the held-out twins, into `artifacts/health-next/`; `runs/mental_queue.py`
+(launched by `runs/mental_launch.sh`, which waits for the multidimensional
+cohort queue to finish) the K=3 fits on the mental GRM alone, independent
+residuals, AR(1) plus "spike" and AR(1) plus "spike" with birth-decade shifts
+(`mental-theta-base`, `mental-theta-ssm`, `mental-theta-ssm-cohort`), on the
+multidim health contract's rows, into `artifacts/mental-health/`.
 `runs/overnight_queue.py` runs the eight-fit AR(1)/GRM batch, two at a time,
 longest first, and writes `artifacts/overnight/digest.json`.
 `oos_assessment.py` is the full out-of-sample assessment of the holdout

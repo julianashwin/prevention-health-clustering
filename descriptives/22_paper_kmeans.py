@@ -23,7 +23,7 @@ cost-anchored cardinalisation of the measure, for the appendix comparison.
 
 --full-only runs the lifecycle fits; --windows-only the windows; --variants h,cost
 restricts either to the named variants. --frailty runs only the lifecycle fits on the
-comparison rulers, the 31-deficit frailty index and log(frailty + 1/31) (contract columns
+comparison measures, the 31-deficit frailty index and log(frailty + 1/31) (contract columns
 ``frailty``, ``logfrailty``; higher = frailer, so type 1 is the highest), and adds
 them to the same output files under their own variant keys.
 Nothing here reads anything but the contract's long.csv.
@@ -53,26 +53,30 @@ SLIDING = [(20, 40), (30, 50), (40, 60), (50, 70), (60, 80), (70, 90)]
 BACKWARD = [(60, 90), (50, 90), (40, 90), (30, 90)]
 VARIANTS = ["h", "theta", "fi10"]
 EXTRA = ["predcost"]             # lifecycle run only
-FRAILTY = ["frailty", "logfrailty"]   # comparison rulers, --frailty only
+FRAILTY = ["frailty", "logfrailty"]   # comparison measures, --frailty only
+# --mental: the mental GRM alone, on the multidim contract's rows (the rows the Bayesian mental fits use)
+MENTAL_CONTRACT = PROCESSED_DATA_DIR / "contracts" / "multidim_health_20_89_minobs3_v1"
 WORSE_HIGH = {"predcost", "frailty", "logfrailty"}
 OUT = ARTIFACTS_DIR / "descriptives"
 
-_panel: pd.DataFrame | None = None
+_panel: dict[str, pd.DataFrame] = {}
 
 
-def panel() -> pd.DataFrame:
-    global _panel
-    if _panel is None:
-        p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
-                        usecols=["pidp", "age", *VARIANTS, *FRAILTY])
-        _panel = p[p["age"].between(*FULL)].assign(age=lambda x: x["age"].astype(int))
-    return _panel
+def panel(which: str = "health") -> pd.DataFrame:
+    if which not in _panel:
+        if which == "mental":
+            p = pd.read_csv(MENTAL_CONTRACT / "long.csv", usecols=["pidp", "age", "theta_ment_nodepr"]).rename(columns={"theta_ment_nodepr": "mental"})
+        else:
+            p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
+                            usecols=["pidp", "age", *VARIANTS, *FRAILTY])
+        _panel[which] = p[p["age"].between(*FULL)].assign(age=lambda x: x["age"].astype(int))
+    return _panel[which]
 
 
 def run(task: tuple[str, int, int]):
     variant, lo, hi = task
     t0 = time.time()
-    p = load_predicted_cost_rows("h") if variant == "predcost" else panel()
+    p = load_predicted_cost_rows("h") if variant == "predcost" else panel("mental" if variant == "mental" else "health")
     p = p[p["age"].between(lo, hi)]
     w = p.pivot_table(index="pidp", columns="age", values=variant, aggfunc="mean")
     w = w.reindex(columns=range(lo, hi + 1))
@@ -104,9 +108,11 @@ def main() -> int:
     tasks = []
     if "--frailty" in sys.argv:
         tasks = [(v, *FULL) for v in FRAILTY]
+    elif "--mental" in sys.argv:
+        tasks = [("mental", *FULL)]
     elif "--windows-only" not in sys.argv:
         tasks += [(v, *FULL) for v in VARIANTS + EXTRA if only is None or v in only]
-    if "--full-only" not in sys.argv and "--frailty" not in sys.argv:
+    if "--full-only" not in sys.argv and "--frailty" not in sys.argv and "--mental" not in sys.argv:
         tasks += [(v, lo, hi) for v in ("h", "theta") if only is None or v in only for lo, hi in dict.fromkeys(SLIDING + BACKWARD)]
     print(f"{len(tasks)} runs", flush=True)
     with Pool(int(os.environ.get("KMEANS_PROCS", "3"))) as pool:

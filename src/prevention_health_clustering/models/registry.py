@@ -446,6 +446,36 @@ HEALTH_K45 = tuple(
 )
 
 
+# The mental GRM on its own (the multidimensional model's second channel), on the multidim
+# health contract's rows, so the univariate fits and the multidimensional one share a sample.
+MENTAL_THETA_BASE = ModelSpec(
+    name="mental-theta-base",
+    stan_file=GAUSSIAN_PANEL,
+    description="Mental GRM theta (no depression diagnosis), K=3 quadratic growth mixture, no AR term.",
+    channels=("theta_ment_nodepr",),
+    anchor_channel="theta_ment_nodepr",
+)
+
+MENTAL_THETA_SSM = ModelSpec(
+    name="mental-theta-ssm",
+    stan_file=GAUSSIAN_PANEL,
+    description="Mental GRM theta, K=3, AR(1) state plus measurement error.",
+    channels=("theta_ment_nodepr",),
+    anchor_channel="theta_ment_nodepr",
+    ar_mode=2,
+)
+
+MENTAL_THETA_SSM_COHORT = ModelSpec(
+    name="mental-theta-ssm-cohort",
+    stan_file=GAUSSIAN_PANEL,
+    description="Mental GRM theta, K=3, AR(1) plus measurement error, shared birth-decade shifts.",
+    channels=("theta_ment_nodepr",),
+    anchor_channel="theta_ment_nodepr",
+    ar_mode=2,
+    cohort="decade",
+)
+
+
 REGISTRY: dict[str, ModelSpec] = {
     spec.name: spec
     for spec in (
@@ -479,6 +509,9 @@ REGISTRY: dict[str, ModelSpec] = {
         HEALTH_H_AR1,
         HEALTH_FI10_AR1,
         *HEALTH_K45,
+        MENTAL_THETA_BASE,
+        MENTAL_THETA_SSM,
+        MENTAL_THETA_SSM_COHORT,
     )
 }
 

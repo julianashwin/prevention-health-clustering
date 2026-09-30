@@ -45,14 +45,15 @@ from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import (  # noqa: E402
-    AGES, DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, HEALTHIER_HIGH, K, LABEL, MAX_AGE, MIN_AGE, VARIANTS, load_labels,
+    AGES, DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, HEALTHIER_HIGH, K, LABEL, MAX_AGE, MENTAL_SUFFIX, MENTAL_VARIANTS, MIN_AGE, VARIANTS, load_labels,
     load_measure, load_predicted_cost_rows, load_trajectories, smooth_path,
 )
 from _style import BLUE, CLUSTER, GREEN, INK2, VERM, apply_style  # noqa: E402
 
 MIN_SUPPORT, MAX_LAG = 25, 9
 FRAIL = "--frailty" in sys.argv
-SUFFIX = FRAILTY_SUFFIX if FRAIL else ""
+MENTAL = "--mental" in sys.argv    # the mental GRM alone, K-means on the multidim contract rows
+SUFFIX = MENTAL_SUFFIX if MENTAL else FRAILTY_SUFFIX if FRAIL else ""
 
 
 def main() -> int:
@@ -61,7 +62,9 @@ def main() -> int:
     # separate appendix figure; --measures the appendix versions on h and the two frailty indices;
     # --frailty the two frailty indices only
     RULERS = "--measures" in sys.argv
-    if FRAIL:
+    if MENTAL:
+        VLIST, tag = MENTAL_VARIANTS, SUFFIX
+    elif FRAIL:
         VLIST, tag = FRAILTY_VARIANTS, SUFFIX
     elif RULERS:
         VLIST, tag = [("h", LABEL["h"])] + FRAILTY_VARIANTS, "_measures"
@@ -74,7 +77,7 @@ def main() -> int:
     g3 = {"height_ratios": [3.2, 1.9, 0.7], "hspace": 0.35}
     fig3, ax3m = plt.subplots(3, nh, figsize=(4.8 * nh, 8.2), gridspec_kw={**g3, "wspace": 0.22}, squeeze=False)
     cols3 = [ax3m[:, j] for j in range(nh)]
-    if not (FRAIL or RULERS):
+    if not (FRAIL or RULERS or MENTAL):
         fig3p, ax3p = plt.subplots(3, 1, figsize=(4.8, 8.2), gridspec_kw=g3, squeeze=False)
         cols3.append(ax3p[:, 0])
     fig4, ax4m = plt.subplots(3, nh, figsize=(4.8 * nh, 8.4), gridspec_kw={"hspace": 0.38, "wspace": 0.25}, squeeze=False)
@@ -165,10 +168,14 @@ def main() -> int:
                              "var_within": vt - vb if pd.notna(vt) else np.nan, "var_d": vd, "cov_level_d": cv,
                              "corr_level_d": cv / np.sqrt(var_l[age_ - MIN_AGE] * vd) if vd > 0 else np.nan})
     measure = {"": "theta", "_measures": "h (left), the 31-deficit frailty index (middle) and log(frailty + 1/31) (right)",
-             SUFFIX: "the 31-deficit frailty index (left) and log(frailty + 1/31) (right)"}[tag]
+             FRAILTY_SUFFIX: "the 31-deficit frailty index (left) and log(frailty + 1/31) (right)",
+             MENTAL_SUFFIX: "the mental GRM"}[tag]
     narrow = nh == 1
+    sample = ("The multidim health contract: 38,181 people with a mental score on every row,\nat least three observed ages 20-89, one row per person-age; the mental GRM\n(three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis).\nPartial K-means with 50 seeded starts,\n"
+              if MENTAL else
+              "The health contract: 38,963 people with at least three observed ages 20-89,\none row per person-age; partial K-means with 50 seeded starts,\n")
     fig3.text(0.01, -0.01,
-              (f"The health contract: 38,963 people with at least three observed ages 20-89,\none row per person-age; partial K-means with 50 seeded starts,\n"
+              (sample +
                "types ordered worst to best. Top: cluster means where at least 25 members\nare observed, shaded to +/- 1 within-cluster sd. Middle: correlation of a\n"
                "person's deviation from their type's mean at age a with their deviation\nk years later. Bottom: type composition of the person-waves observed at each age."
                if narrow else
@@ -177,7 +184,7 @@ def main() -> int:
                "Log frailty is log(frailty + 1/31), so person-ages with no deficit sit at the floor."),
               fontsize=7.4, color=INK2, va="top")
     fig3.savefig(FIG / f"fig_clusters{tag}.png", bbox_inches="tight")
-    if not (FRAIL or RULERS):
+    if not (FRAIL or RULERS or MENTAL):
         fig3p.text(0.01, -0.01, "Partial K-means on each person's predicted cost:\nthe pooled cost curve on h (cubic in the standardised\n"
                    "score on costs capped at p99, waves 7-15, made\nmonotone) evaluated at every contract row, a\ncost-anchored scale of the measure.",
                    fontsize=7.4, color=INK2, va="top")
@@ -193,7 +200,7 @@ def main() -> int:
     pd.DataFrame(note).to_csv(DESC / f"paper_cluster_autocorr{tag}.csv", index=False)
     # agreement between every pair of typologies on disk
     lab_all = pd.read_parquet(DESC / "paper_kmeans_labels.parquet")
-    avail = [v for v in ("theta", "h", "frailty", "logfrailty", "fi10", "predcost") if ((lab_all["variant"] == v) & (lab_all["lo"] == MIN_AGE)).any()]
+    avail = [v for v in ("theta", "h", "frailty", "logfrailty", "fi10", "predcost", "mental") if ((lab_all["variant"] == v) & (lab_all["lo"] == MIN_AGE)).any()]
     LL = {v: load_labels(v) for v in avail}
     rows = []
     for a_ in avail:

@@ -38,7 +38,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, LABEL, VARIANTS  # noqa: E402
+from _paper_common import DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, LABEL, MENTAL_SUFFIX, MENTAL_VARIANTS, VARIANTS  # noqa: E402
 from _paper_moments import (  # noqa: E402
     BANDS, admissible, cell_names, corr_of, fit_common, fit_constrained, ident_panel, layers, pairs_of,
     pooled_moments, wide,
@@ -61,13 +61,14 @@ DESIGNS = {
 BAND_NAMES = list(BANDS)
 WEAK_VH = 0.05    # V_H below this share of the first variance: the level, and with it Corr(H, d), is not identified
 FRAIL = "--frailty" in sys.argv
-if FRAIL:
-    VARIANTS = FRAILTY_VARIANTS
+MENTAL = "--mental" in sys.argv     # the mental GRM alone: Cases 1 and 4, main design, fig_exhibit2_main_mental
+if FRAIL or MENTAL:
+    VARIANTS = MENTAL_VARIANTS if MENTAL else FRAILTY_VARIANTS
     DESIGNS = {"main": DESIGNS["main"]}
-SUFFIX = FRAILTY_SUFFIX if FRAIL else ""
+SUFFIX = MENTAL_SUFFIX if MENTAL else FRAILTY_SUFFIX if FRAIL else ""
 # the default run fits every measure once: theta for the main figure, h and the frailty indices for the
 # appendix, and the ten-item deficit index still read by the two appendix summaries
-FIT_VARIANTS = VARIANTS if FRAIL else [("theta", LABEL["theta"]), ("h", LABEL["h"]), ("fi10", LABEL["fi10"])] + FRAILTY_VARIANTS
+FIT_VARIANTS = VARIANTS if (FRAIL or MENTAL) else [("theta", LABEL["theta"]), ("h", LABEL["h"]), ("fi10", LABEL["fi10"])] + FRAILTY_VARIANTS
 
 
 def fit_design(W: np.ndarray, spec: dict) -> dict:
@@ -193,6 +194,12 @@ def main() -> int:
         barchart(FIG / f"fig_exhibit2_main{SUFFIX}.png", [("logfrailty", "case1"), ("logfrailty", "case4"), ("frailty", "case1"), ("frailty", "case4")],
                  fits["main"], main_spec, "Exhibit 2: Cases 1 and 4 on log frailty and frailty",
                  "Frailty: the share of 31 equal-weight deficits, higher = frailer; log frailty is log(frailty + 1/31), zeros at the floor. " + main_foot)
+        print(f"wrote fig_exhibit2_main{SUFFIX}.png to {FIG}")
+        return 0
+    if MENTAL:
+        barchart(FIG / f"fig_exhibit2_main{SUFFIX}.png", [("mental", "case1"), ("mental", "case4")],
+                 fits["main"], main_spec, "Exhibit 2: Cases 1 and 4 on the mental GRM",
+                 "The mental GRM: three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis; higher = better. " + main_foot)
         print(f"wrote fig_exhibit2_main{SUFFIX}.png to {FIG}")
         return 0
     y2_spec = DESIGNS["2y"]

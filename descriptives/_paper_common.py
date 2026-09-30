@@ -19,24 +19,34 @@ CONTRACT = PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1
 MIN_AGE, MAX_AGE, K = 20, 90, 3
 AGES = np.arange(MIN_AGE, MAX_AGE + 1)
 VARIANTS = [("h", "$h$"), ("theta", r"$\theta$"), ("fi10", "deficit index")]
-# comparison rulers, run with --frailty: the 31-deficit Rockwood-style index and its shifted
+# comparison measures, run with --frailty: the 31-deficit Rockwood-style index and its shifted
 # log, log(frailty + 1/31), which keeps the zeros at the floor; higher = frailer
 FRAILTY_VARIANTS = [("frailty", "frailty index"), ("logfrailty", "log frailty")]
-LABEL = dict(VARIANTS + FRAILTY_VARIANTS)
-HEALTHIER_HIGH = {"h": True, "theta": True, "fi10": True, "ws": True, "frailty": False, "logfrailty": False}
+# the mental GRM (three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis), the
+# multidimensional model's second channel, run on its own with --mental; higher = better
+MENTAL_VARIANTS = [("mental", r"mental $\theta$")]
+LABEL = dict(VARIANTS + FRAILTY_VARIANTS + MENTAL_VARIANTS)
+HEALTHIER_HIGH = {"h": True, "theta": True, "fi10": True, "ws": True, "frailty": False, "logfrailty": False, "mental": True}
 FRAILTY_SUFFIX = "_frailty"
+MENTAL_SUFFIX = "_mental"
+MENTAL_COL = "theta_ment_nodepr"
+MULTIDIM_CONTRACT = PROCESSED_DATA_DIR / "contracts" / "multidim_health_20_89_minobs3_v1"
 
 
 def read_scores(variants) -> pd.DataFrame:
-    """Person-wave scores for any mix of the measure's variants and the frailty rulers."""
+    """Person-wave scores for any mix of the measure's variants and the frailty measures."""
     variants = list(variants)
-    base = [v for v in variants if v not in ("frailty", "logfrailty")]
+    base = [v for v in variants if v not in ("frailty", "logfrailty", "mental")]
     d = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "health_measure.parquet", columns=["pidp", "wave", "age", *base])
     fr = [v for v in variants if v in ("frailty", "logfrailty")]
     if fr:
         f = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "frailty_index.parquet",
                             columns=["pidp", "wave", "frailty", "log_frailty"]).rename(columns={"log_frailty": "logfrailty"})
         d = d.merge(f[["pidp", "wave", *fr]], on=["pidp", "wave"], how="left")
+    if "mental" in variants:
+        g = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "grm2_scores.parquet",
+                            columns=["pidp", "wave", MENTAL_COL]).rename(columns={MENTAL_COL: "mental"})
+        d = d.merge(g, on=["pidp", "wave"], how="left").dropna(subset=["mental"])
     return d
 
 

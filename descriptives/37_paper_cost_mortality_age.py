@@ -48,7 +48,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import FRAILTY_SUFFIX, HEALTHIER_HIGH, read_scores  # noqa: E402
+from _paper_common import FRAILTY_SUFFIX, HEALTHIER_HIGH, MENTAL_SUFFIX, read_scores  # noqa: E402
 from _style import BLUE, GREEN, INK2, VERM, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR, ROOT_DIR  # noqa: E402
@@ -59,10 +59,12 @@ BANDS3 = [(20, 44, "20-44"), (45, 64, "45-64"), (65, 90, "65-90")]
 BANDS6 = [(20, 34), (35, 44), (45, 54), (55, 64), (65, 74), (75, 90)]
 BAND_COL = ["#9ECAE1", "#4292C6", "#08306B"]
 EDGES_COST = {"h": np.arange(0.3, 1.0001, 0.05), "theta": np.arange(-3.0, 2.0001, 0.25),
-              "frailty": np.arange(0.0, 0.7001, 0.05), "logfrailty": np.arange(-3.5, 0.0501, 0.25)}
+              "frailty": np.arange(0.0, 0.7001, 0.05), "logfrailty": np.arange(-3.5, 0.0501, 0.25),
+              "mental": np.arange(-3.0, 2.0001, 0.25)}
 EDGES_MORT = {"h": np.arange(0.3, 1.0001, 0.1), "theta": np.arange(-3.0, 2.0001, 0.5),
-              "frailty": np.arange(0.0, 0.7001, 0.1), "logfrailty": np.arange(-3.5, 0.0501, 0.5)}
-LAB = {"h": "$h$", "theta": r"$\theta$", "frailty": "frailty", "logfrailty": "log frailty"}
+              "frailty": np.arange(0.0, 0.7001, 0.1), "logfrailty": np.arange(-3.5, 0.0501, 0.5),
+              "mental": np.arange(-3.0, 2.0001, 0.5)}
+LAB = {"h": "$h$", "theta": r"$\theta$", "frailty": "frailty", "logfrailty": "log frailty", "mental": r"mental $\theta$"}
 CAP_Q = 0.99
 
 
@@ -107,9 +109,12 @@ def main() -> int:
     six = "--panels6" in sys.argv
     # which measures: the paper's figure is theta alone; --measures the appendix version on h and the
     # two frailty indices; --frailty the two frailty indices; --both the earlier h / theta pair
+    # two frailty indices; --frailty the two frailty indices; --both the earlier h / theta pair; --mental the
+    # mental GRM alone, laid out like the main figure
     mode = ("measures" if "--measures" in sys.argv else "frailty" if "--frailty" in sys.argv
-            else "both" if ("--both" in sys.argv or six) else "main")
-    VL = {"main": ["theta"], "measures": ["h", "frailty", "logfrailty"], "frailty": ["frailty", "logfrailty"], "both": ["h", "theta"]}[mode]
+            else "mental" if "--mental" in sys.argv else "both" if ("--both" in sys.argv or six) else "main")
+    VL = {"main": ["theta"], "measures": ["h", "frailty", "logfrailty"], "frailty": ["frailty", "logfrailty"], "both": ["h", "theta"],
+          "mental": ["mental"]}[mode]
     cost_col = "flat_cost_inpatient" if inpatient else "flat_cost_total"
     cost_lab = "in-patient cost, £ (uncapped)" if inpatient else "cost index, £ (uncapped)"
     apply_style()
@@ -133,7 +138,7 @@ def main() -> int:
         fig, ax = plt.subplots(2, 3, figsize=(14.5, 8.4), gridspec_kw={"hspace": 0.45, "wspace": 0.32})
         cost_ax, mort_ax, band_c, band_m = list(ax[0, :2]), list(ax[1, :2]), ax[0, 2], ax[1, 2]
     else:
-        if mode == "main":                   # one row: cost, then mortality
+        if mode in ("main", "mental"):       # one row: cost, then mortality
             fig, ax = plt.subplots(1, 2, figsize=(10.2, 4.3), gridspec_kw={"wspace": 0.28})
             cost_ax, mort_ax = [ax[0]], [ax[1]]
         else:
@@ -141,7 +146,7 @@ def main() -> int:
             cost_ax, mort_ax = list(ax[0]), list(ax[1])
         hidden, hax = plt.subplots(2, 1)          # the by-band panels are still computed, into a throwaway figure
         band_c, band_m = hax
-    if mode == "main":
+    if mode in ("main", "mental"):
         cost_let, mort_let = "a", "b"
     elif six:
         cost_let, mort_let = "ab", "de"
@@ -240,7 +245,8 @@ def main() -> int:
     measure = {"main": "theta, the paper's health measure",
              "measures": "h (left), the 31-deficit frailty index (middle) and log(frailty + 1/31) (right)",
              "frailty": "the 31-deficit frailty index (left) and log(frailty + 1/31) (right)",
-             "both": "h (left) and theta (right)"}[mode]
+             "both": "h (left) and theta (right)",
+             "mental": "the mental GRM (three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis), higher = better"}[mode]
     if six:
         th, tt = tests[VL[0]], tests[VL[1]]
         fig.text(0.01, -0.005,
@@ -252,7 +258,7 @@ def main() -> int:
                  f"the slope's change t = {th['slope_x_age_t']:.1f}, {tt['slope_x_age_t']:.1f};\nmortality slope's change t = {th['mort_x_age_t']:.1f} (h), {tt['mort_x_age_t']:.1f} (theta), negative = flattens with age.",
                  fontsize=7.1, color=INK2, va="top")
     else:
-        fig.text(0.01, -0.02 if mode == "main" else -0.005,
+        fig.text(0.01, -0.02 if mode in ("main", "mental") else -0.005,
                  f"UKHLS, {measure}, ages 20-90. Cost: {what}, {'capped at the 99th percentile' if cap_ab else 'uncapped'}, waves 7-15, {len(c):,} person-waves; "
                  f"bins with at least 150 person-waves,\n95% intervals. Mortality: death before the next wave (one year), waves 1-14, {len(m):,} person-waves at risk, "
                  f"{int(m['died'].sum()):,} deaths; bins with at least 10 deaths, Wilson 95% intervals; lines are the within-band logit,\nlinear in the measure and quadratic in age, "
@@ -260,8 +266,8 @@ def main() -> int:
                  fontsize=7.1, color=INK2, va="top")
         plt.close(hidden)
     tag = ("_inpatient" if inpatient else "") + ("_capab" if cap_ab else "") + ("_uncappedc" if not cap_c else "") + ("_panels6" if six else "")
-    mtag = {"main": "", "measures": "_measures", "frailty": FRAILTY_SUFFIX, "both": "_both"}[mode]
-    to_paper = not tag and mode in ("main", "measures", "frailty")
+    mtag = {"main": "", "measures": "_measures", "frailty": FRAILTY_SUFFIX, "both": "_both", "mental": MENTAL_SUFFIX}[mode]
+    to_paper = not tag and mode in ("main", "measures", "frailty", "mental")
     out = (ROOT_DIR / "paper" / "figures" if to_paper else ARTIFACTS_DIR / "scratch") / f"fig_cost_mortality_age{tag}{mtag}.png"
     tag += mtag
     out.parent.mkdir(parents=True, exist_ok=True)
