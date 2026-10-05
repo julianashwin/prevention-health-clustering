@@ -36,7 +36,7 @@ fits; h at K = 4/5 in the multidimensional model; Bayesian expanding windows.
 
 | Item | Status |
 |---|---|
-| Predict the type from an initial, held-out health value, baseline and full clustering | Done: `fig:typeinit`, K-means / independent / AR(1)+"spike" / multidimensional; the first-two-rows and h versions follow the running fits |
+| Predict the type from an initial, held-out health value, baseline and full clustering | Done: `fig:typeinit`, reframed (5 Oct) as observables versus one health reading: education, income rank and sex add 0.08-0.10 of AUC over age, one reading of theta takes it to 0.81, and on top of the reading the observables add 0.01. K-means / independent / AR(1)+"spike" / multidimensional; the first-two-rows and h versions follow the running fits |
 | Relabel "spike" as "episodic" | Open (a global rename in the draft and the figure footers; `descriptives/` prints "spike" in about 30 places) |
 | Is the C_Hd reversal driven by the small very-ill group? | Open; the bottom-decile and worst-class composition figures exist (`fig:decomp`, `fig:multidim`) but the statement has not been made |
 | Result 2: focus on the by-type form and why the evolution of the mean matters | Open (Section 2 rewrite; see the framework todos below) |

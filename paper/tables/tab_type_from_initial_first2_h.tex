@@ -1,0 +1,17 @@
+\begin{tabular}{lrr}
+\toprule
+predictors at the first row & \multicolumn{2}{c}{K-means} \\
+\cmidrule(lr){2-3}
+ & accuracy & AUC \\
+\midrule
+majority type & 0.604 &  \\
+age(0) & 0.604 & 0.578 \\
++ education & 0.602 & 0.622 \\
++ income rank & 0.601 & 0.656 \\
++ education, income, sex & 0.609 & 0.664 \\
++ $h$(0) & 0.709 & 0.814 \\
++ $h$(0), $h$(1) & 0.750 & 0.864 \\
++ $h$(0), education, income, sex & 0.710 & 0.826 \\
+model posterior from the first row &  &  \\
+\bottomrule
+\end{tabular}

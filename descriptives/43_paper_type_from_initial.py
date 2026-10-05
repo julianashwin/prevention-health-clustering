@@ -1,4 +1,4 @@
-"""How well a person's health type can be predicted from their initial health value.
+"""What identifies a person's health type: a health reading, or education and income?
 
 The types come from fits that never saw the initial row: partial K-means on theta
 with each person's first observed row dropped (22_paper_kmeans.py --first-held,
@@ -12,12 +12,15 @@ Bayesian type is the modal class of the posterior computed from the fitted windo
 alone (for the multidimensional fit: both channels plus survival through the
 fitted window).
 
-Predictors known at the first row: age (quadratic), the observables (income
-rank, sex, education), theta at the first row, and its interaction with age; for
-the multidimensional types also the mental score at the first row.
-Multinomial logit on the modal type, people split 70/30 by a hash of pidp,
-fitted on the 70, scored on the 30: accuracy (against the majority-type rate)
-and the macro one-vs-rest AUC. For the mixtures there is also the model's own
+The question is which is more informative about the type: the observables
+(education, income rank, sex) or a reading of the health measure itself. The
+predictor sets, all known at the first row and each on top of a quadratic in
+age, are: education alone, income alone, all three observables, one health
+reading (theta at the first row, with its age interaction), two readings
+(--first2), and the reading plus the observables; for the multidimensional
+types also the mental score at the first row. Multinomial logit on the modal
+type, people split 70/30 by a hash of pidp, fitted on the 70, scored on the
+30: accuracy (against the majority-type rate) and the macro one-vs-rest AUC. For the mixtures there is also the model's own
 answer, the class posterior implied by the single first observation under the
 fitted parameters (stationary variance plus "spike" under AR(1) + "spike"), which
 needs no regression. A second panel splits the "+ theta(0) x age" accuracy by the
@@ -27,7 +30,8 @@ Modes: the default is theta with the first row held out (the main-text figure);
 --h the same on h; --first2 the fits with the first TWO rows held out (people
 with at least five rows), where the type is defined from the third row on, the
 AR(1) + "spike" fit with birth-decade shifts is a fourth typology and a set with
-both held readings shows what a second observation adds. Outputs carry the
+both held readings shows what a second observation adds. The by-age split of the
+one-reading set goes to the csv. Outputs carry the
 suffix: fig_type_from_initial{,_h,_first2,_first2_h}.png, the matching
 tab_type_from_initial*.tex and paper_type_from_initial*{,_by_age}.csv. A fit
 that has not finished is skipped with a note.
@@ -199,11 +203,14 @@ def main() -> int:
         else:
             frames["md"] = f
     obs = ["income_rank_mean", "female"] + [f"educ_{g}" for g in EDUC]
-    SETS = {"age(0)": [], "+ observables": obs, f"+ {V}(0)": ["y0"], f"+ {V}(0) x age(0)": ["y0", "y0a"],
-            f"+ {V}(0) x age(0), observables": ["y0", "y0a"] + obs}
+    educ = [f"educ_{g}" for g in EDUC]
+    HEALTH = f"+ {V}(0)"
+    SETS = {"age(0)": [], "+ education": educ, "+ income rank": ["income_rank_mean"], "+ education, income, sex": obs,
+            HEALTH: ["y0", "y0a"]}
     if KHELD == 2:   # the second held reading, a year or so later: what a second observation adds
-        SETS[f"+ {V}(0), {V}(1) x age(0)"] = ["y0", "y0a", "y1", "y1a"]
-    MD_SETS = {f"+ {V}(0), mental(0) x age(0)": ["y0", "y0a", "m0", "m0a"]}      # multidimensional types only
+        SETS[f"+ {V}(0), {V}(1)"] = ["y0", "y0a", "y1", "y1a"]
+    SETS[f"+ {V}(0), education, income, sex"] = ["y0", "y0a"] + obs
+    MD_SETS = {f"+ {V}(0), mental(0)": ["y0", "y0a", "m0", "m0a"]}      # multidimensional types only
     MODEL = "model posterior from the first row"
     rows, by_age = [], []
     for tag, lab in TYPOLOGIES:
@@ -228,7 +235,7 @@ def main() -> int:
             r = score(df, [], test, probs=df[[f"model_p{k}" for k in range(K)]].to_numpy()); probs_by_set[MODEL] = r.pop("probs")
             rows.append({"typology": tag, "label": lab, "predictors": MODEL, "n": len(df), "n_test": int(test.sum()), "majority": majority, **r})
             print(f"  {MODEL:36s} accuracy {r['accuracy']:.3f}  macro AUC {r['auc']:.3f}")
-        pred = probs_by_set[f"+ {V}(0) x age(0)"].argmax(axis=1)
+        pred = probs_by_set[HEALTH].argmax(axis=1)
         for lo, hi in AGE_BANDS:
             sel = test & df["age0"].between(lo, hi).to_numpy()
             yb = df.loc[sel, "type"].to_numpy()
@@ -253,40 +260,35 @@ def main() -> int:
             f.write(name.replace("mental", "mental $\\theta$").replace(V + "(", VL + "(").replace(" x ", " $\\times$ ") + " & " + " & ".join(cells) + " \\\\\n")
         f.write("\\bottomrule\n\\end{tabular}\n")
 
-    # ---- figure
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), gridspec_kw={"wspace": 0.3, "width_ratios": [1.25, 1]})
-    ax = axes[0]
+    # ---- figure: accuracy and macro AUC by predictor set, the observables against the health reading
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8), gridspec_kw={"wspace": 0.08}, sharey=True)
     cols = {"kmeans": INK2, "base": CLUSTER[2], "ssm": CLUSTER[0], "ssm-cohort": "#6a51a3", "md": PURPLE}
     width = 0.8 / len(have)
-    for i, (tag, lab) in enumerate(have):
-        q = t[t["typology"] == tag].set_index("predictors").reindex(sets)
-        ypos = np.arange(len(sets)) + (i - (len(have) - 1) / 2) * width
-        ax.barh(ypos, q["accuracy"].fillna(0), height=width * 0.92, color=cols[tag], label=lab)
-        ax.axvline(q["majority"].dropna().iloc[0], color=cols[tag], lw=1.0, ls="--")
-    ax.set_yticks(np.arange(len(sets))); ax.set_yticklabels([n.replace("mental", r"mental $\theta$").replace(V + "(", VL + "(").replace(" x ", r" $\times$ ") for n in sets], fontsize=8)
-    ax.invert_yaxis(); ax.set_xlim(0.3, max(0.75, t["accuracy"].max() + 0.05)); ax.grid(True, axis="x")
-    ax.set_title("(a) accuracy on the test 30%, by predictor set\n(dashed: the majority-type rate)", fontsize=9, loc="left")
-    ax.legend(fontsize=7.5, loc="upper right")
-    ax = axes[1]
-    x = np.arange(len(AGE_BANDS))
-    for tag, lab in have:
-        q = ba[ba["typology"] == tag].set_index("band").reindex([f"{lo}-{hi}" for lo, hi in AGE_BANDS])
-        ax.plot(x, q["accuracy"], marker="o", color=cols[tag], lw=1.8, label=lab)
-        ax.plot(x, q["majority"], color=cols[tag], lw=1.0, ls="--")
-    ax.set_xticks(x); ax.set_xticklabels([f"{lo}-{hi}" for lo, hi in AGE_BANDS]); ax.set_xlabel("age at the first observation")
-    ax.set_ylim(0.3, 1.0); ax.grid(True, axis="y")
-    ax.set_title(f"(b) accuracy of age(0) + {VL}(0) $\\times$ age(0), by age at the first row" + "\n(dashed: the majority-type rate in the band)", fontsize=9, loc="left")
-    ax.legend(fontsize=7.5, loc="upper left")
+    for ax, metric, title in ((axes[0], "accuracy", "(a) accuracy on the test 30%\n(dashed: the majority-type rate)"),
+                              (axes[1], "auc", "(b) macro one-vs-rest AUC on the test 30%")):
+        for i, (tag, lab) in enumerate(have):
+            q = t[t["typology"] == tag].set_index("predictors").reindex(sets)
+            ypos = np.arange(len(sets)) + (i - (len(have) - 1) / 2) * width
+            ax.barh(ypos, q[metric].fillna(0), height=width * 0.92, color=cols[tag], label=lab)
+            if metric == "accuracy":
+                ax.axvline(q["majority"].dropna().iloc[0], color=cols[tag], lw=1.0, ls="--")
+        ax.set_xlim(0.3 if metric == "accuracy" else 0.45, max(0.75, t[metric].max() + 0.05)); ax.grid(True, axis="x")
+        ax.set_title(title, fontsize=9, loc="left")
+    axes[0].set_yticks(np.arange(len(sets)))
+    axes[0].set_yticklabels([n.replace("mental", r"mental $\theta$").replace(V + "(", VL + "(") for n in sets], fontsize=8)
+    axes[0].invert_yaxis()
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, fontsize=7.5, loc="lower center", ncol=len(have), bbox_to_anchor=(0.5, -0.02), frameon=False)
     n = len(frames[have[0][0]]); n_md = len(frames["md"]) if "md" in frames else 0
     held = "first row" if KHELD == 1 else "first two rows"
     footer = (f"Health contract people with at least {MIN_ROWS} rows ({n:,}), on {V}; every typology is fitted without each person's {held} (K-means on the remaining rows; the mixtures with the {held} held out, "
              "type = modal class of the posterior from the fitted window)."
              + (f" The multidimensional fit (theta + mental GRM + mortality) is on the multidim contract's people with at least four rows ({n_md:,}), its posterior from both channels and survival through the fitted window." if n_md else "")
-             + f"\nPredictors are known at the first row: age (quadratic), the observables (income rank, sex, education), {V} at the first row and its "
-             "interaction with age; multinomial logit, people split 70/30 by a hash of pidp, fitted on the 70, scored on the 30.\n\"Model posterior\": the class posterior the fitted mixture itself implies "
+             + f"\nEvery predictor set is on top of a quadratic in age at the first row: education (three groups), income rank, the three observables together, {V} at the first row "
+             "(with its age interaction), and the reading plus the observables; multinomial logit, people split 70/30 by a hash of pidp, fitted on the 70, scored on the 30.\n\"Model posterior\": the class posterior the fitted mixture itself implies "
              "from the single first observation (class prior times the marginal density at that age; stationary variance plus \"spike\" under AR(1) + \"spike\"), no regression. "
              "AUC is the macro one-vs-rest AUC over the three types." + (" The multidimensional model's posterior uses both first-row scores." if n_md else ""))
-    fig.text(0.01, -0.03, "\n".join(textwrap.wrap(footer.replace("\n", " "), 200)), fontsize=7.2, color=INK2, va="top")
+    fig.text(0.01, -0.09, "\n".join(textwrap.wrap(footer.replace("\n", " "), 200)), fontsize=7.2, color=INK2, va="top")
     fig.savefig(FIG / f"fig_type_from_initial{SFX}.png", bbox_inches="tight")
     print(f"wrote fig_type_from_initial{SFX}.png and tab_type_from_initial{SFX}.tex ({', '.join(lab for _, lab in have)})")
     return 0
