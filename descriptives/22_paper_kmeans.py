@@ -54,10 +54,12 @@ BACKWARD = [(60, 90), (50, 90), (40, 90), (30, 90)]
 VARIANTS = ["h", "theta"]
 EXTRA = ["predcost"]             # lifecycle run only
 FRAILTY = ["frailty", "logfrailty"]   # comparison measures, --frailty only
-# --first-held: theta with each person's first row (by age) dropped, people with at least four rows, the
-# rows of the first-row-held-out Bayesian fits (clustering/runs/health_firstheld_queue.py); stored as
-# variant "theta_firstheld" for descriptives/43_paper_type_from_initial.py
-FIRSTHELD_MIN_ROWS = 4
+# --first-held [k]: theta and h with each person's first k rows (by age) dropped (k = 1 or 2), people
+# with at least k + 3 rows, the rows of the first-rows-held-out Bayesian fits
+# (clustering/runs/health_firstheld_queue.py, frailty_firstheld_queue.py); stored as variants
+# "theta_firstheld", "h_firstheld", "theta_first2held", "h_first2held" for 43_paper_type_from_initial.py
+FIRSTHELD = {"theta_firstheld": ("theta", 1), "h_firstheld": ("h", 1),
+             "theta_first2held": ("theta", 2), "h_first2held": ("h", 2)}
 # --mental: the mental GRM alone, on the multidim contract's rows (the rows the Bayesian mental fits use)
 MENTAL_CONTRACT = PROCESSED_DATA_DIR / "contracts" / "multidim_health_20_89_minobs3_v1"
 WORSE_HIGH = {"predcost", "frailty", "logfrailty"}
@@ -70,11 +72,12 @@ def panel(which: str = "health") -> pd.DataFrame:
     if which not in _panel:
         if which == "mental":
             p = pd.read_csv(MENTAL_CONTRACT / "long.csv", usecols=["pidp", "age", "theta_ment_nodepr"]).rename(columns={"theta_ment_nodepr": "mental"})
-        elif which == "theta_firstheld":
+        elif which in FIRSTHELD:
+            v, k = FIRSTHELD[which]
             p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
-                            usecols=["pidp", "age", "theta"]).sort_values(["pidp", "age"])
+                            usecols=["pidp", "age", v]).sort_values(["pidp", "age"])
             n = p.groupby("pidp")["age"].transform("size")
-            p = p[(n >= FIRSTHELD_MIN_ROWS) & (p.groupby("pidp").cumcount() > 0)].rename(columns={"theta": "theta_firstheld"})
+            p = p[(n >= k + 3) & (p.groupby("pidp").cumcount() >= k)].rename(columns={v: which})
         else:
             p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
                             usecols=["pidp", "age", *VARIANTS, *FRAILTY])
@@ -85,7 +88,7 @@ def panel(which: str = "health") -> pd.DataFrame:
 def run(task: tuple[str, int, int]):
     variant, lo, hi = task
     t0 = time.time()
-    p = load_predicted_cost_rows("h") if variant == "predcost" else panel(variant if variant in ("mental", "theta_firstheld") else "health")
+    p = load_predicted_cost_rows("h") if variant == "predcost" else panel(variant if variant == "mental" or variant in FIRSTHELD else "health")
     p = p[p["age"].between(lo, hi)]
     w = p.pivot_table(index="pidp", columns="age", values=variant, aggfunc="mean")
     w = w.reindex(columns=range(lo, hi + 1))
@@ -120,7 +123,10 @@ def main() -> int:
     elif "--mental" in sys.argv:
         tasks = [("mental", *FULL)]
     elif "--first-held" in sys.argv:
-        tasks = [("theta_firstheld", *FULL)]
+        # --first-held [k] [--variants theta,h]: default both measures, k = 1
+        nxt = sys.argv[sys.argv.index("--first-held") + 1:]
+        k = int(nxt[0]) if nxt and nxt[0].isdigit() else 1
+        tasks = [(f"{v}_first{'' if k == 1 else k}held", *FULL) for v in ("theta", "h") if only is None or v in only]
     elif "--windows-only" not in sys.argv:
         tasks += [(v, *FULL) for v in VARIANTS + EXTRA if only is None or v in only]
     if "--full-only" not in sys.argv and not any(f in sys.argv for f in ("--frailty", "--mental", "--first-held")):

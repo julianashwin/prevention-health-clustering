@@ -308,7 +308,10 @@ def bayes_fit(fit_dir, v: str, Kc: int = K, chains=None, contract: Path | None =
     fs, fe = np.asarray(d["fit_start"]), np.asarray(d["fit_end"])
     contract = Path(contract) if contract is not None else CONTRACT; col = col or v
     long = pd.read_csv(contract / "long.csv").sort_values(["pidp", "age"]).reset_index(drop=True)
-    mom = json.load(open(contract / "manifest.json"))["metric_moments"][col]
+    moments = json.load(open(contract / "manifest.json"))["metric_moments"]
+    # the frailty indices ride on the contract as auxiliary columns, not metrics: the payload
+    # standardised them on the column itself (runner/fit.py), so do the same here
+    mom = moments.get(col) or {"mean": float(long[col].mean()), "sd": float(long[col].std(ddof=1))}
     z = (long[col].to_numpy() - mom["mean"]) / mom["sd"]
     assert len(long) == len(Y) and np.abs(z - Y).max() < 1e-6, "payload rows do not match the contract"
     n_coh = d.get("N_cohort", 1); row_shift = np.zeros(len(Y)); cohort = {}
@@ -341,6 +344,12 @@ def bayes_fit(fit_dir, v: str, Kc: int = K, chains=None, contract: Path | None =
         extra = {"rho": np.zeros(Kc), "sigma_meas": 0.0}
     un = np.log(theta)[None, :] + per
     w = np.exp(un - un.max(axis=1, keepdims=True)); w /= w.sum(axis=1, keepdims=True)
+    if not HEALTHIER_HIGH.get(col, True):
+        # the ordered anchor puts the LOWEST intercept first, which on a frailer-is-higher measure is
+        # the healthiest class; relabel so class 1 is worst health, as on theta and h
+        order = np.arange(Kc)[::-1]
+        theta, coef, w = theta[order], coef[order], w[:, order]
+        extra["rho"] = extra["rho"][order]
     pids = long.groupby("pidp", sort=False)["pidp"].first().to_numpy()
     cols = [f"class{k + 1}" for k in range(Kc)]
     post = pd.DataFrame(w, columns=cols).assign(pidp=pids)

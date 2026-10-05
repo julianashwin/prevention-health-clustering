@@ -23,11 +23,16 @@ fitted parameters (stationary variance plus "spike" under AR(1) + "spike"), whic
 needs no regression. A second panel splits the "+ theta(0) x age" accuracy by the
 age at the first observation.
 
-Outputs: paper/figures/fig_type_from_initial.png, paper/tables/tab_type_from_initial.tex,
-artifacts/descriptives/paper_type_from_initial{,_by_age}.csv. A fit that has not
-finished is skipped with a note.
+Modes: the default is theta with the first row held out (the main-text figure);
+--h the same on h; --first2 the fits with the first TWO rows held out (people
+with at least five rows), where the type is defined from the third row on, the
+AR(1) + "spike" fit with birth-decade shifts is a fourth typology and a set with
+both held readings shows what a second observation adds. Outputs carry the
+suffix: fig_type_from_initial{,_h,_first2,_first2_h}.png, the matching
+tab_type_from_initial*.tex and paper_type_from_initial*{,_by_age}.csv. A fit
+that has not finished is skipped with a note.
 
-    PYTHONPATH=src .venv/bin/python descriptives/43_paper_type_from_initial.py
+    PYTHONPATH=src .venv/bin/python descriptives/43_paper_type_from_initial.py [--h] [--first2]
 """
 
 from __future__ import annotations
@@ -52,13 +57,21 @@ from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DI
 
 M33 = importlib.import_module("33_paper_prediction")
 K = 3
-V = "theta"
-MIN_ROWS = 4
+# --h: the exercise on h; --first2: the fits with the first TWO rows held out (people with at
+# least five rows), where the type is defined from the third row on and the cohort-shift
+# twin (health-{v}-ssm-cohort-first2ho) is a fourth typology
+V = "h" if "--h" in sys.argv else "theta"
+KHELD = 2 if "--first2" in sys.argv else 1
+MIN_ROWS = KHELD + 3
+HO = "first2ho" if KHELD == 2 else "firstho"
+SFX = ("_first2" if KHELD == 2 else "") + ("_h" if V == "h" else "")
+VL = {"theta": r"$\theta$", "h": "$h$"}[V]
 FH = ARTIFACTS_DIR / "health-firstheld"
-MD = ARTIFACTS_DIR / "multidim-health" / "theta-ssm-mort-firstho"
+MD = ARTIFACTS_DIR / "multidim-health" / "theta-ssm-mort-firstho"      # theta, first row only
 EDUC = ["GCSE", "A-level", "degree or higher"]
 AGE_BANDS = [(20, 34), (35, 49), (50, 64), (65, 90)]
-TYPOLOGIES = [("kmeans", "K-means"), ("base", "independent residuals"), ("ssm", 'AR(1) + "spike"'), ("md", "multidimensional")]
+TYPOLOGIES = [("kmeans", "K-means"), ("base", "independent residuals"), ("ssm", 'AR(1) + "spike"'),
+              ("ssm-cohort", 'AR(1) + "spike", cohort shifts'), ("md", "multidimensional")]
 
 
 def first_rows(contract=CONTRACT, extra: tuple[str, ...] = ()) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -67,6 +80,9 @@ def first_rows(contract=CONTRACT, extra: tuple[str, ...] = ()) -> tuple[pd.DataF
     n = long.groupby("pidp")["age"].transform("size")
     sub = long[n >= MIN_ROWS].reset_index(drop=True)
     first = sub.groupby("pidp", as_index=False).first()[["pidp", "age", V, *extra]].rename(columns={"age": "age0", V: "y0"})
+    if KHELD == 2:   # the second held row, for the "+ v(0), v(1)" comparison
+        second = sub.groupby("pidp", as_index=False).nth(1)[["pidp", "age", V]].rename(columns={"age": "age1", V: "y1"})
+        first = first.merge(second, on="pidp")
     panel = pd.read_csv(PROCESSED_DATA_DIR / "ukhls_indresp_processed.csv", usecols=["pidp", "sex"])
     per = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "observables_person.parquet").set_index("pidp")
     first = first.join(per[["educ_group", "income_rank_mean"]], on="pidp")
@@ -79,14 +95,21 @@ def first_rows(contract=CONTRACT, extra: tuple[str, ...] = ()) -> tuple[pd.DataF
 
 def bayes_types(tag: str, sub: pd.DataFrame, first: pd.DataFrame):
     """Modal class from the fitted window, and the class posterior implied by the first
-    row alone, for the first-row-held-out fit ``tag`` (base or ssm)."""
-    fit_dir = FH / f"health-{V}-{tag}-firstho"
+    row alone, for the first-rows-held-out fit ``tag`` (base, ssm or ssm-cohort). With
+    birth-decade shifts in the fit every score is netted of its decade shift first, as
+    Stan computed the likelihood."""
+    fit_dir = FH / f"health-{V}-{tag}-{HO}"
     if not (fit_dir / "run_summary.json").exists():
         return None
     d = json.load(open(fit_dir / "stan_data.json")); p = json.load(open(fit_dir / "run_summary.json"))["params"]
     assert len(sub) == d["N_obs"], f"{fit_dir.name}: rows {len(sub):,} vs payload {d['N_obs']:,}"
     m, s = sub[V].mean(), sub[V].std(ddof=1)
     Y = np.asarray(d["y"][0]); assert np.abs((sub[V].to_numpy() - m) / s - Y).max() < 1e-6, "rows do not match the payload"
+    n_coh = d.get("N_cohort", 1)
+    if n_coh > 1:   # the single-channel run_summary carries no cohort terms: read them from the chains
+        ce = pd.concat([pd.read_csv(f, comment="#", usecols=[f"cohort_effect.1.{j}" for j in range(1, n_coh + 1)])
+                        for f in sorted(fit_dir.glob("chains/*_[0-9].csv"))]).mean().to_numpy()
+        Y = Y - ce[np.asarray(d["cohort_id"]) - 1]
     theta = np.array([p[f"theta[{k}]"]["mean"] for k in range(1, K + 1)])
     coef = np.array([[p[f"coef[1,{k},{j}]"]["mean"] for j in (1, 2, 3)] for k in range(1, K + 1)])
     sigma = p["sigma[1,1]"]["mean"]
@@ -94,8 +117,8 @@ def bayes_types(tag: str, sub: pd.DataFrame, first: pd.DataFrame):
     rho = np.array([[p[f"rho[{k}]"]["mean"]] for k in range(1, K + 1)]) if ar == 2 else np.zeros((K, 1))
     sm = [p["sigma_meas[1]"]["mean"]] if ar == 2 else [0.0]
     w, _ = M33.posterior_and_forecast(d, [Y], [coef], [sigma], sm, rho, theta)        # fitted window only
-    fs, hs = np.asarray(d["fit_start"]), np.asarray(d["hold_start"])
-    assert (hs + 1 == fs).all(), "the held row is not the row before the fitted window"
+    fs, hs, he = (np.asarray(d[k]) for k in ("fit_start", "hold_start", "hold_end"))
+    assert (he + 1 == fs).all() and (he - hs + 1 == KHELD).all(), "the held rows are not the rows before the fitted window"
     pids = sub.groupby("pidp", sort=False)["pidp"].first().to_numpy()
     # the model's own answer from the single first row: class prior times the marginal
     # density of y0 at age0, stationary variance (plus "spike") under AR(1) + "spike"
@@ -160,24 +183,27 @@ def main() -> int:
     apply_style()
     sub, first = first_rows()
     frames = {}
-    L = load_labels("theta_firstheld")
+    L = load_labels(f"{V}_first{'2' if KHELD == 2 else ''}held")
     frames["kmeans"] = first.merge(pd.DataFrame({"pidp": L.index, "type": L.to_numpy()}), on="pidp")
-    for tag in ("base", "ssm"):
+    for tag in ("base", "ssm") + (("ssm-cohort",) if KHELD == 2 else ()):
         f = bayes_types(tag, sub, first)
         if f is None:
-            print(f"{tag}: first-row-held-out fit not finished, skipped")
+            print(f"{tag}: first-rows-held-out fit not finished, skipped")
         else:
             frames[tag] = f
-    sub_md, first_md = first_rows(MULTIDIM_CONTRACT, extra=(MENTAL_COL,))
-    f = multidim_types(sub_md, first_md.rename(columns={MENTAL_COL: "m0"}))
-    if f is None:
-        print("md: first-row-held-out multidimensional fit not finished, skipped")
-    else:
-        frames["md"] = f
+    if V == "theta" and KHELD == 1:
+        sub_md, first_md = first_rows(MULTIDIM_CONTRACT, extra=(MENTAL_COL,))
+        f = multidim_types(sub_md, first_md.rename(columns={MENTAL_COL: "m0"}))
+        if f is None:
+            print("md: first-row-held-out multidimensional fit not finished, skipped")
+        else:
+            frames["md"] = f
     obs = ["income_rank_mean", "female"] + [f"educ_{g}" for g in EDUC]
-    SETS = {"age(0)": [], "+ observables": obs, "+ theta(0)": ["y0"], "+ theta(0) x age(0)": ["y0", "y0a"],
-            "+ theta(0) x age(0), observables": ["y0", "y0a"] + obs}
-    MD_SETS = {"+ theta(0), mental(0) x age(0)": ["y0", "y0a", "m0", "m0a"]}      # multidimensional types only
+    SETS = {"age(0)": [], "+ observables": obs, f"+ {V}(0)": ["y0"], f"+ {V}(0) x age(0)": ["y0", "y0a"],
+            f"+ {V}(0) x age(0), observables": ["y0", "y0a"] + obs}
+    if KHELD == 2:   # the second held reading, a year or so later: what a second observation adds
+        SETS[f"+ {V}(0), {V}(1) x age(0)"] = ["y0", "y0a", "y1", "y1a"]
+    MD_SETS = {f"+ {V}(0), mental(0) x age(0)": ["y0", "y0a", "m0", "m0a"]}      # multidimensional types only
     MODEL = "model posterior from the first row"
     rows, by_age = [], []
     for tag, lab in TYPOLOGIES:
@@ -185,6 +211,8 @@ def main() -> int:
             continue
         df = frames[tag].dropna(subset=["y0", "income_rank_mean"]).reset_index(drop=True)
         df["y0a"] = df["y0"] * df["a0"]
+        if "y1" in df:
+            df["y1a"] = df["y1"] * df["a0"]
         if "m0" in df:
             df["m0a"] = df["m0"] * df["a0"]
         test = ((pd.util.hash_pandas_object(df["pidp"], index=False) % 10) >= 7).to_numpy()
@@ -200,19 +228,19 @@ def main() -> int:
             r = score(df, [], test, probs=df[[f"model_p{k}" for k in range(K)]].to_numpy()); probs_by_set[MODEL] = r.pop("probs")
             rows.append({"typology": tag, "label": lab, "predictors": MODEL, "n": len(df), "n_test": int(test.sum()), "majority": majority, **r})
             print(f"  {MODEL:36s} accuracy {r['accuracy']:.3f}  macro AUC {r['auc']:.3f}")
-        pred = probs_by_set["+ theta(0) x age(0)"].argmax(axis=1)
+        pred = probs_by_set[f"+ {V}(0) x age(0)"].argmax(axis=1)
         for lo, hi in AGE_BANDS:
             sel = test & df["age0"].between(lo, hi).to_numpy()
             yb = df.loc[sel, "type"].to_numpy()
             by_age.append({"typology": tag, "label": lab, "band": f"{lo}-{hi}", "n_test": int(sel.sum()),
                            "accuracy": float((pred[sel] == yb).mean()), "majority": float(pd.Series(yb).value_counts(normalize=True).max())})
-    t = pd.DataFrame(rows); t.to_csv(DESC / "paper_type_from_initial.csv", index=False)
-    ba = pd.DataFrame(by_age); ba.to_csv(DESC / "paper_type_from_initial_by_age.csv", index=False)
+    t = pd.DataFrame(rows); t.to_csv(DESC / f"paper_type_from_initial{SFX}.csv", index=False)
+    ba = pd.DataFrame(by_age); ba.to_csv(DESC / f"paper_type_from_initial_by_age{SFX}.csv", index=False)
     have = [(tag, lab) for tag, lab in TYPOLOGIES if tag in frames]
 
     # ---- table
-    sets = list(SETS) + list(MD_SETS) + [MODEL]
-    with open(TAB / "tab_type_from_initial.tex", "w") as f:
+    sets = list(SETS) + (list(MD_SETS) if "md" in frames else []) + [MODEL]
+    with open(TAB / f"tab_type_from_initial{SFX}.tex", "w") as f:
         f.write("\\begin{tabular}{l" + "rr" * len(have) + "}\n\\toprule\n")
         f.write("predictors at the first row & " + " & ".join(f"\\multicolumn{{2}}{{c}}{{{lab}}}" for _, lab in have) + " \\\\\n")
         f.write(" ".join(f"\\cmidrule(lr){{{2 + 2 * i}-{3 + 2 * i}}}" for i in range(len(have))) + "\n & " + " & ".join(["accuracy & AUC"] * len(have)) + " \\\\\n\\midrule\n")
@@ -222,20 +250,20 @@ def main() -> int:
             for tag, _ in have:
                 q = t[(t["typology"] == tag) & (t["predictors"] == name)]
                 cells.append(f"{q['accuracy'].iloc[0]:.3f} & {q['auc'].iloc[0]:.3f}" if len(q) else " & ")
-            f.write(name.replace("theta", "$\\theta$").replace("mental", "mental $\\theta$").replace(" x ", " $\\times$ ") + " & " + " & ".join(cells) + " \\\\\n")
+            f.write(name.replace("mental", "mental $\\theta$").replace(V + "(", VL + "(").replace(" x ", " $\\times$ ") + " & " + " & ".join(cells) + " \\\\\n")
         f.write("\\bottomrule\n\\end{tabular}\n")
 
     # ---- figure
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.6), gridspec_kw={"wspace": 0.3, "width_ratios": [1.25, 1]})
     ax = axes[0]
-    cols = {"kmeans": INK2, "base": CLUSTER[2], "ssm": CLUSTER[0], "md": PURPLE}
+    cols = {"kmeans": INK2, "base": CLUSTER[2], "ssm": CLUSTER[0], "ssm-cohort": "#6a51a3", "md": PURPLE}
     width = 0.8 / len(have)
     for i, (tag, lab) in enumerate(have):
         q = t[t["typology"] == tag].set_index("predictors").reindex(sets)
         ypos = np.arange(len(sets)) + (i - (len(have) - 1) / 2) * width
         ax.barh(ypos, q["accuracy"].fillna(0), height=width * 0.92, color=cols[tag], label=lab)
         ax.axvline(q["majority"].dropna().iloc[0], color=cols[tag], lw=1.0, ls="--")
-    ax.set_yticks(np.arange(len(sets))); ax.set_yticklabels([n.replace("theta", r"$\theta$").replace("mental", r"mental $\theta$").replace(" x ", r" $\times$ ") for n in sets], fontsize=8)
+    ax.set_yticks(np.arange(len(sets))); ax.set_yticklabels([n.replace("mental", r"mental $\theta$").replace(V + "(", VL + "(").replace(" x ", r" $\times$ ") for n in sets], fontsize=8)
     ax.invert_yaxis(); ax.set_xlim(0.3, max(0.75, t["accuracy"].max() + 0.05)); ax.grid(True, axis="x")
     ax.set_title("(a) accuracy on the test 30%, by predictor set\n(dashed: the majority-type rate)", fontsize=9, loc="left")
     ax.legend(fontsize=7.5, loc="upper right")
@@ -247,19 +275,20 @@ def main() -> int:
         ax.plot(x, q["majority"], color=cols[tag], lw=1.0, ls="--")
     ax.set_xticks(x); ax.set_xticklabels([f"{lo}-{hi}" for lo, hi in AGE_BANDS]); ax.set_xlabel("age at the first observation")
     ax.set_ylim(0.3, 1.0); ax.grid(True, axis="y")
-    ax.set_title(r"(b) accuracy of age(0) + $\theta$(0) $\times$ age(0), by age at the first row" + "\n(dashed: the majority-type rate in the band)", fontsize=9, loc="left")
+    ax.set_title(f"(b) accuracy of age(0) + {VL}(0) $\\times$ age(0), by age at the first row" + "\n(dashed: the majority-type rate in the band)", fontsize=9, loc="left")
     ax.legend(fontsize=7.5, loc="upper left")
     n = len(frames[have[0][0]]); n_md = len(frames["md"]) if "md" in frames else 0
-    footer = (f"Health contract people with at least four rows ({n:,}); every typology is fitted without each person's first row (K-means on the remaining rows; the mixtures with the first row held out, "
+    held = "first row" if KHELD == 1 else "first two rows"
+    footer = (f"Health contract people with at least {MIN_ROWS} rows ({n:,}), on {V}; every typology is fitted without each person's {held} (K-means on the remaining rows; the mixtures with the {held} held out, "
              "type = modal class of the posterior from the fitted window)."
              + (f" The multidimensional fit (theta + mental GRM + mortality) is on the multidim contract's people with at least four rows ({n_md:,}), its posterior from both channels and survival through the fitted window." if n_md else "")
-             + "\nPredictors are known at the first row: age (quadratic), the observables (income rank, sex, education), theta at the first row and its "
+             + f"\nPredictors are known at the first row: age (quadratic), the observables (income rank, sex, education), {V} at the first row and its "
              "interaction with age; multinomial logit, people split 70/30 by a hash of pidp, fitted on the 70, scored on the 30.\n\"Model posterior\": the class posterior the fitted mixture itself implies "
              "from the single first observation (class prior times the marginal density at that age; stationary variance plus \"spike\" under AR(1) + \"spike\"), no regression. "
              "AUC is the macro one-vs-rest AUC over the three types." + (" The multidimensional model's posterior uses both first-row scores." if n_md else ""))
     fig.text(0.01, -0.03, "\n".join(textwrap.wrap(footer.replace("\n", " "), 200)), fontsize=7.2, color=INK2, va="top")
-    fig.savefig(FIG / "fig_type_from_initial.png", bbox_inches="tight")
-    print(f"wrote fig_type_from_initial.png and tab_type_from_initial.tex ({', '.join(lab for _, lab in have)})")
+    fig.savefig(FIG / f"fig_type_from_initial{SFX}.png", bbox_inches="tight")
+    print(f"wrote fig_type_from_initial{SFX}.png and tab_type_from_initial{SFX}.tex ({', '.join(lab for _, lab in have)})")
     return 0
 
 

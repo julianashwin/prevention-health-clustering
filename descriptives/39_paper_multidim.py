@@ -57,6 +57,12 @@ FITS = [
 # classes; class paths are drawn at the 1950s decade and the likelihood nets the shifts out of the scores.
 FITS_COHORT = [("theta-ssm-mort-cohort", "theta", 'AR(1) + "spike", cohort shifts', None)]
 COHORT_REF = 1950
+# --k: the theta AR(1) + "spike" fit at K = 3, 4 and 5 (clustering/runs/multidim_health_k45_queue.py), one row each
+FITS_K = [("theta-ssm-mort", "theta", 'AR(1) + "spike", K = 3', None, 3),
+          ("theta-ssm-mort-k4", "theta", 'AR(1) + "spike", K = 4', None, 4),
+          ("theta-ssm-mort-k5", "theta", 'AR(1) + "spike", K = 5', None, 5)]
+PALETTE = {3: CLUSTER, 4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
+           5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}     # worst -> best, as 36_paper_trajectories.py
 # h-ssm-mort: chains 1-3 agree to three decimals; chain 4 sits in the mode with the
 # class 2 and 3 intercepts pressed together on the ordering constraint, about 2,950
 # log-posterior units lower, and is dropped.
@@ -82,12 +88,12 @@ def chain_means(fit_dir: Path, chains) -> tuple[dict, float, list]:
     return means, worst, [float(d["lp__"].mean()) for d in dfs]
 
 
-def gompertz_person_lp(d: dict, log_b, slope, makeham) -> np.ndarray:
+def gompertz_person_lp(d: dict, log_b, slope, makeham, kc: int = K) -> np.ndarray:
     age = np.asarray(d["mort_age"], float); gap = np.asarray(d["mort_gap"], float)
     obs = np.asarray(d["mort_obs"]) == 1; y = np.asarray(d["mort_y"]) == 1
     fs, fe = np.asarray(d["fit_start"]), np.asarray(d["full_end"])
-    out = np.zeros((len(fs), K))
-    for k in range(K):
+    out = np.zeros((len(fs), kc))
+    for k in range(kc):
         H = makeham * gap + np.exp(log_b[k] - np.log(slope[k]) + slope[k] * age) * np.expm1(slope[k] * gap)
         ll = np.where(y, np.log(-np.expm1(-H)), -H) * obs
         person = np.repeat(np.arange(len(fs)), fe - fs + 1)
@@ -95,20 +101,20 @@ def gompertz_person_lp(d: dict, log_b, slope, makeham) -> np.ndarray:
     return out
 
 
-def load_fit(tag: str, v: str, chains):
+def load_fit(tag: str, v: str, chains, kc: int = K):
     fit_dir = MD / tag
     d = json.load(open(fit_dir / "stan_data.json"))
     summ = json.load(open(fit_dir / "run_summary.json"))
     m, rhat, lps = chain_means(fit_dir, chains)
     mom = summ["channel_moments"]; ch = summ["channels"]
-    theta = np.array([m[f"theta.{k}"] for k in range(1, K + 1)])
-    coef = np.array([[[m[f"coef.{c}.{k}.{p}"] for p in (1, 2, 3)] for k in range(1, K + 1)] for c in (1, 2)])
+    theta = np.array([m[f"theta.{k}"] for k in range(1, kc + 1)])
+    coef = np.array([[[m[f"coef.{c}.{k}.{p}"] for p in (1, 2, 3)] for k in range(1, kc + 1)] for c in (1, 2)])
     sigma = np.array([m[f"sigma.1.{c}"] for c in (1, 2)])
     ar = d["ar_mode"]
-    rho = np.array([[m[f"rho.{k}.{c}"] for c in (1, 2)] for k in range(1, K + 1)]) if ar else np.zeros((K, 2))
+    rho = np.array([[m[f"rho.{k}.{c}"] for c in (1, 2)] for k in range(1, kc + 1)]) if ar else np.zeros((kc, 2))
     smeas = np.array([m[f"sigma_meas.{c}"] for c in (1, 2)]) if ar == 2 else np.zeros(2)
-    log_b = np.array([m[f"log_b.{k}"] for k in range(1, K + 1)])
-    slope = np.array([m[f"gomp_slope.{k}"] for k in range(1, K + 1)])
+    log_b = np.array([m[f"log_b.{k}"] for k in range(1, kc + 1)])
+    slope = np.array([m[f"gomp_slope.{k}"] for k in range(1, kc + 1)])
     makeham = m["makeham.1"]
     X = np.asarray(d["X"]); Y = np.asarray(d["y"])
     # cohort shifts: net them out of the scores so the class likelihood is as Stan computes it,
@@ -122,7 +128,7 @@ def load_fit(tag: str, v: str, chains):
         ref_shift = ce[:, summ["cohort_decades"].index(COHORT_REF)]
     fs, fe = np.asarray(d["fit_start"]), np.asarray(d["fit_end"])
     person = np.repeat(np.arange(len(fs)), fe - fs + 1)
-    per = np.zeros((len(fs), K))
+    per = np.zeros((len(fs), kc))
     for c in range(2):
         if ar == 2:
             per += kalman_person_lp(Y[c], X, coef[c], sigma[c], smeas[c], rho[:, c], np.asarray(d["age_gap"], float), fs, fe)
@@ -130,7 +136,7 @@ def load_fit(tag: str, v: str, chains):
             mu = X @ coef[c].T
             lp = -0.5 * np.log(2 * np.pi) - np.log(sigma[c]) - 0.5 * ((Y[c][:, None] - mu) / sigma[c]) ** 2
             np.add.at(per, person, lp)
-    per += gompertz_person_lp(d, log_b, slope, makeham)
+    per += gompertz_person_lp(d, log_b, slope, makeham, kc)
     un = np.log(theta)[None, :] + per
     w = np.exp(un - un.max(axis=1, keepdims=True)); w /= w.sum(axis=1, keepdims=True)
     long = pd.read_csv(CONTRACT / "long.csv").sort_values(["pidp", "age"]).reset_index(drop=True)
@@ -138,7 +144,7 @@ def load_fit(tag: str, v: str, chains):
     z = (long[ch[0]].to_numpy() - mom[ch[0]]["mean"]) / mom[ch[0]]["sd"]
     assert np.abs(z - Y_raw[0]).max() < 1e-6, "payload rows do not match the contract"
     pids = long.groupby("pidp", sort=False)["pidp"].first().to_numpy()
-    cols = [f"class{k + 1}" for k in range(K)]
+    cols = [f"class{k + 1}" for k in range(kc)]
     post = pd.DataFrame(w, columns=cols).assign(pidp=pids)
     adj = [(ce[c, cid] - ref_shift[c]) * mom[ch[c]]["sd"] if n_coh > 1 else 0.0 for c in range(2)]
     rows = pd.DataFrame(w[person], columns=cols).assign(age=long["age"].to_numpy(), y0=long[ch[0]].to_numpy() - adj[0],
@@ -161,10 +167,10 @@ def load_fit(tag: str, v: str, chains):
             rec.append(((lo + hi) / 2, ev / py if py >= MIN_PERSON_YEARS else np.nan))
         crude[c] = rec
     paths = [np.vstack([mom[ch[c]]["mean"] + mom[ch[c]]["sd"] * (b[0] + ref_shift[c] + b[1] * A + b[2] * A ** 2) for b in coef[c]]) for c in range(2)]
-    hazard = np.vstack([makeham + np.exp(log_b[k] + slope[k] * (AGES - 55)) for k in range(K)])
+    hazard = np.vstack([makeham + np.exp(log_b[k] + slope[k] * (AGES - 55)) for k in range(kc)])
     sig_share = np.array([[sigma[c] ** 2 / (1 - rho[k, c] ** 2) / (sigma[c] ** 2 / (1 - rho[k, c] ** 2) + smeas[c] ** 2)
-                           for c in range(2)] for k in range(K)]) if ar == 2 else np.full((K, 2), np.nan)
-    return {"tag": tag, "v": v, "ar": ar, "share": theta, "rho": rho, "sigma": sigma, "sigma_meas": smeas, "signal": sig_share,
+                           for c in range(2)] for k in range(kc)]) if ar == 2 else np.full((kc, 2), np.nan)
+    return {"tag": tag, "v": v, "ar": ar, "K": kc, "share": theta, "rho": rho, "sigma": sigma, "sigma_meas": smeas, "signal": sig_share,
             "log_b": log_b, "slope": slope, "makeham": makeham, "paths": paths, "hazard": hazard, "post": post,
             "cohort_shift": ce, "cohort_decades": summ.get("cohort_decades", []),
             "comp": comp, "observed": observed, "crude": crude, "rhat": rhat, "lps": lps, "chains": chains,
@@ -172,13 +178,13 @@ def load_fit(tag: str, v: str, chains):
 
 
 def agreement(fit) -> dict:
-    """Agreement of the physical typology with the single-channel K = 3 fit on the same measure."""
+    """Agreement of the physical typology with the single-channel K = 3 fit on the same measure (K = 3 fits only)."""
     tag = "ssm" if fit["ar"] == 2 else "base"
     f = DESC / f"paper_bayes_{tag}_posteriors.parquet"
-    if not f.exists():
+    if not f.exists() or fit["K"] != K:
         return {}
     uni = pd.read_parquet(f); uni = uni[uni["variant"] == fit["v"]]
-    cols = [f"class{k + 1}" for k in range(K)]
+    cols = [f"class{k + 1}" for k in range(fit["K"])]
     m = fit["post"].merge(uni[["pidp"] + cols], on="pidp", suffixes=("", "_uni"))
     a = m[cols].to_numpy().argmax(1); b = m[[c + "_uni" for c in cols]].to_numpy().argmax(1)
     return {"ari_vs_univariate": adjusted_rand_score(a, b), "same_class": float((a == b).mean()), "n_compared": len(m)}
@@ -189,15 +195,21 @@ def main() -> int:
     # the paper's figure is theta alone (AR(1) + "spike", then independent residuals); --h the appendix version
     V_ONLY = "h" if "--h" in sys.argv else "theta"
     COHORT = "--cohort" in sys.argv
-    FITS_V = FITS_COHORT if COHORT else [f for f in FITS if f[1] == V_ONLY]
-    fits = [load_fit(tag, v, ch) for tag, v, _, ch in FITS_V]
+    KMODE = "--k" in sys.argv
+    if KMODE:
+        FITS_V = [f[:4] for f in FITS_K if (MD / f[0] / "run_summary.json").exists()]
+        fits = [load_fit(tag, v, ch, kc) for tag, v, _, ch, kc in FITS_K if (MD / tag / "run_summary.json").exists()]
+    else:
+        FITS_V = FITS_COHORT if COHORT else [f for f in FITS if f[1] == V_ONLY]
+        fits = [load_fit(tag, v, ch) for tag, v, _, ch in FITS_V]
     fig, axes = plt.subplots(len(FITS_V), 4, figsize=(15, 3.3 * len(FITS_V)), squeeze=False,
                              gridspec_kw={"wspace": 0.28, "hspace": 0.35, "width_ratios": [1, 1, 1, 0.8]})
     rows = []
     for r, ((tag, v, spec, _), f) in enumerate(zip(FITS_V, fits)):
+        Kc = f["K"]; CLUSTER = PALETTE[Kc]
         for c in range(2):
             ax = axes[r, c]
-            for k in range(K):
+            for k in range(Kc):
                 lab = f"{k + 1}: {f['share'][k]:.0%}" + (f", $\\rho$ {f['rho'][k, c]:.2f}" if f["ar"] else "")
                 ax.plot(AGES, f["paths"][c][k], color=CLUSTER[k], lw=1.0 + 3.5 * f["share"][k], label=lab)
                 obs = f["observed"][c][f"class{k + 1}"]
@@ -208,7 +220,7 @@ def main() -> int:
                 ax.set_title(["physical channel", "mental channel"][c], fontsize=10, loc="left")
             ax.set_ylabel(f"{LABEL[v]}, {spec}" if c == 0 else r"mental $\theta$", fontsize=9)
         ax = axes[r, 2]
-        for k in range(K):
+        for k in range(Kc):
             ax.plot(AGES, f["hazard"][k], color=CLUSTER[k], lw=1.0 + 3.5 * f["share"][k],
                     label=f"{k + 1}: slope {f['slope'][k]:.3f}")
             xs, ys = zip(*f["crude"][f"class{k + 1}"])
@@ -228,7 +240,7 @@ def main() -> int:
             if r == len(FITS_V) - 1:
                 ax.set_xlabel("age")
         agree = agreement(f)
-        for k in range(K):
+        for k in range(Kc):
             rows.append({"fit": tag, "variant": v, "spec": spec, "class": k + 1, "share": f["share"][k],
                          "rho_phys": f["rho"][k, 0], "rho_ment": f["rho"][k, 1],
                          "signal_phys": f["signal"][k, 0], "signal_ment": f["signal"][k, 1],
@@ -247,7 +259,7 @@ def main() -> int:
                 print(f"  {lab}: " + " ".join(f"{x:+.3f}" for x in f["cohort_shift"][c]))
         print(f"{tag}: rhat {f['rhat']:.4f} over chains {f['chains'] or 'all'}, lp by chain {np.round(f['lps'], 1)}; "
               f"shares {np.round(f['share'], 3)}; rho phys {np.round(f['rho'][:, 0], 2)} ment {np.round(f['rho'][:, 1], 2)}; "
-              f"hazard ratio 1/3 at 55 {f['hazard'][0][35] / f['hazard'][2][35]:.1f}x, at 85 {f['hazard'][0][65] / f['hazard'][2][65]:.1f}x; "
+              f"hazard ratio 1/{f['K']} at 55 {f['hazard'][0][35] / f['hazard'][-1][35]:.1f}x, at 85 {f['hazard'][0][65] / f['hazard'][-1][65]:.1f}x; "
               + (f"ARI vs single-channel {agree['ari_vs_univariate']:.2f}, same class {agree['same_class']:.0%}" if agree else ""))
     n = fits[0]["n_person"]; ev = fits[0]["events"]
     fig.text(0.01, 0.005,
@@ -258,11 +270,12 @@ def main() -> int:
              "Under AR(1) + \"spike\" the legend gives each class's persistence on that channel; the innovation and \"spike\" scales are common to the classes. "
              "The Makeham constant is below 0.0001 in every fit."
              + (" Class paths and observed class means are at the 1950s birth decade, every score net of its estimated decade shift." if COHORT else "")
+             + (" Rows: the class count K = 3, 4 and 5 under AR(1) + \"spike\"; classes ordered worst to best." if KMODE else "")
              + (" h + AR(1) + \"spike\" is read over the three chains that share a mode; the fourth sat in the mode "
              "with the class 2 and 3 intercepts pressed together on the ordering constraint, about 2,950 log-posterior units lower." if V_ONLY == "h" else ""),
              fontsize=7.2, color=INK2, va="top")
     fig.subplots_adjust(top=0.93, bottom=0.17 if len(FITS_V) > 1 else 0.30, left=0.05, right=0.99)
-    sfx = "_cohort" if COHORT else ("" if V_ONLY == "theta" else "_h")
+    sfx = "_by_K" if KMODE else "_cohort" if COHORT else ("" if V_ONLY == "theta" else "_h")
     fig.savefig(FIG / f"fig_multidim_trajectories{sfx}.png")
     tab = pd.DataFrame(rows); tab.to_csv(DESC / f"paper_multidim{sfx}.csv", index=False)
     print(tab[["fit", "class", "share", "rho_phys", "rho_ment", "signal_phys", "signal_ment", "gomp_slope", "hazard_55", "hazard_85"]].round(3).to_string(index=False))

@@ -174,12 +174,15 @@ def combined(v: str = "theta") -> int:
     s = d[d["pidp"].isin(L.index)].assign(cluster=lambda x: x["pidp"].map(L))
     t = s.groupby(["cluster", "age"])[v].agg(["mean", "count"]).reset_index()
     km_share = np.array([(L == c).mean() for c in range(K)])
-    lab = {"theta": r"$\theta$", "h": "$h$", "mental": r"mental $\theta$"}[v]
+    lab = {"theta": r"$\theta$", "h": "$h$", "mental": r"mental $\theta$", "frailty": "frailty index", "logfrailty": "log(frailty + 1/31)"}[v]
+    frail = v in ("frailty", "logfrailty")
     if mental:
         fits = [(fs, name, fd) for fs, name, fd in MENTAL_FITS if (fd / "run_summary.json").exists()]
     else:
-        fits = [(fs, name, ARTIFACTS_DIR / ("health-base" if fs == "base" else "health-ssm") / f"health-{v}-{fs}")
+        # the frailty fits sit in artifacts/health-frailty/, the theta and h fits in health-base/ and health-ssm/
+        fits = [(fs, name, ARTIFACTS_DIR / ("health-frailty" if frail else "health-base" if fs == "base" else "health-ssm") / f"health-{v}-{fs}")
                 for fs, name in (("base", "independent residuals"), ("ssm", 'AR(1) + "spike"'))]
+        fits = [f for f in fits if (f[2] / "run_summary.json").exists()]
     nc = len(fits)
     fig, axes = plt.subplots(2, nc, figsize=(5 * nc, 7.2), gridspec_kw={"height_ratios": [3.2, 0.7], "hspace": 0.32, "wspace": 0.2},
                              sharey="row", squeeze=False)
@@ -197,7 +200,7 @@ def combined(v: str = "theta") -> int:
             q = t[(t["cluster"] == k) & (t["count"] >= MIN_SUPPORT)]
             ax.plot(q["age"], q["mean"], color=KMEANS_RED[k], lw=1.1, ls="--", label=f"K-means type {k + 1} ({km_share[k]:.0%})" if j == 0 else None)
         ax.set_title(f"({'abc'[j]}) {lab}, {name}", loc="left", fontsize=10)
-        ax.legend(fontsize=7, loc="best" if mental else "lower left", ncols=2 if j == 0 else 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
+        ax.legend(fontsize=7, loc="best" if mental else "upper left" if frail else "lower left", ncols=2 if j == 0 else 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
         ax = axes[1, j]
         comp = r["comp"].reindex(columns=[f"class{k + 1}" for k in range(K)])
         ax.stackplot(comp.index, *[comp[c] for c in comp.columns], colors=CLUSTER, alpha=0.9)
@@ -206,13 +209,14 @@ def combined(v: str = "theta") -> int:
         print(f"{v} {fs}: shares {np.round(r['theta'], 3)}" + (f", rho {np.round(r['rho'], 2)}" if fs.startswith("ssm") else "")
               + (f", rhat {r['rhat']:.3f}") + (f"; decade shifts (vs 1950s) {np.round(r['cohort_shift'], 2)}" if "cohort_shift" in r else ""))
     sample = ("the mental GRM on the multidim health contract (38,181 people with a mental score on every row, 325,822 person-ages)" if mental
-              else f"{'theta' if v == 'theta' else 'h'} on the health contract (38,963 people, 334,194 person-ages)")
+              else f"{ {'theta': 'theta', 'h': 'h', 'frailty': 'the 31-deficit frailty index', 'logfrailty': 'log(frailty + 1/31)'}[v] } on the health contract (38,963 people, 334,194 person-ages)"
+              + ("; higher is frailer, so the classes are relabelled with class 1 the frailest" if frail else ""))
     footer = (f"K = 3 quadratic growth mixtures on {sample}, parameters at the posterior mean; "
              "class 1 is worst health. Left: independent residuals;\nmiddle" + ("" if mental else "/right") + ": an AR(1) latent state plus a one-period \"spike\", with the class persistence in the legend"
              + ("; right: the same with one level shift per birth decade, common to the classes, paths and observed means at the 1950s, every score net of its decade shift. " if mental else ". ")
              + "Line width is proportional to the class share. Dotted: the observed class mean at each age, the measure averaged over\nthe people observed there weighted by their "
              "posterior class probabilities. Dashed red: the partial K-means type means on the same rows. Bottom: the posterior class composition of the person-waves observed at each age.")
-    if mental:   # wrapped to the figure's width
+    if mental or frail:   # wrapped to the figure's width
         footer = "\n".join(textwrap.wrap(footer.replace("\n", " "), 75 * nc))
     fig.text(0.01, 0.0, footer, fontsize=7.2, color=INK2, va="top")
     out = FIG / ("fig_bayes_mixtures.png" if v == "theta" else f"fig_bayes_mixtures_{v}.png")
@@ -223,5 +227,6 @@ def combined(v: str = "theta") -> int:
 
 if __name__ == "__main__":
     if "combined" in sys.argv:
-        sys.exit(combined("mental" if "--mental" in sys.argv else "h" if "--h" in sys.argv else "theta"))
+        sys.exit(combined("mental" if "--mental" in sys.argv else "frailty" if "--frailty" in sys.argv
+                          else "logfrailty" if "--logfrailty" in sys.argv else "h" if "--h" in sys.argv else "theta"))
     sys.exit(main())
