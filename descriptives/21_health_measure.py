@@ -2,11 +2,11 @@
 
 Everything here reads only what data_cleaning/04_build_health.py and
 05_build_cost_proxy.py write, so the note's numbers regenerate from the live
-chain. The three reported variants (theta, h, fi10) and the appendix weighted
-sum (ws) are shown side by side throughout, because the point of the note is
+chain. The two reported variants (theta, h) and the appendix weighted sum
+(ws) are shown side by side throughout, because the point of the note is
 that the same answers carry all of them.
 
-A fifth score is computed here rather than in the build: the linear factor
+A fourth score is computed here rather than in the build: the linear factor
 model on the same eight codes treated as continuous (measures/health.py,
 one_factor_score), which is what a linear measurement system does with
 ordinal items. It is reported beside the others to show which side of the
@@ -50,7 +50,7 @@ MEAS = PROCESSED_DATA_DIR / "measures"
 FIG = ROOT_DIR / "measuring_health" / "figures"
 COST = "flat_cost_total"
 VARIANTS = [("theta", r"$\theta$", BLUE), ("h", "$h$", ORANGE),
-            ("fi10", "ten-deficit index", GREEN), ("ws", "weighted sum", PURPLE)]
+            ("ws", "weighted sum", PURPLE)]
 FACTOR = ("fs", "linear factor score", INK2)
 TABLE_VARIANTS = VARIANTS + [FACTOR]
 BANDS = [(20, 34), (75, 90)]
@@ -202,7 +202,7 @@ def main() -> int:
     # ---- figure 3: cost ----------------------------------------------------
     fig, axs = plt.subplots(1, 3, figsize=(10.4, 3.3))
     rows = []
-    for ax, (col, lab, c) in zip(axs, [VARIANTS[0], VARIANTS[1], VARIANTS[2]]):
+    for ax, (col, lab, c) in zip(axs, VARIANTS):
         v = pd.qcut(d[col], 20, labels=False, duplicates="drop")
         m = d.groupby(v).agg(x=(col, "mean"), y=("cost", "mean"))
         z = (m["x"] - d[col].mean()) / d[col].std()
@@ -291,7 +291,7 @@ def main() -> int:
     from scipy.stats import pearsonr, spearmanr
     print(f"  correlation with the appendix weighted sum: {pearsonr(s2['fs'], s2['ws'])[0]:.4f}")
     print("  Spearman with " + ", ".join(f"{c} {spearmanr(s2['fs'], s2[c]).statistic:.3f}"
-                                       for c in ["theta", "h", "fi10"]))
+                                       for c in ["theta", "h"]))
     gaps = []
     for _, r in items.iterrows():
         b = r[[c for c in items.columns if c.startswith("b")]].dropna().to_numpy(float)
@@ -299,7 +299,7 @@ def main() -> int:
             gaps.append((r["item"], np.diff(b).max() / np.diff(b).min()))
     print("  widest/narrowest threshold gap: " + ", ".join(f"{k} {v:.1f}" for k, v in gaps))
     rows = []
-    for col, lab in [("theta", "theta"), ("h", "h"), ("fi10", "fi10"), ("ws", "weighted sum"),
+    for col, lab in [("theta", "theta"), ("h", "h"), ("ws", "weighted sum"),
                      ("fs", "linear factor score"), ("logdef", "-log(1-h)")]:
         z = (s2[col] - s2[col].mean()) / s2[col].std()
         p = band_profile(s2, col).set_index("age")

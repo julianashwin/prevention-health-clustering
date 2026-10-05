@@ -18,15 +18,16 @@ TAB = ROOT_DIR / "paper" / "tables"
 CONTRACT = PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1"
 MIN_AGE, MAX_AGE, K = 20, 90, 3
 AGES = np.arange(MIN_AGE, MAX_AGE + 1)
-VARIANTS = [("h", "$h$"), ("theta", r"$\theta$"), ("fi10", "deficit index")]
+VARIANTS = [("h", "$h$"), ("theta", r"$\theta$")]
 # comparison measures, run with --frailty: the 31-deficit Rockwood-style index and its shifted
 # log, log(frailty + 1/31), which keeps the zeros at the floor; higher = frailer
 FRAILTY_VARIANTS = [("frailty", "frailty index"), ("logfrailty", "log frailty")]
-# the mental GRM (three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis), the
-# multidimensional model's second channel, run on its own with --mental; higher = better
+# the mental GRM (three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis;
+# data_cleaning/04c_build_mental_grm.py), the multidimensional model's second channel, run on its own
+# with --mental; higher = better
 MENTAL_VARIANTS = [("mental", r"mental $\theta$")]
 LABEL = dict(VARIANTS + FRAILTY_VARIANTS + MENTAL_VARIANTS)
-HEALTHIER_HIGH = {"h": True, "theta": True, "fi10": True, "ws": True, "frailty": False, "logfrailty": False, "mental": True}
+HEALTHIER_HIGH = {"h": True, "theta": True, "ws": True, "frailty": False, "logfrailty": False, "mental": True}
 FRAILTY_SUFFIX = "_frailty"
 MENTAL_SUFFIX = "_mental"
 MENTAL_COL = "theta_ment_nodepr"
@@ -44,13 +45,13 @@ def read_scores(variants) -> pd.DataFrame:
                             columns=["pidp", "wave", "frailty", "log_frailty"]).rename(columns={"log_frailty": "logfrailty"})
         d = d.merge(f[["pidp", "wave", *fr]], on=["pidp", "wave"], how="left")
     if "mental" in variants:
-        g = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "grm2_scores.parquet",
+        g = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "mental_grm.parquet",
                             columns=["pidp", "wave", MENTAL_COL]).rename(columns={MENTAL_COL: "mental"})
         d = d.merge(g, on=["pidp", "wave"], how="left").dropna(subset=["mental"])
     return d
 
 
-def load_measure(variants=("h", "theta", "fi10")) -> pd.DataFrame:
+def load_measure(variants=("h", "theta")) -> pd.DataFrame:
     d = read_scores(variants)
     return d[d["age"].between(MIN_AGE, MAX_AGE)].assign(age=lambda x: x["age"].astype(int))
 
@@ -85,12 +86,15 @@ def load_predicted_cost_rows(v: str = "h", cap_q: float = 0.99, degree: int = 3)
     return long[["pidp", "age"]].assign(predcost=np.interp(z, grid, curve))
 
 
-def observed_class_means(post: pd.DataFrame, v: str, Kc: int, min_weight: float = 25.0) -> pd.DataFrame:
+def observed_class_means(post: pd.DataFrame, v: str, Kc: int, min_weight: float = 25.0,
+                         rows: pd.DataFrame | None = None) -> pd.DataFrame:
     """Posterior-weighted mean of the measure by class and age on the contract rows:
     the dotted 'observed' lines drawn against fitted class paths. NaN where the
-    summed posterior weight at an age is below ``min_weight`` people."""
+    summed posterior weight at an age is below ``min_weight`` people. ``rows``
+    replaces the health contract's rows (columns pidp, age, v), e.g. another
+    contract or scores net of a cohort shift."""
     cols = [f"class{k + 1}" for k in range(Kc)]
-    long = pd.read_csv(CONTRACT / "long.csv", usecols=["pidp", "age", v])
+    long = rows if rows is not None else pd.read_csv(CONTRACT / "long.csv", usecols=["pidp", "age", v])
     d = long.merge(post[["pidp"] + cols], on="pidp")
     out = {}
     for c in cols:
@@ -274,7 +278,7 @@ def _chain_means(fit_dir: Path, chains) -> tuple[dict, float]:
     return out, worst
 
 
-def bayes_fit(fit_dir, v: str, Kc: int = K, chains=None) -> dict:
+def bayes_fit(fit_dir, v: str, Kc: int = K, chains=None, contract: Path | None = None, col: str | None = None) -> dict:
     """A fitted K-class mixture on the health contract, read at its posterior mean.
 
     Returns the class shares, the quadratic coefficients on the standardised channel
@@ -283,7 +287,12 @@ def bayes_fit(fit_dir, v: str, Kc: int = K, chains=None) -> dict:
     composition of the person-waves observed at each age (``comp``), and for
     ar_mode 2 the persistence and "spike" scale. Works for any K. ``chains`` restricts
     the posterior mean to those CmdStan chains (1-based) when the others sat in a
-    separate mode; ``rhat`` is then the split R-hat over that subset.
+    separate mode; ``rhat`` is then the split R-hat over that subset. ``contract`` and
+    ``col`` point at another contract and column (the mental GRM on the multidim
+    contract); the default is the health contract's column ``v``. A fit with
+    birth-decade shifts (N_cohort > 1) is read with every score net of its decade
+    shift and the class paths at the 1950s, as the cohort appendix draws them;
+    ``obs_rows`` carries the adjusted scores for observed_class_means.
     """
     fit_dir = Path(fit_dir)
     d = json.load(open(fit_dir / "stan_data.json"))
@@ -297,10 +306,27 @@ def bayes_fit(fit_dir, v: str, Kc: int = K, chains=None) -> dict:
     sigma = p["sigma[1,1]"]["mean"]
     X, Y = np.asarray(d["X"]), np.asarray(d["y"][0])
     fs, fe = np.asarray(d["fit_start"]), np.asarray(d["fit_end"])
-    long = pd.read_csv(CONTRACT / "long.csv").sort_values(["pidp", "age"]).reset_index(drop=True)
-    mom = json.load(open(CONTRACT / "manifest.json"))["metric_moments"][v]
-    z = (long[v].to_numpy() - mom["mean"]) / mom["sd"]
+    contract = Path(contract) if contract is not None else CONTRACT; col = col or v
+    long = pd.read_csv(contract / "long.csv").sort_values(["pidp", "age"]).reset_index(drop=True)
+    mom = json.load(open(contract / "manifest.json"))["metric_moments"][col]
+    z = (long[col].to_numpy() - mom["mean"]) / mom["sd"]
     assert len(long) == len(Y) and np.abs(z - Y).max() < 1e-6, "payload rows do not match the contract"
+    n_coh = d.get("N_cohort", 1); row_shift = np.zeros(len(Y)); cohort = {}
+    if n_coh > 1:
+        # the single-channel run_summary carries no cohort terms: read them from the chains
+        files = sorted(fit_dir.glob("chains/*_[0-9].csv"))
+        if chains is not None:
+            files = [f for f in files if int(f.stem.rsplit("_", 1)[1]) in set(chains)]
+        ce = pd.concat([pd.read_csv(f, comment="#", usecols=[f"cohort_effect.1.{j}" for j in range(1, n_coh + 1)])
+                        for f in files]).mean().to_numpy()
+        decades = sorted(int(x) for x in (long["birthy"].dropna() // 10 * 10).unique())
+        assert len(decades) == n_coh, f"{fit_dir.name}: {n_coh} cohorts in the payload, {len(decades)} decades in the contract"
+        ref = ce[decades.index(1950)]
+        row_shift = ce[np.asarray(d["cohort_id"]) - 1] - ref      # relative to the 1950s, standardised units
+        Y = Y - ce[np.asarray(d["cohort_id"]) - 1]                 # the likelihood as Stan computed it
+        coef = coef.copy(); coef[:, 0] += ref                      # class paths at the 1950s
+        cohort = {"cohort_shift": ce - ref, "cohort_decades": decades}
+    obs_rows = long[["pidp", "age"]].assign(**{col: long[col].to_numpy() - mom["sd"] * row_shift})
     person = np.repeat(np.arange(len(fs)), fe - fs + 1)
     assert (np.diff(long["pidp"].to_numpy()) != 0).sum() + 1 == len(fs)
     if d["ar_mode"] == 2:
@@ -320,4 +346,4 @@ def bayes_fit(fit_dir, v: str, Kc: int = K, chains=None) -> dict:
     post = pd.DataFrame(w, columns=cols).assign(pidp=pids)
     comp = pd.DataFrame(w[person], columns=cols).assign(age=long["age"].to_numpy()).groupby("age").mean()
     return {"theta": theta, "coef": coef, "sigma": sigma, "mom": mom, "post": post, "comp": comp,
-            "rhat": rhat, "chains": chains, "K": Kc, **extra}
+            "rhat": rhat, "chains": chains, "K": Kc, "obs_rows": obs_rows, **cohort, **extra}

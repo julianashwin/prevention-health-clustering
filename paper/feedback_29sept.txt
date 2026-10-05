@@ -1,0 +1,28 @@
+Extra prediction exercise - predict health type based on some initial observables or an initial (ideally held out) health value. Do this for some "baseline" clustering and then also for the "full" bells and whistles clustering
+
+Relabel "spike" as "episodic". 
+
+Is there an overall takeaway that the C_{Hd} reversal is driven by a small proportion of the population who are the very ill. 
+
+Result 2 - focus on main result which is *by type* -> 2 \sum_a (a - hbar_{ja})(hbar_{j,r-1} - hbar_{ja}). Why we want the evolution of the mean 
+
+K=5 plots and the like -> make sure we use the same vertical axis scale across panels wherever appropriate. 
+
+As we add more clusters and as we add the stochastic framework, are we getting more discrimination in the unhealthy type?
+
+Is the narrative around the clusters that there is always a bad group driving things - and more structure makes things stronger. Very noisy process is difficult for the K means, so it understates the importance/size/decline of this bad group?
+
+Can we express the differences across types in terms of LE and HLE?
+
+Look at univariate mental health clusters - are these different from the clusters that the multidimensional model learns?
+
+Figure 9 (overlapping and expanding windows) - how does the class composition by age change here? Do we have an expanding or shrinking bad type as we extend the window?
+
+Figure 13 (returns to prevention by type) - we should show this with targeting based on observables, or based on $\theta_{t-1}$ or things like that. The question here would be what we should target on?
+...
+
+Rather than contrasting with "treatment", we can think of treatment as the cost that we are trying to prevent. SO prevention is about avoiding treatment...
+
+Also on Figure 13, we should look at when the cost savings come. There is an interesting economic question here around the costs coming at a different time to the benefits - we pay for prevention now but we'll only get the benefits of the lower costs far into the future. 
+
+We should also look at the health/lifespan inequality and life expectancy effects of prevention. 

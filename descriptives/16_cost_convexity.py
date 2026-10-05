@@ -12,8 +12,9 @@ pounds admits. Its size is per standard deviation of the health ruler, so it
 differs across rulers; its sign is what the sensitivity grid tests.
 
 Measures: the health measure on theta and on h (04_build_health.py, carried by
-the cost index), and for comparison the UKHLS PCS, the SF-6D utility and the
-mental-health theta. Then the sensitivities the plan set out, all on theta:
+the cost index), and the 31-deficit frailty index and log(frailty + 1/31)
+(04b_build_frailty.py), both negated so higher is healthier on every measure.
+Then the sensitivities the plan set out, all on theta:
 spell rule, maternity, winsorising, condition weights and the top band.
 
 Outputs: measuring_health/figures/fig_cost_convexity.png and the same file in paper/figures/,
@@ -39,11 +40,9 @@ from prevention_health_clustering.measures.cost import UnitCosts, build_cost_ind
 
 MEASURES = {"theta": "health $\\theta$",
             "h": "health $h$",
-            "sf12pcs_dv": "UKHLS PCS",
-            "sf6d_utility": "SF-6D utility",
-            "theta_ment": "MENT $\\theta$"}
-COLORS = {"theta": BLUE, "h": VERM,
-          "sf12pcs_dv": ORANGE, "sf6d_utility": GREEN, "theta_ment": "#7B4EA8"}
+            "neg_frailty": "$-$frailty index",
+            "neg_logfrailty": "$-$log(frailty + 1/31)"}
+COLORS = {"theta": BLUE, "h": VERM, "neg_frailty": ORANGE, "neg_logfrailty": GREEN}
 
 
 def quad_levels(z, y, groups):
@@ -70,11 +69,10 @@ def decile_means(z, y, k=10):
 def main() -> int:
     apply_style()
     d = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "cost_index.parquet")
-    panel = pd.read_parquet(
-        PROCESSED_DATA_DIR / "measures" / "measure_panel.parquet",
-        columns=["pidp", "wave",
-                 "sf12pcs_dv", "sf6d_utility", "theta_ment"])
-    d = d.merge(panel, on=["pidp", "wave"], how="left")
+    fr = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "frailty_index.parquet",
+                         columns=["pidp", "wave", "frailty", "log_frailty"])
+    d = d.merge(fr, on=["pidp", "wave"], how="left")
+    d["neg_frailty"], d["neg_logfrailty"] = -d["frailty"], -d["log_frailty"]
     d = d[d["flat_cost_total"].notna() & d["age"].notna()]
     d = d[d["age"].between(20, 90)]
     keep = d[list(MEASURES)].notna().all(axis=1)
@@ -148,7 +146,7 @@ def main() -> int:
                 color=COLORS[m], label=MEASURES[m])
     ax.set_xlabel("percentile of the measure (low = worst health)")
     ax.set_ylabel("cost index, £ per person-year")
-    ax.set_title("(a) Cost against health, five measures", fontsize=10)
+    ax.set_title("(a) Cost against health, four measures", fontsize=10)
     ax.legend(fontsize=7, frameon=False); ax.grid(True)
 
     ax = axes[1]
@@ -157,7 +155,7 @@ def main() -> int:
         ax.plot(g["z"], g["y"], "o-", ms=4, lw=1.8, color=COLORS[m], label=MEASURES[m])
     ax.set_xlabel("standardised measure (pooled sd units)")
     ax.set_ylabel("cost index, £ per person-year")
-    ax.set_title("(b) The same curves per SD: the ruler sets the bend", fontsize=10)
+    ax.set_title("(b) The same curves per SD: the measure sets the bend", fontsize=10)
     ax.grid(True)
 
     ax = axes[2]
@@ -175,7 +173,7 @@ def main() -> int:
                  "conclusion depend on the assumptions?",
                  fontweight="bold", y=1.005)
     fig.text(0.01, -0.02,
-             "Cost index, waves 7-15, ages 20-90, common sample on all five measures. Panel (c) varies the spell rule,\n"
+             "Cost index, waves 7-15, ages 20-90, common sample on all four measures (the frailty indices negated, so higher is healthier). Panel (c) varies the spell rule,\n"
              "maternity treatment, condition weighting and top-band value; (w) marks the winsorised-at-p99 twin of each.\n"
              "A positive bar means an extra SD of poor health costs more, in pounds, when already unwell. All cost in pounds.",
              fontsize=7.4, color=INK2, va="top")

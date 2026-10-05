@@ -16,12 +16,12 @@ def frame():
         ages = np.sort(rng.choice(np.arange(30, 70), n, replace=False))
         for a in ages:
             rows.append({"pidp": pid, "age": a, "wave": 1, "birthy": 1960,
-                         "sf12pcs_dv": rng.normal(50, 10)})
+                         "theta": rng.normal(0, 1)})
     return pd.DataFrame(rows)
 
 
 def test_last_k_holdout_windows():
-    spec = get_model("pcs-ar1")
+    spec = get_model("health-theta-ar1")
     p = build_payload(frame(), spec=None) if False else build_payload(
         spec, frame(), holdout_last_k=2, holdout_min_person_obs=5)
     d = p.data
@@ -37,7 +37,7 @@ def test_last_k_holdout_windows():
 
 
 def test_modes_exclusive_and_baseline_unchanged():
-    spec = get_model("pcs-ar1")
+    spec = get_model("health-theta-ar1")
     p0 = build_payload(spec, frame())
     assert p0.data["N_person"] == 5
     assert all(p0.data["hold_end"][i] == 0 for i in range(5))

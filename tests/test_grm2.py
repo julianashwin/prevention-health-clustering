@@ -9,9 +9,7 @@ from prevention_health_clustering.measures.grm2 import (
     GHQ_NEGATIVE,
     GHQ_POSITIVE,
     MENT_ITEMS,
-    build_func_item,
     build_mental_items,
-    build_physical_items,
     collapse_ghq_wording,
 )
 
@@ -40,33 +38,6 @@ def chronic_frame(**cols) -> pd.DataFrame:
             "ever_17": [0.0]}
     base.update(cols)
     return pd.DataFrame(base)
-
-
-def test_func_structural_zero_and_gating():
-    # health == 2: module skipped by design -> valid best category (4)
-    assert build_func_item(frame()).iloc[0] == 4
-    # health == 1 with three physical limitations -> worst category (1)
-    f = frame(health=[1.0], disdif1=[1.0], disdif2=[1.0], disdif11=[1.0],
-              disdif5=[0.0])
-    assert build_func_item(f).iloc[0] == 1
-    # sensory-only limitation does not count against physical functioning
-    f = frame(health=[1.0], disdif5=[1.0], disdif6=[1.0], disdif1=[0.0])
-    assert build_func_item(f).iloc[0] == 4
-    # health == 1 but module unanswered -> missing, not zero
-    f = frame(health=[1.0])
-    assert np.isnan(build_func_item(f).iloc[0])
-
-
-def test_physical_bank_directions():
-    ch = chronic_frame(n_cvd=[3.0], n_msk=[1.0])
-    bank = build_physical_items(frame(health=[2.0]), ch, conditions="ever")
-    row = bank.iloc[0]
-    assert row["GH"] == 5 and row["PF"] == 5 and row["FUNC"] == 4
-    assert row["CVD"] == 1        # 2+ events -> worst category
-    assert row["MSK"] == 1 and row["CANCER"] == 2
-    # functioning-only bank needs no chronic data
-    bank = build_physical_items(frame(), conditions=None)
-    assert list(bank.columns[-5:]) == ["GH", "PF", "RP", "BP", "FUNC"]
 
 
 def test_mental_bank_directions():

@@ -7,7 +7,7 @@ the type paths the fitted quadratics in each variant's units, on the contract
 people. Outputs then carry the suffix: fig_returns_ssm.png, tab_returns_ssm.tex.
 
 The framework's formulas applied to the non-parametric types, for each of
-the three variants of the measure mapped to [0, 1] (h and the deficit index
+the two variants of the measure mapped to [0, 1] (h
 as they are; theta rescaled affinely so the sample minimum is 0 and maximum
 1). With c(h) = (1 - h)^2 and a horizon at age 90, for a start age r:
 
@@ -63,7 +63,7 @@ def bayes_paths(v: str, A: np.ndarray):
 def main() -> int:
     apply_style()
     d = load_measure()
-    fig, axes = plt.subplots(3, 3, figsize=(12.5, 9), gridspec_kw={"hspace": 0.4, "wspace": 0.28})
+    fig, axes = plt.subplots(3, len(VARIANTS), figsize=(4.2 * len(VARIANTS), 9), gridspec_kw={"hspace": 0.4, "wspace": 0.28})
     recs, table = [], []
     for j, (v, lab) in enumerate(VARIANTS):
         A = (AGES - 55) / 10

@@ -2,14 +2,9 @@
 
 The Bayesian latent-class modelling stream.
 
-- `validation/` — comparisons against the predecessor's published fits and
-  synthetic parameter-recovery runs. Key results: PCS and MCS full-roster fits
-  reproduce the published posteriors to ≤0.05 posterior SDs; the joint fit
-  matches the reported modal shares with honestly dispersed chains.
-- `benchmarks/` — timing probes and negative results (sufficient-statistic and
-  vectorised variants are SLOWER than the row loop; kept as recorded findings).
-
-Fast unit tests live in `tests/`, not here. Fits write to `artifacts/`.
+Fast unit tests live in `tests/` (the held-out generated quantities against a
+numpy reimplementation, the holdout window partitions), not here. Fits write
+to `artifacts/`.
 
 ## Batch fitting
 
@@ -19,12 +14,12 @@ person-level columns; `--holdout-last-k 2 --holdout-min-obs 5` holds out each
 person's last two observations (sample limited to people with at least five)
 and writes per-person held-out predictive densities.
 `runs/health_base_queue.py` (launched by `runs/health_base_launch.sh`)
-runs the three baseline K=3 fits on the paper's measure, theta / h / fi10, one
+runs the two baseline K=3 fits on the paper's measure, theta / h, one
 at a time into `artifacts/health-base/`; `runs/health_ssm_queue.py` (launched by
-`runs/health_ssm_launch.sh`) the same three under the AR(1) plus measurement error specification
+`runs/health_ssm_launch.sh`) the same two under the AR(1) plus measurement error specification
 into `artifacts/health-ssm/`; `runs/health_cohort_queue.py` (launched by
 `runs/health_cohort_launch.sh`, which waits for the AR(1) plus measurement error queue to finish)
-the same three with a shared birth-decade level shift, into
+the same two with a shared birth-decade level shift, into
 `artifacts/health-ssm-cohort/`; `runs/health_next_queue.py` (launched by
 `runs/health_next_launch.sh`) the AR(1)-without-measurement-error comparison
 and the held-out twins, into `artifacts/health-next/`; `runs/mental_queue.py`
@@ -32,22 +27,30 @@ and the held-out twins, into `artifacts/health-next/`; `runs/mental_queue.py`
 cohort queue to finish) the K=3 fits on the mental GRM alone, independent
 residuals, AR(1) plus "spike" and AR(1) plus "spike" with birth-decade shifts
 (`mental-theta-base`, `mental-theta-ssm`, `mental-theta-ssm-cohort`), on the
-multidim health contract's rows, into `artifacts/mental-health/`.
-`runs/overnight_queue.py` runs the eight-fit AR(1)/GRM batch, two at a time,
-longest first, and writes `artifacts/overnight/digest.json`.
-`oos_assessment.py` is the full out-of-sample assessment of the holdout
-fits: it reproduces the model's own held-out density offline (validated to
-corr 0.9999998), adds the AR-conditional forecast the generated quantities
-do not compute, and scores both against age-quadratic and
-last-observation-carried-forward benchmarks on density, point accuracy and
-interval calibration (note section 9). It needs structural draws extracted
-from the chain CSVs (columns 1-33) into `<dir>/<tag>.csv`.
-
+multidim health contract's rows, into `artifacts/mental-health/`;
+`runs/health_firstheld_queue.py` (launched by `runs/health_firstheld_launch.sh`,
+which waits for the mental queue) the theta independent-residuals and AR(1) plus
+"spike" fits with each person's FIRST row held out (`run_fit.py --holdout-first-k 1
+--holdout-min-obs 4`), into `artifacts/health-firstheld/`, for the
+type-from-an-initial-value exercise (`descriptives/43_paper_type_from_initial.py`);
+`runs/multidim_firstheld_launch.sh` the multidimensional twin, `run_multidim.py
+--variant ssm-firstho` (theta + mental GRM + mortality, first row held out, people
+with at least four rows) into `artifacts/multidim-health/theta-ssm-mort-firstho/`.
+`runs/frailty_firstheld_queue.py` (launcher `runs/frailty_firstheld_launch.sh`)
+runs the K=3 fits on the 31-deficit frailty index and log(frailty + 1/31),
+independent residuals and AR(1) plus "spike", into `artifacts/health-frailty/`,
+then h with the first row held out and theta / h with the first two rows held
+out (`--holdout-first-k 2 --holdout-min-obs 5`, tags `*-first2ho`) into
+`artifacts/health-firstheld/`; `runs/cohort_first2_queue.py` (launcher
+`runs/cohort_first2_launch.sh`, run alongside) the AR(1) plus "spike" plus
+birth-decade-shift twins of the first-two-rows fits; and
+`runs/multidim_health_k45_queue.py` (launcher `runs/multidim_health_k45_launch.sh`,
+which waits for the frailty/first-held queue) the multidimensional theta
+AR(1) plus "spike" + mortality fit at K = 4 and K = 5
+(`artifacts/multidim-health/theta-ssm-mort-k{4,5}/`).
 `run_multidim.py` fits the multidimensional mixture: a physical channel
 (`--physical theta` or `h`) and the mental GRM, Gaussian with optional AR(1)
-or AR(1) plus "spike" and persistence by class and channel; an optional
-negative-binomial chronic count (`--with-chronic`, off in the paper's runs);
-and a Gompertz-Makeham mortality hazard (`--with-mortality`, class-specific
+or AR(1) plus "spike" and persistence by class and channel, and a Gompertz-Makeham mortality hazard (`--with-mortality`, class-specific
 level and slope, common Makeham constant, integrated over each row's years at
 risk, never held out). Variants: baseline, holdout, ar1, ar1-holdout, ssm,
 ssm-holdout, on `multidim_health_20_89_minobs3_v1`
@@ -61,7 +64,4 @@ person's last two rows held out, for the prediction exercise;
 `multidim_health_cohort_launch.sh`) fits theta-ssm-mort-cohort and its
 held-out twin with `--cohort decade` (birth-decade level shifts on both
 Gaussian channels, common to the classes, oldest decade = 0);
-`runs/multidim_mode_check.py` reads a running fit's chains for a mode split. The archived four-channel fits in
-`artifacts/multidim*` were run by the previous version of the script
-(logit-quadratic hazard, one persistence per class) and no longer match the
-Stan source.
+`runs/multidim_mode_check.py` reads a running fit's chains for a mode split.

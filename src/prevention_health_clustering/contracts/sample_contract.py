@@ -25,7 +25,7 @@ import pandas as pd
 
 from prevention_health_clustering.config import (
     DEFAULT_AGE_CENTER,
-    DEFAULT_HEALTH_METRIC,
+    DEFAULT_HEALTH_METRICS,
     DEFAULT_LIFECYCLE_MAX_AGE,
     DEFAULT_LIFECYCLE_MIN_AGE,
     DEFAULT_MIN_OBS_PER_PERSON,
@@ -80,14 +80,9 @@ class ContractResult:
     manifest: dict = field(default_factory=dict)
 
 
-PCS_LIFECYCLE = ContractSpec(
-    contract_id="pcs_lifecycle_20_89_minobs3_v1",
-    metrics=(DEFAULT_HEALTH_METRIC,),
-)
-
-PCS_MCS_LIFECYCLE = ContractSpec(
-    contract_id="pcs_mcs_lifecycle_20_89_minobs3_v1",
-    metrics=("sf12pcs_dv", "sf12mcs_dv"),
+HEALTH_LIFECYCLE = ContractSpec(
+    contract_id="health_lifecycle_20_89_minobs3_v1",
+    metrics=DEFAULT_HEALTH_METRICS,
 )
 
 
@@ -228,8 +223,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--panel", type=Path, default=DEFAULT_PANEL_PATH)
     parser.add_argument("--output-root", type=Path, default=DEFAULT_CONTRACT_ROOT)
-    parser.add_argument("--contract-id", default=PCS_LIFECYCLE.contract_id)
-    parser.add_argument("--metrics", nargs="+", default=list(PCS_LIFECYCLE.metrics))
+    parser.add_argument("--contract-id", default=HEALTH_LIFECYCLE.contract_id)
+    parser.add_argument("--metrics", nargs="+", default=list(HEALTH_LIFECYCLE.metrics))
     parser.add_argument("--min-age", type=int, default=DEFAULT_LIFECYCLE_MIN_AGE)
     parser.add_argument("--max-age", type=int, default=DEFAULT_LIFECYCLE_MAX_AGE)
     parser.add_argument(

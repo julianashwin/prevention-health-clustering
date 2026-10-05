@@ -1,11 +1,13 @@
-"""AR(1) plus measurement error K=3 fits with shared birth-decade shifts on the paper's health measure.
+"""K=3 fits on theta with each person's FIRST observation held out.
 
-AR(1) plus measurement error, plus one level shift per birth decade, common to the classes, on the one contract that carries both variants
-(data_cleaning/07_build_health_contract.py), run one after another
-with 4 chains x 3 threads. Each job logs to artifacts/health-ssm-cohort/<tag>/run.log;
-the queue writes digest.json.
+Independent residuals and AR(1) plus "spike" on the health contract, people with
+at least four rows, the first row (by age) left out of the likelihood. The types
+are then predicted from that initial health value (descriptives/43_paper_type_from_initial.py),
+which the full-sample fits cannot do honestly because the initial row shaped them.
+One after another with 4 chains x 3 threads. Each job logs to
+artifacts/health-firstheld/<tag>/run.log; the queue writes digest.json.
 
-    python clustering/runs/health_cohort_queue.py [--workers 1] [--dry-run]
+    python clustering/runs/health_firstheld_queue.py [--workers 1] [--dry-run]
 """
 
 from __future__ import annotations
@@ -20,17 +22,21 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = ROOT / "data" / "processed" / "contracts" / "health_lifecycle_20_89_minobs3_v1"
-OUT = ROOT / "artifacts" / "health-ssm-cohort"
-JOBS = [("health-h-ssm-cohort", "health-h-ssm-cohort"),
-        ("health-theta-ssm-cohort", "health-theta-ssm-cohort")]
+OUT = ROOT / "artifacts" / "health-firstheld"
+HO = ["--holdout-first-k", "1", "--holdout-min-obs", "4"]
+JOBS = [("health-theta-base-firstho", "health-theta-base"),
+        ("health-theta-ssm-firstho", "health-theta-ssm")]
 
 
 def run_job(job, settings):
     tag, model = job
     out_dir = OUT / tag
+    if (out_dir / "run_summary.json").exists():
+        print(f"[{time.strftime('%H:%M:%S')}] SKIP {tag} (already finished)", flush=True)
+        return tag, 0, 0.0
     out_dir.mkdir(parents=True, exist_ok=True)
     cmd = [sys.executable, str(ROOT / "clustering" / "run_fit.py"), "--model", model,
-           "--contract", str(CONTRACT), "--output", str(out_dir)] + settings
+           "--contract", str(CONTRACT), "--output", str(out_dir)] + HO + settings
     t0 = time.time()
     print(f"[{time.strftime('%H:%M:%S')}] START {tag}", flush=True)
     with open(out_dir / "run.log", "w") as fh:
@@ -69,12 +75,12 @@ def main(argv=None) -> int:
             digest.setdefault("summaries", {})[tag] = {
                 "max_rhat": r["max_structural_rhat"],
                 "theta": [round(r["params"][f"theta[{i}]"]["mean"], 4) for i in range(1, 4)],
-                "rho": [round(r["params"][f"rho[{i}]"]["mean"], 3) for i in range(1, 4)],
-                "sigma_meas": round(r["params"]["sigma_meas[1]"]["mean"], 3),
+                "rho": [round(r["params"][f"rho[{i}]"]["mean"], 3) for i in range(1, 4) if f"rho[{i}]" in r["params"]],
+                "sigma_meas": round(r["params"]["sigma_meas[1]"]["mean"], 3) if "sigma_meas[1]" in r["params"] else None,
                 "wall_hours": round(r["wall_hours"], 2)}
     (OUT / "digest.json").write_text(json.dumps(digest, indent=1))
     failed = [t for t, rc, _ in results if rc != 0]
-    print(f"QUEUE COMPLETE in {digest['total_hours']:.1f} h; {'all ok' if not failed else 'FAILED: ' + ', '.join(failed)}", flush=True)
+    print(f"FIRSTHELD QUEUE COMPLETE in {digest['total_hours']:.1f} h; {'all ok' if not failed else 'FAILED: ' + ', '.join(failed)}", flush=True)
     return 1 if failed else 0
 
 

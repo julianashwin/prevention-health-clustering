@@ -22,8 +22,8 @@ The summary it writes carries salvaged: true and the per-chain draw counts, so
 the shortfall against the planned sampling is visible to anything reading it.
 
 Usage:
-  python clustering/salvage_partial_fit.py --dir artifacts/k5/physfunc-ssm-k5 \
-      --model physgrm-func-ssm-k5 [--planned-sampling 1000] [--write]
+  python clustering/salvage_partial_fit.py --dir artifacts/health-k45/health-theta-ssm-k5 \
+      --model health-theta-ssm-k5 [--planned-sampling 1000] [--write]
 """
 
 from __future__ import annotations

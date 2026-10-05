@@ -1,7 +1,7 @@
-"""AR(1) plus measurement error K=3 fits on the paper's health measure: h, theta and the deficit index.
+"""AR(1) plus measurement error K=3 fits on the paper's health measure: h and theta.
 
 AR(1) plus measurement error (an AR(1) latent state plus a one-period
-measurement error, ar_mode 2), the paper's stochastic specification, on the one contract that carries all three
+measurement error, ar_mode 2), the paper's stochastic specification, on the one contract that carries both
 variants (data_cleaning/07_build_health_contract.py), run one after another
 with 4 chains x 3 threads. Each job logs to artifacts/health-ssm/<tag>/run.log;
 the queue writes digest.json.
@@ -23,8 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = ROOT / "data" / "processed" / "contracts" / "health_lifecycle_20_89_minobs3_v1"
 OUT = ROOT / "artifacts" / "health-ssm"
 JOBS = [("health-h-ssm", "health-h-ssm"),
-        ("health-theta-ssm", "health-theta-ssm"),
-        ("health-fi10-ssm", "health-fi10-ssm")]
+        ("health-theta-ssm", "health-theta-ssm")]
 
 
 def run_job(job, settings):

@@ -11,14 +11,13 @@ class means: at each age, the mean of the measure over the people observed at th
 age weighted by their posterior class probabilities (drawn where the summed
 weight is at least 25 people), so the eye can check the quadratic. A fit that has not finished
 (no run_summary.json) leaves its panel blank and says so.
-Appendix (fig_trajectories_fi10.png): K = 3 for the ten-deficit index.
 
 K = 3 comes from what 32_paper_bayes_fits.py wrote (paper_bayes_{set}_classes.csv,
 paper_bayes_{set}_posteriors.parquet); K = 4 and 5 are read straight from the fits
 in artifacts/health-k45/ with _paper_common.bayes_fit, and their per-person
 posteriors cached to paper_bayes_{set}_k{K}_{variant}.parquet.
 
-Outputs: paper/figures/fig_class_trajectories_by_K.png, fig_trajectories_fi10.png,
+Outputs: paper/figures/fig_class_trajectories_by_K.png,
          artifacts/descriptives/paper_trajectories.csv
 """
 
@@ -41,7 +40,7 @@ from prevention_health_clustering.config import ARTIFACTS_DIR  # noqa: E402
 K45_DIR = ARTIFACTS_DIR / "health-k45"
 KS = (3, 4, 5)
 SETS = [("base", "independent residuals"), ("ssm", 'AR(1) + "spike"')]
-LABEL = {"h": "$h$", "theta": r"$\theta$", "fi10": "ten-deficit index"}
+LABEL = {"h": "$h$", "theta": r"$\theta$"}
 observed_means = observed_class_means
 PALETTE = {3: CLUSTER, 4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
            5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}     # worst -> best health
@@ -157,23 +156,9 @@ def main() -> int:
         print(f"wrote fig_class_trajectories_by_K_h.png to {FIG}")
         return 0
 
-    # ---- appendix: the deficit index, K = 3 ---------------------------------------
-    fig = plt.figure(figsize=(11.5, 4.6))
-    gs = fig.add_gridspec(2, 2, height_ratios=[3.2, 0.62], hspace=0.3, wspace=0.2)
-    for c, (tag, spec) in enumerate(SETS):
-        fit = k3_panel(tag, "fi10")
-        ax, axc = fig.add_subplot(gs[0, c]), fig.add_subplot(gs[1, c])
-        draw(ax, axc, fit, show_rho=(tag == "ssm"))
-        ax.set_title(f"{LABEL['fi10']}, {spec}", loc="left", fontsize=9.5)
-        axc.set_xlabel("age")
-        record(rows, tag, "fi10", fit)
-    fig.text(0.01, -0.02, "As the main-text trajectory figure, for the ten-deficit index at $K = 3$.", fontsize=7.4, color=INK2, va="top")
-    fig.savefig(FIG / "fig_trajectories_fi10.png")
-    plt.close(fig)
-
     t = pd.DataFrame(rows)
     t.to_csv(DESC / "paper_trajectories.csv", index=False)
-    print(f"wrote fig_class_trajectories_by_K.png and fig_trajectories_fi10.png to {FIG}")
+    print(f"wrote fig_class_trajectories_by_K.png to {FIG}")
     return 0
 
 

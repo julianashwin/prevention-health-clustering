@@ -19,6 +19,4 @@ cd paper && pdflatex paper_skeleton && bibtex paper_skeleton && pdflatex paper_s
   skeleton.
 - `references.bib` — natbib bibliography.
 
-Placeholders, deliberately: the Bayesian mixture results are on the archived
-P-FULL measure until refitted on the paper's measure; Exhibit 2 is paused;
-the introduction is not started.
+The introduction is not started.

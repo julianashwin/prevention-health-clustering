@@ -6,8 +6,9 @@ mortality event carried as masked channels.
 
 Gaussian channels are chosen by name (``gauss_channels``): the paper's runs
 pair a physical variant (``theta`` or ``h``) with the mental GRM
-(``theta_ment_nodepr``); the archived four-channel fits paired
-``theta_phys_func`` with the mental GRM and a chronic count.
+(``theta_ment_nodepr``). The chronic-count channel the Stan program carries is
+off (``use_chronic`` False): the condition count is already an item of the
+physical measure.
 
 Persistence is class and channel specific (rho[k, c]); the innovation and
 "spike" scales are channel specific and common to the classes.
@@ -42,7 +43,6 @@ from prevention_health_clustering.config import DEFAULT_AGE_CENTER, DEFAULT_AGE_
 from prevention_health_clustering.runner.fit import _cohort_ids
 
 GAUSS_CHANNELS = ("theta", "theta_ment_nodepr")
-ARCHIVED_CHANNELS = ("theta_phys_func", "theta_ment_nodepr")
 
 
 @dataclass
@@ -60,6 +60,7 @@ def build_multidim_payload(
     n_classes: int = 3,
     ar_mode: int = 0,
     holdout_last_k: int | None = None,
+    holdout_first_k: int | None = None,
     min_person_obs: int | None = None,
     use_chronic: bool = False,
     use_mortality: bool = True,
@@ -82,9 +83,12 @@ def build_multidim_payload(
     dropped = 0
     # The sample filter is applied to EVERY variant, not only the holdout
     # ones, so that baseline / AR / holdout differ by specification alone.
+    if holdout_last_k is not None and holdout_first_k is not None:
+        raise ValueError("holdout_last_k and holdout_first_k are exclusive.")
     if min_person_obs is not None:
-        if holdout_last_k is not None and min_person_obs <= holdout_last_k:
-            raise ValueError("min_person_obs must exceed holdout_last_k.")
+        held_k = holdout_last_k if holdout_last_k is not None else holdout_first_k
+        if held_k is not None and min_person_obs <= held_k:
+            raise ValueError("min_person_obs must exceed the held-out k.")
         n = frame.groupby("pidp")["age"].transform("size")
         dropped = int((n < min_person_obs).groupby(frame["pidp"]).first().sum())
         frame = frame[n >= min_person_obs].reset_index(drop=True)
@@ -98,12 +102,17 @@ def build_multidim_payload(
     lo = bounds["lo"].to_numpy() + 1
     hi = bounds["hi"].to_numpy() + 1
 
-    if holdout_last_k is None:
+    if holdout_last_k is None and holdout_first_k is None:
         fit_start, fit_end = lo, hi
         hold_start = np.zeros(len(lo), dtype=int)
         hold_end = np.zeros(len(lo), dtype=int)
     else:
-        held = frame.groupby("_person").cumcount(ascending=False) < holdout_last_k
+        # the last k rows of each person's block are held out, or with holdout_first_k the FIRST k:
+        # the type-from-an-initial-value exercise, where the held row sits before the fitted
+        # window, so Stan's conditional held-out density is not meaningful and the runner skips it;
+        # mortality then also starts at the first fitted row
+        held = (frame.groupby("_person").cumcount(ascending=False) < holdout_last_k if holdout_last_k is not None
+                else frame.groupby("_person").cumcount() < holdout_first_k)
         held = held.to_numpy()
         fit_start, fit_end, hold_start, hold_end = [], [], [], []
         for p in range(len(lo)):
@@ -327,5 +336,5 @@ def write_multidim_data(payload: MultidimPayload, output_dir: Path) -> Path:
     return path
 
 
-__all__ = ["ARCHIVED_CHANNELS", "GAUSS_CHANNELS", "MultidimPayload", "build_multidim_payload",
+__all__ = ["GAUSS_CHANNELS", "MultidimPayload", "build_multidim_payload",
            "multidim_inits", "write_multidim_data"]

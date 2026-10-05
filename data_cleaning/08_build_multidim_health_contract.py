@@ -20,7 +20,7 @@ encoding (the death is recorded at the wave AFTER the last interview, see
 the archived 08_build_multidim_contract.py). Rows carry mort_event 1 on a
 decedent's last row and 0 elsewhere. Birth year from xwavedat as always.
 
-Reads health_measure.parquet and grm2_scores.parquet; writes under
+Reads health_measure.parquet and mental_grm.parquet; writes under
 data/processed/contracts/ (gitignored).
 """
 
@@ -47,7 +47,7 @@ def main() -> int:
     ensure_runtime_directories()
     md = PROCESSED_DATA_DIR / "measures"
     health = pd.read_parquet(md / "health_measure.parquet", columns=["pidp", "wave", "age", "theta", "h"])
-    mental = pd.read_parquet(md / "grm2_scores.parquet", columns=["pidp", "wave", "theta_ment_nodepr"])
+    mental = pd.read_parquet(md / "mental_grm.parquet", columns=["pidp", "wave", "theta_ment_nodepr"])
     scores = health.merge(mental, on=["pidp", "wave"], how="left")
     print(f"health rows {len(health):,}; with a mental score {scores['theta_ment_nodepr'].notna().sum():,}")
     scores = scores.dropna(subset=["theta", "h", "theta_ment_nodepr"])

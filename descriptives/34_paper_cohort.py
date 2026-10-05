@@ -1,6 +1,6 @@
 """Birth-decade cohort effects in the AR(1) plus measurement error fits.
 
-For each variant (h, theta, deficit index), from artifacts/health-ssm-cohort/:
+For each variant (h, theta), from artifacts/health-ssm-cohort/:
   row 1  class paths of the cohort fit at the 1950s reference (solid) against
          the fit without cohort effects (dashed), in the variant's units
   row 2  observed mean of the variant by age within birth decades, raw

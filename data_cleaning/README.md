@@ -6,12 +6,13 @@ inputs — the health measure and the cost index — in order:
 | Script | Produces |
 |---|---|
 | `01_build_panel.py` | `data/processed/ukhls_indresp_processed.csv`: the processed UKHLS panel |
-| `02_build_measures.py` | `data/interim/sf12_items_long.parquet` (the item extract every later step reads) and `data/processed/measures/sf12_measures.parquet`: subscales, US/UK PCS-MCS variants, `PCS_phys_only`, SF-6D utility, Farivar composites |
+| `02_build_measures.py` | `data/interim/sf12_items_long.parquet` (the item extract every later step reads): the SF-12 and GHQ-12 items, age and identifiers, one row per person-wave |
 | `03_build_chronic.py` | `data/processed/measures/chronic_conditions.parquet`: per-condition ever indicators, diagnosis ages, clinical group counts, 10-year-recency counts |
-| `04_build_health.py` | `data/processed/measures/health_measure.parquet`: the health measure as `theta`, `h`, `fi10` and the weighted-sum twin `ws`, plus item parameters, Q3, the latent age profile and the appendix weights |
+| `04_build_health.py` | `data/processed/measures/health_measure.parquet`: the health measure as `theta`, `h` and the weighted-sum twin `ws`, plus item parameters, Q3, the latent age profile and the appendix weights |
 | `04b_build_frailty.py` | `data/processed/measures/frailty_index.parquet`: a Rockwood-style frailty index, the share of 31 equal-weight deficits (six SF-12 physical items graded 0-1, eight impairment areas, the ever-diagnosed conditions; higher = frailer), its shifted log, log(frailty + 1/31), which keeps the 7% of zeros at the floor, and for reference the log on positive frailty only as in Hosseini, Kopecky and Zhao (2022). A comparison ruler, not the paper's measure; runs after 04 and before 07, which carries both as auxiliary contract columns (`frailty`, `logfrailty`) without changing the contract's rows or metrics |
+| `04c_build_mental_grm.py` | `data/processed/measures/mental_grm.parquet`: the mental GRM score `theta_ment_nodepr` (three SF-12 mental testlets and two GHQ-12 wording testlets, no depression diagnosis), the multidimensional model's second channel; also `mental_grm_items.csv` |
 | `05_build_cost_proxy.py` | `data/processed/measures/cost_index.parquet`: the flat-rate and condition-weighted cost index, one row per person-wave that answered the utilisation block |
-| `07_build_health_contract.py` | `data/processed/contracts/health_lifecycle_20_89_minobs3_v1`: the clustering contract on the health measure, carrying `theta`, `h` and `fi10` as metrics (38,963 people, the P-FULL roster), with `frailty` and `logfrailty` as auxiliary columns |
+| `07_build_health_contract.py` | `data/processed/contracts/health_lifecycle_20_89_minobs3_v1`: the clustering contract on the health measure, carrying `theta` and `h` as metrics (38,963 people), with `frailty` and `logfrailty` as auxiliary columns |
 | `08_build_multidim_health_contract.py` | `data/processed/contracts/multidim_health_20_89_minobs3_v1`: the multidimensional contract, the health contract's people with the mental GRM (`theta_ment_nodepr`, from the archived GRM-2 banks) on every row, carrying `theta`, `h`, `theta_ment_nodepr` and the death event on each decedent's last row (38,181 people, 2,045 deaths) |
 | `06_build_observables.py` | `data/processed/measures/observables.parquet` and `observables_person.parquet`: equivalised household net income as within-wave percentile ranks, and highest qualification, read from the raw tab files; the paper's observational comparison |
 
@@ -29,17 +30,14 @@ they derive from licensed UKHLS microdata and must never be committed.
 validated SF-12 physical testlets (GH, PF, RP, BP), three counts over the UKHLS
 impairment areas (functional, self-care, sensory) and one count of
 ever-diagnosed physical conditions. 387,599 person-waves, 69,958 people, ages
-20–90. It is reported three ways, all monotone in the same answers: `theta`
-from the graded-response model, `h` from its expected-score curve on [0, 1],
-and `fi10`, a ten-deficit index anyone can compute by hand. What it is and why
-it is this: `measuring_health/health_measure_construction.tex`. The search
-behind the choice is archived (see below).
+20–90. It is reported two ways, both monotone in the same answers: `theta`
+from the graded-response model and `h` from its expected-score curve on
+[0, 1]. What it is and why it is this:
+`measuring_health/health_measure_construction.tex`.
 
 Every run gates on: no positive local dependence between testlets (max Yen's
-Q3 +0.05), the EAP identity (Var(theta) + mean posterior variance = 1), the
-three variants agreeing in rank (Spearman 0.99), and — while the search
-outputs are still on disk — exact reproduction of the search's P-LIM3+CC
-scores.
+Q3 +0.05), the EAP identity (Var(theta) + mean posterior variance = 1), and the
+weighted-sum twin agreeing with h in rank (Spearman 0.99).
 
 ## Validation carried by the other steps
 
@@ -61,22 +59,13 @@ admission's weight within decile of the health measure, never globally. The
 index is a cost variable, so it covers every person-wave that answered the
 utilisation block (301,390 of them), health score or not.
 
-## archive/
+## Removed
 
-The measure search and the earlier measure generations, moved intact and still
-runnable. Each script's docstring says what superseded it and who still reads
-its output.
-
-| Script | Status |
-|---|---|
-| `02_build_contracts.py` | PCS-based clustering contracts; the fits in `artifacts/` were estimated on them |
-| `04_build_grm.py` | the first graded-response measure (`grm_scores.parquet`); also the EIT-note replication |
-| `06_build_grm2.py` | the physical/mental bank generation, P-FUNC / P-FULL / P-REC (`grm2_scores.parquet`) |
-| `07_build_grm_contracts.py` | frozen lifecycle contracts for the GRM clustering channels (`physgrm_*`, `combgrm_*`) |
-| `07_build_limitation_banks.py` | the measure search: six limitation banks under both models, ten condition banks |
-| `08_build_multidim_contract.py` | the four-channel multidimensional contract |
-
-Archived does not mean dead: several `descriptives/` scripts and the existing
-clustering fits still read `grm_scores.parquet`, `grm2_scores.parquet` and the
-contracts. What is settled is that new work uses `health_measure.parquet`, and
-that the clustering contract on it is the next build step to write.
+The measure search and the earlier measure generations (SF-12 PCS/MCS and
+their variants, SF-6D, the physical GRM banks P-FUNC / P-FULL / P-REC, the
+combined GRM, the ten-deficit index and the four-channel multidimensional
+contract) have been removed from the repository together with the fits on
+them. The project reports four health measures: `theta` and `h`, and the
+31-deficit frailty index and its log as robustness measures; the mental GRM
+(`04c_build_mental_grm.py`) is the second channel of the multidimensional
+model.

@@ -61,10 +61,34 @@ def load_attribution() -> pd.DataFrame:
     return out
 
 
+def extract_utilisation() -> pd.DataFrame:
+    cache = INTERIM_DATA_DIR / "utilisation_long.parquet"
+    if cache.exists():
+        return pd.read_parquet(cache)
+    frames = []
+    for wi, w in enumerate("abcdefghijklmno", start=1):
+        path = UKHLS_PANEL_DIR / f"{w}_indresp.tab"
+        header = set(pd.read_csv(path, sep="\t", nrows=0).columns)
+        cols = {f"{w}_{s}": s for s in ("hl2gp", "hl2hop", "hosp", "hospd", "hospch", "servuse1")
+                if f"{w}_{s}" in header}
+        if not cols:
+            continue
+        df = pd.read_csv(path, sep="\t", usecols=["pidp"] + list(cols),
+                         low_memory=False).rename(columns=cols)
+        for c in cols.values():
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+            df.loc[df[c] < 0, c] = np.nan
+        df["wave"] = wi
+        frames.append(df)
+    out = pd.concat(frames, ignore_index=True)
+    out.to_parquet(cache, index=False)
+    return out
+
+
 def main() -> int:
     ensure_runtime_directories()
     costs = UnitCosts()
-    util = pd.read_parquet(INTERIM_DATA_DIR / "utilisation_long.parquet")
+    util = extract_utilisation()      # cached in data/interim/utilisation_long.parquet
     # the index is a cost variable: every person-wave that answered the
     # utilisation block gets one, whether or not it carries a health score.
     age = pd.read_parquet(INTERIM_DATA_DIR / "sf12_items_long.parquet",

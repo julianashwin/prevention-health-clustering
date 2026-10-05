@@ -1,18 +1,15 @@
-"""The next batch on the paper's health contract, one fit at a time.
+"""The AR(1)-without-"spike" comparison and the held-out twins, one fit at a time.
 
-Two things the paper still takes from the archived P-FULL measure:
+  AR(1) without a measurement-error term (ar_mode 1), theta and h. The paper's
+  recommendation --- estimate persistence with AR(1) plus a one-period "spike",
+  not with a plain AR(1) --- rests on this comparison: without the "spike" rho
+  has to absorb the one-period noise and is pulled down. Same people and rows
+  as the fits in artifacts/health-ssm/.
 
-  AR(1) without a measurement-error term (ar_mode 1). The note's
-  recommendation --- estimate persistence with AR(1) plus measurement error,
-  not with AR(1) --- rests on a comparison run on P-FULL, where rho went from
-  .78/.27/.39 to .95/.90/.86 once the one-period error was allowed. These
-  three fits put the same comparison on the paper's own measure, on the same
-  people and rows as the fits already in artifacts/health-ssm/.
-
-  Held-out twins of the AR(1) plus measurement error fits: each person's last
-  two observations are dropped from the likelihood and scored as a conditional
+  Held-out twins of the AR(1) plus "spike" fits: each person's last two
+  observations are dropped from the likelihood and scored as a conditional
   predictive density, with the sample restricted to people observed at least
-  five times. These replace the held-out table, which is still on P-FULL.
+  five times (the prediction exercises of descriptives/33_paper_prediction.py).
 
 Cheapest and most load-bearing first, so an overnight run lands the AR(1)
 comparison by morning. Logs to artifacts/health-next/<tag>/run.log; the queue
@@ -39,7 +36,6 @@ HO = ["--holdout-last-k", "2", "--holdout-min-obs", "5"]
 JOBS = [
     ("health-theta-ar1", "health-theta-ar1", []),
     ("health-h-ar1", "health-h-ar1", []),
-    ("health-fi10-ar1", "health-fi10-ar1", []),
     ("health-theta-ssm-ho", "health-theta-ssm", HO),
     ("health-h-ssm-ho", "health-h-ssm", HO),
 ]

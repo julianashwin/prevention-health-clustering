@@ -27,7 +27,7 @@ from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DI
 
 MEAS = PROCESSED_DATA_DIR / "measures"
 TAB = ROOT_DIR / "paper" / "tables"
-VARIANTS = [("theta", r"$\theta$"), ("h", "$h$"), ("fi10", "deficit index")]
+VARIANTS = [("theta", r"$\theta$"), ("h", "$h$")]
 # the paper's correlation table: theta, h and the two frailty indices, the frailty indices negated so higher is healthier
 CORR_VARIANTS = [("theta", r"$\theta$"), ("h", "$h$"), ("neg_frailty", "frailty index (negated)"), ("neg_logfrailty", "log frailty (negated)")]
 BANDS = [(20, 44), (45, 64), (65, 90)]
@@ -67,7 +67,7 @@ def z(s):
 def main() -> int:
     TAB.mkdir(parents=True, exist_ok=True)
     hm = pd.read_parquet(MEAS / "health_measure.parquet")
-    sf = pd.read_parquet(MEAS / "sf12_measures.parquet", columns=["pidp", "wave", "sf12pcs_dv", "sf12mcs_dv"])
+    sf = pd.read_csv(PROCESSED_DATA_DIR / "ukhls_indresp_processed.csv", usecols=["pidp", "wave", "sf12pcs_dv", "sf12mcs_dv"])
     ch = pd.read_parquet(MEAS / "chronic_conditions.parquet")
     ncols = [c for c in ch.columns if c.startswith("n_")]
     ch = ch.assign(n_chronic=ch[ncols].sum(axis=1))[["pidp", "wave", "n_chronic"]]

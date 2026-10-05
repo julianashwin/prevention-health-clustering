@@ -39,7 +39,7 @@ def main() -> int:
     n_def = fr.attrs["n_deficits"]
     fr = fr.dropna(subset=["frailty"]).reset_index(drop=True)
     fr["age"] = fr["age"].astype(int)
-    hm = pd.read_parquet(md / "health_measure.parquet", columns=["pidp", "wave", "h", "theta", "fi10"])
+    hm = pd.read_parquet(md / "health_measure.parquet", columns=["pidp", "wave", "h", "theta"])
     both = hm.merge(fr, on=["pidp", "wave"])
     print(f"frailty index: {n_def} deficits, {len(fr):,} person-waves scored; {len(both):,} also carry the health measure "
           f"({len(both) / len(hm):.1%} of its rows)")
@@ -50,7 +50,7 @@ def main() -> int:
         g = pd.DataFrame({"age": fr["age"], "y": np.log(fr["frailty"] + c)}).groupby("age")["y"].var()
         print(f"  log(frailty + {lab}): variance at 25 {g.loc[23:27].mean():.3f}, 45 {g.loc[43:47].mean():.3f}, 65 {g.loc[63:67].mean():.3f}, "
               f"85 {g.loc[83:87].mean():.3f}; peak at {int(g.loc[25:88].idxmax())}")
-    for v in ("h", "theta", "fi10"):
+    for v in ("h", "theta"):
         print(f"  Spearman frailty vs {v}: {spearmanr(both['frailty'], both[v]).statistic:+.3f}")
     fr[["pidp", "wave", "age", "frailty", "log_frailty", "log_frailty_pos"]].to_parquet(md / "frailty_index.parquet", index=False)
     print(f"wrote {md / 'frailty_index.parquet'}")

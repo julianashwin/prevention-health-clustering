@@ -47,9 +47,8 @@ UKHLS_PANEL_DIR = RAW_DATA_DIR / "UKDA-6614-tab" / "tab" / "ukhls"
 # UKHLS release waves a..o.
 MAX_PERSON_OBSERVATIONS = 15
 
-DEFAULT_HEALTH_METRIC = "sf12pcs_dv"
-DEFAULT_SECONDARY_METRIC = "sf12mcs_dv"
-DEFAULT_HEALTH_METRICS: tuple[str, ...] = (DEFAULT_HEALTH_METRIC,)
+DEFAULT_HEALTH_METRIC = "theta"
+DEFAULT_HEALTH_METRICS: tuple[str, ...] = ("theta", "h")
 
 # The frozen lifecycle window. Ages are inclusive at both ends in the public
 # interface; internal slicing uses a half-open [start, stop) convention.
@@ -101,7 +100,6 @@ __all__ = [
     "DEFAULT_LIFECYCLE_MAX_AGE",
     "DEFAULT_LIFECYCLE_MIN_AGE",
     "DEFAULT_MIN_OBS_PER_PERSON",
-    "DEFAULT_SECONDARY_METRIC",
     "FOLD_COUNT",
     "INTERIM_DATA_DIR",
     "MAX_AGE",

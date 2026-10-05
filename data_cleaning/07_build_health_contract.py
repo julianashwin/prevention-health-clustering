@@ -1,14 +1,13 @@
 """The frozen clustering contract on the paper's health measure.
 
-One lifecycle contract (ages 20-89, at least three observations, the same
-collapse and standardisation conventions as every earlier contract) carrying
-the three reported variants of the measure as metrics, so a fit on theta, on
-h and on the deficit index runs on exactly the same people and rows:
+One lifecycle contract (ages 20-89, at least three observations) carrying
+both reported variants of the measure as metrics, so a fit on theta and on h
+runs on exactly the same people and rows:
 
-    health_lifecycle_20_89_minobs3_v1    theta, h, fi10
+    health_lifecycle_20_89_minobs3_v1    theta, h
 
 Birth year comes from xwavedat (birthy, doby_dv fallback), as for the
-archived GRM contracts. The Rockwood-style frailty index and its log
+every earlier contract. The Rockwood-style frailty index and its log
 (04b_build_frailty.py) ride along as auxiliary columns, ``frailty`` and
 ``logfrailty``, averaged over a person-age's waves like the metrics (the log,
 log(frailty + 1/31), taken of that average, so zeros sit at the floor); they are not metrics, so they change
@@ -32,13 +31,13 @@ from prevention_health_clustering.contracts.sample_contract import (
     write_contract,
 )
 
-SPEC = ContractSpec(contract_id="health_lifecycle_20_89_minobs3_v1", metrics=("theta", "h", "fi10"))
+SPEC = ContractSpec(contract_id="health_lifecycle_20_89_minobs3_v1", metrics=("theta", "h"))
 
 
 def main() -> int:
     ensure_runtime_directories()
     scores = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "health_measure.parquet",
-                             columns=["pidp", "wave", "age", "theta", "h", "fi10"])
+                             columns=["pidp", "wave", "age", "theta", "h"])
     xw = pd.read_csv(UKHLS_PANEL_DIR / "xwavedat.tab", sep="\t",
                      usecols=["pidp", "birthy", "doby_dv"], low_memory=False)
     for c in ("birthy", "doby_dv"):
@@ -47,7 +46,7 @@ def main() -> int:
     xw["birthy"] = xw["birthy"].fillna(xw["doby_dv"])
     panel = scores.merge(xw[["pidp", "birthy"]], on="pidp", how="left")
     result = build_contract(SPEC, panel)
-    # auxiliary rulers: person-age means over the waves the contract collapsed, not metrics
+    # auxiliary measures: person-age means over the waves the contract collapsed, not metrics
     fr = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "frailty_index.parquet", columns=["pidp", "wave", "frailty"])
     fr = panel[["pidp", "wave", "age"]].assign(age=lambda x: x["age"].astype(int)).merge(fr, on=["pidp", "wave"])
     fr = fr.groupby(["pidp", "age"], as_index=False)["frailty"].mean()

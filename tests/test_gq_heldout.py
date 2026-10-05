@@ -48,8 +48,7 @@ def simulate(n_persons=400, seed=99):
         for age in ages:
             rows.append({"pidp": pid, "age": int(age), "wave": 1,
                          "birthy": 1960,
-                         "sf12pcs_dv": 50 + 8 * level
-                         - 0.15 * (age - 55) + rng.normal(0, 4)})
+                         "theta": level - 0.02 * (age - 55) + rng.normal(0, 0.5)})
     return pd.DataFrame(rows)
 
 
@@ -127,13 +126,13 @@ def check(model_name: str, ar: bool, tmp_dir="artifacts/test-gq"):
 
 
 def test_ar_conditional_gq_matches_numpy():
-    got_ar, got_mg = check("pcs-ar1", ar=True)
+    got_ar, got_mg = check("health-theta-ar1", ar=True)
     # conditioning on the last fitted value can only help on average
     assert got_ar.mean() > got_mg.mean(), (got_ar.mean(), got_mg.mean())
 
 
 def test_without_ar_the_two_estimands_coincide():
-    got_ar, got_mg = check("pcs-headline", ar=False,
+    got_ar, got_mg = check("health-theta-base", ar=False,
                            tmp_dir="artifacts/test-gq-noar")
     assert np.abs(got_ar - got_mg).max() < 1e-9
 

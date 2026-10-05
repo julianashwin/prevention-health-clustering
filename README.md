@@ -41,17 +41,9 @@ it; then it moves into the package.
 
 | Component | Check | Result |
 |---|---|---|
-| Panel + contracts | vs frozen roster | 50,194 persons / 446,966 rows exact; PCS mean bit-identical |
-| Fold manifest | vs frozen ID | `1797b5c5a937d7f5671d` reproduced exactly |
-| PCS model | full roster vs published | max 0.05 posterior SDs |
-| MCS model | full roster vs published | max 0.04 posterior SDs |
-| Joint PCS+MCS | full roster, dispersed chains | R-hat 1.0036; shares 13.4/27.9/58.7 vs report 13.4/27.5/59.2 |
-| Mixed five-channel | synthetic recovery, off-bounds truth | all groups pass; R-hat 1.008 |
-| Held-out scoring | leakage probe | exactly 0 at a 1e-12 gate |
-| SF-12 measures | vs the PCS construction note | `sf12pcs_dv` rebuilt to max err 0.0054 (MCS same, given the zero floor); UK norms, variant-D row and the 6.6-pt artifact exact; SF-6D tariff worked example/ceiling/floor pass |
-| GRM (physical) | vs the EIT note's grm.rds fit | own-code Python refit: same 498,424 person-years, discriminations to 3e-5, person-wave theta to 1e-5, age latent distributions to 5dp |
-| GRM-2 (phys + mental) | 11 self-validation gates | functioning + condition banks, GHQ wording testlets triggered by Q3 as pre-specified; tracks the original GRM at r = 0.994; ever-diagnosis sensitivity quantified in measuring_health/health_measures_note.pdf (archived) |
-| Health measure | 6 gates per run | the bank the project uses (P-LIM3+CC): max positive Q3 +0.05, EAP identity 1.000, the three reported variants agreeing in rank at 0.99, and exact reproduction of the measure search's scores — see measuring_health/health_measure_construction.pdf |
+| Health measure | gates per run | the bank the project uses: max positive Q3 +0.05, EAP identity 1.000, the weighted-sum twin agreeing with h in rank at 0.99 — see measuring_health/health_measure_construction.pdf |
+| Mental GRM | 3 gates per run | the diagnosis-free mental bank, GHQ wording testlets triggered by Q3 as pre-specified; EAP identity 1.000 (`data_cleaning/04c_build_mental_grm.py`) |
+| Held-out windows | `tests/test_gq_heldout.py`, `tests/test_payload_holdout.py` | Stan's held-out generated quantities match a numpy reimplementation on simulated data; last-k, first-k and age holdouts partition the rows as specified |
 
 ## Setup
 

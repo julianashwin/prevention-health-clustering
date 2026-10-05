@@ -1,7 +1,7 @@
 """Figures 3 and 4: the non-parametric types and their between/within anatomy.
 
-Figure 3 (fig_clusters.png, h and theta; the deficit index and, beside it, the same
-three panels for partial K-means on predicted cost go to fig_clusters_fi10_cost.png
+Figure 3 (fig_clusters.png, theta; the same three panels for partial K-means on
+predicted cost go to fig_clusters_predcost.png
 for the appendix), one column per variant of the measure:
   top     cluster mean paths, K = 3, with the within-cluster +/- 1 sd band; the
           class shares in the title
@@ -9,8 +9,8 @@ for the appendix), one column per variant of the measure:
           cluster: the persistence of what the types do not explain
   bottom  cluster composition of the person-waves observed at each age
 
-Figure 4 (fig_cluster_decomposition.png, h and theta; the deficit index goes to
-fig_cluster_decomposition_fi10.png for the appendix), the clustering version of Exhibit 1:
+Figure 4 (fig_cluster_decomposition.png, theta; h and the frailty indices with
+--measures), the clustering version of Exhibit 1:
   (a) the cross-sectional variance at each age split into between-cluster
       (Var of the cluster means, age-specific shares) and within
   (b) Var_j(d_j,a): the between-type variance of the one-year change of the
@@ -200,7 +200,7 @@ def main() -> int:
     pd.DataFrame(note).to_csv(DESC / f"paper_cluster_autocorr{tag}.csv", index=False)
     # agreement between every pair of typologies on disk
     lab_all = pd.read_parquet(DESC / "paper_kmeans_labels.parquet")
-    avail = [v for v in ("theta", "h", "frailty", "logfrailty", "fi10", "predcost", "mental") if ((lab_all["variant"] == v) & (lab_all["lo"] == MIN_AGE)).any()]
+    avail = [v for v in ("theta", "h", "frailty", "logfrailty", "predcost", "mental") if ((lab_all["variant"] == v) & (lab_all["lo"] == MIN_AGE)).any()]
     LL = {v: load_labels(v) for v in avail}
     rows = []
     for a_ in avail:

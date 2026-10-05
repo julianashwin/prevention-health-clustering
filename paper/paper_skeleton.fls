@@ -274,6 +274,15 @@ INPUT ./figures/fig_prediction_mortality.png
 INPUT ./figures/fig_prediction_mortality.png
 INPUT ./figures/fig_prediction_mortality.png
 INPUT ./figures/fig_prediction_mortality.png
+INPUT ./figures/fig_type_from_initial.png
+INPUT ./figures/fig_type_from_initial.png
+INPUT ./figures/fig_type_from_initial.png
+INPUT ./figures/fig_type_from_initial.png
+INPUT ./tables/tab_type_from_initial.tex
+INPUT ./tables/tab_type_from_initial.tex
+INPUT ./tables/tab_type_from_initial.tex
+INPUT ./tables/tab_type_from_initial.tex
+INPUT tables/tab_type_from_initial.tex
 INPUT ./figures/fig_returns_bayes.png
 INPUT ./figures/fig_returns_bayes.png
 INPUT ./figures/fig_returns_bayes.png
@@ -445,6 +454,10 @@ INPUT ./figures/fig_cluster_decomposition_mental.png
 INPUT ./figures/fig_cluster_decomposition_mental.png
 INPUT ./figures/fig_cluster_decomposition_mental.png
 INPUT ./figures/fig_cluster_decomposition_mental.png
+INPUT ./figures/fig_bayes_mixtures_mental.png
+INPUT ./figures/fig_bayes_mixtures_mental.png
+INPUT ./figures/fig_bayes_mixtures_mental.png
+INPUT ./figures/fig_bayes_mixtures_mental.png
 INPUT paper_skeleton.aux
 INPUT ./paper_skeleton.out
 INPUT ./paper_skeleton.out

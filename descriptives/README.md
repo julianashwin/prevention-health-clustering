@@ -5,10 +5,13 @@ Descriptive figures and tables. Scripts import the package and write to
 `src/prevention_health_clustering/plotting`, not here.
 
 The measure the project uses is built by `data_cleaning/04_build_health.py`;
-`21_health_measure.py` is the descriptive that documents it. Scripts numbered
-01-20 were written against the earlier measure generations and read
-`measure_panel.parquet`, `grm_scores.parquet` or `grm2_scores.parquet`, which
-`data_cleaning/archive/` still builds.
+`21_health_measure.py` is the descriptive that documents it, and
+`15_cost_validation.py`, `16_cost_convexity.py` and `17_cost_age_interaction.py`
+document the cost index (`measuring_health/`). The project reports four health
+measures only: theta and h, and the 31-deficit frailty index and its log as
+robustness measures; the mental GRM is the second channel of the
+multidimensional model. The earlier measure generations and the scripts that
+read them have been removed.
 
 Paper scripts (`2x`-`4x`, all on the health measure; figures to
 `paper/figures/`, table fragments to `paper/tables/`, data to
@@ -16,7 +19,7 @@ Paper scripts (`2x`-`4x`, all on the health measure; figures to
 
 | Script | Produces |
 |---|---|
-| `22_paper_kmeans.py` | partial K-means, K = 3, on theta / h / fi10 over 20-90, and on sliding and backward-expanding age windows (h, theta); labels, trajectories, composition; ~15 min on 4 processes |
+| `22_paper_kmeans.py` | partial K-means, K = 3, on theta / h over 20-90, and on sliding and backward-expanding age windows (h, theta); labels, trajectories, composition; ~15 min on 4 processes |
 | `23_paper_exhibit1.py` | Exhibit 1: mean, variance and covariance rows, h and theta (`fig_exhibit1.png`) |
 | `24_paper_measure_tables.py` | correlations with PCS/MCS/chronic count, mortality by age band, cost gradient by age band (`tab_measure_*.tex`) |
 | `25_paper_clusters.py` | Figures 3 and 4: types with within-type bands and autocorrelation; between/within, Var(d) and Cov(H, d) by age |
@@ -41,32 +44,21 @@ Paper scripts (`2x`-`4x`, all on the health measure; figures to
 
 **Frailty comparison.** `22_paper_kmeans.py`, `23_paper_exhibit1.py`, `25_paper_clusters.py`, `29_paper_moments.py` and `37_paper_cost_mortality_age.py` take `--frailty`, which runs Figures 1-5 on the 31-deficit frailty index and its shifted log, log(frailty + 1/31), (`data_cleaning/04b_build_frailty.py`) instead of h and theta, writing `*_frailty.png` to `paper/figures/` and `*_frailty.csv` to `artifacts/descriptives/` beside the draft's outputs without touching them. Order: `22 --frailty` before `25 --frailty`. Not yet in the draft.
 
+**Type from an initial value.** `22_paper_kmeans.py --first-held` runs the K-means on theta with each person's first row (by age) dropped, people with at least four rows, stored as variant `theta_firstheld`; `43_paper_type_from_initial.py` then predicts each typology's type (that K-means, and the modal class of the first-row-held-out mixtures in `artifacts/health-firstheld/`, from `clustering/runs/health_firstheld_queue.py`) and the modal class of the first-row-held-out multidimensional fit in `artifacts/multidim-health/theta-ssm-mort-firstho/`, from `clustering/runs/multidim_firstheld_launch.sh`) from age, the observables and theta at the first row (plus the mental score for the multidimensional types), multinomial logit on a 70/30 split, plus the mixture's own posterior from the single first observation (`fig_type_from_initial.png`, `tab_type_from_initial.tex`, `paper_type_from_initial{,_by_age}.csv`). Order: `22 --first-held`, the fits, then `43`.
+
 **Mental health.** The same five scripts take `--mental`, which runs Figures 1-5 on the mental GRM (`theta_ment_nodepr` in `data/processed/measures/grm2_scores.parquet`, variant `mental`, higher = better) for the paper's mental-health appendix, writing `*_mental.png` and `*_mental.csv`. The K-means (`22 --mental`, then `25 --mental`) runs on the multidim health contract's rows, the rows the univariate mental Bayesian fits (`clustering/runs/mental_queue.py`) and the multidimensional fits use.
 
 `_paper_common.py` holds the loaders, the path smoother and the Exhibit 1 helpers they share; `_paper_moments.py` the identification panel (one row per person-age, at least four observed ages) and the pooled-moment, case-fit and row-fit machinery ported from the companion pipeline.
 
-Earlier scripts, in dependency order:
+The measure and cost-index notes (`measuring_health/`):
 
 | Script | Produces |
 |---|---|
-| `21_health_measure.py` | the health measure construction note's three figures (`measuring_health/figures/fig_health_*.png`) + `artifacts/descriptives/health_measure_properties.csv` |
-| `baseline_measures/` | the archived measure search: 85 candidates against every criterion, its own README |
-| `01_measure_landscape.py` | `data/processed/measures/measure_panel.parquet` + correlation/age-mean CSVs under `artifacts/descriptives/` |
-| `02_cluster_figure.py` | partial K-means trajectory panels (`docs/figures/fig_cluster_trajectories.png`) + agreement table |
-| `03_moments_grid.py` | mean/variance/covariance-rows grid (`docs/figures/fig_moments_grid.png`) |
-| `04_ever_sensitivity.py` | the ever-diagnosis accumulation checks (`docs/figures/fig_ever_sensitivity.png`) |
-| `05_grm_versions_figure.py` | the measure-choice panel across GRM versions (`docs/figures/fig_grm_versions.png`) + criteria CSV |
-| `06_information_ceiling.py` | item-information decomposition per GRM (`docs/figures/fig_grm_information.png`) + ceiling/floor and floor-depth tables |
-| `14_expected_cost.py` | the two margins of in-patient cost and whether convexity survives logs (`docs/figures/fig_expected_cost.png`) |
-| `13_convexity_detail.py` | how much of the healthcare convexity survives the axis and link choices (`docs/figures/fig_convexity_detail.png`) |
-| `12_outcome_prediction.py` | mortality and utilisation prediction from each model's classes, in and out of sample (`docs/figures/fig_outcome_prediction.png`) |
-| `11_class_composition.py` | model class composition by age for all twelve fits (`artifacts/descriptives/class_composition_by_age.csv`) |
-| `10_multidim_trajectories.py` | class trajectories and shares for the four multidimensional fits, all three channels (`docs/figures/fig_multidim_trajectories.png`) |
-| `09_combined_grm_model.py` | the combined GRM drawn as hurdles on the health axis (`docs/figures/fig_combined_grm_model.png`) |
-| `08_trajectory_comparison.py` | fitted class trajectories and shares across the eight fits (`docs/figures/fig_trajectory_comparison.png`) + spread table |
-| `07_convexity.py` | convexity of in-/out-patient use and GP contact in each metric (`docs/figures/fig_convexity.png`) + tests CSV |
+| `21_health_measure.py` | the health measure construction note's figures (`measuring_health/figures/fig_health_*.png`) and its properties table |
+| `15_cost_validation.py` | `fig_cost_validation.png`: the cost index against the utilisation it is built from |
+| `16_cost_convexity.py` | `fig_cost_convexity.png`: convexity of cost in pounds on the four measures and under every costing assumption (`cost_convexity.csv`) |
+| `17_cost_age_interaction.py` | `fig_cost_age_interaction.png`: the cost gradient within age bands |
 
-Figures live under `measuring_health/figures/` (the table above still spells
-some of them `docs/figures/`, the folder's former name). They are aggregate
+Figures live under `measuring_health/figures/`. They are aggregate
 statistics and safe to commit; everything person-level stays under `data/`
 (gitignored).

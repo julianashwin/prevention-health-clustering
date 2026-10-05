@@ -517,7 +517,7 @@ Small robustness exercise:
 		\item On $h$ (Appendix~\ref{app:measures}) the healthiest-class collapse spreads rather than resolves as classes are added: the top two classes have persistence $0.52$ and $0.19$ at $K=4$, and $0.39$ and $0.18$ at $K=5$, covering about half the sample.
 		\item Multidimensional model (Figure~\ref{fig:multidim}): the physical measure ($\theta$; $h$ in Appendix~\ref{app:measures}) and a mental GRM (the three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis; Appendix~\ref{app:mental} looks at it on its own) as Gaussian channels, plus mortality, one shared class structure; the health contract's people with a mental score on every row, 38,181 people and 2,045 deaths. Under AR(1) plus ``spike'' the persistence is class and channel specific while the innovation and ``spike'' scales are common to the classes; the hazard is Gompertz--Makeham, $\lambda_k(a)=c+b_k e^{\vartheta_k(a-55)}$, integrated over each row's years at risk, with class-specific level and slope and a common Makeham constant.
 		\item The physical typology survives the extra channels. Under AR(1) plus ``spike'' the classes are $.19/.51/.31$ with physical persistence $.94/.91/.87$, and 77\% of people land in the same class as under the single-channel fit. On $h$ (Appendix~\ref{app:measures}) the healthiest class keeps its collapse, persistence $0.28$, even though its mental persistence is $0.86$.
-		\item With one level shift per birth decade on both channels, common to the classes (Figure~\ref{fig:multidim_cohort} in Appendix~\ref{app:cohort}), the multidimensional fit is unchanged: shares $.18/.50/.32$, physical persistence $.94/.90/.86$, the same ``spike'' scales, a class-1 to class-3 hazard ratio of $11.5$ at 55 and $3.2$ at 85 against $10.6$ and $3.3$ without the shifts, and 76\% of people in their single-channel class. The shifts themselves fall monotonically from the 1920s to the 2000s, by $0.9$ sd on $\theta$ and $1.3$ sd on the mental score, with the caveat on reading them as cohort effects set out below.
+		\item With one level shift per birth decade on both channels, common to the classes (Figure~\ref{fig:multidim_cohort} in Appendix~\ref{app:cohort}), the multidimensional fit is unchanged: shares $.18/.50/.32$, physical persistence $.94/.90/.86$, the same ``spike'' scales, a class-1 to class-3 hazard ratio of $11.5$ at 55 and $3.2$ at 85 against $10.6$ and $3.3$ without the shifts, and 76\% of people in their single-channel class. Its held-out twin predicts exactly as the fit without shifts does (the cohort rows of Figures~\ref{fig:pred} and \ref{fig:predmort}: $R^2$ $0.61$ and $0.74$ for $\theta_{t+1}$ from the classes and the forecast, against $0.61$ and $0.74$). The shifts themselves fall monotonically from the 1920s to the 2000s, by $0.9$ sd on $\theta$ and $1.3$ sd on the mental score, with the caveat on reading them as cohort effects set out below.
 		\item Mental health is faster and noisier than physical health in every class: persistence $.93/.88/.81$ against $.94/.91/.87$ on $\theta$, and a ``spike'' of $0.54$ against $0.42$, so the signal share of the mental channel is $0.45$--$0.67$ against $0.56$--$0.74$. A shared persistence across channels, as in earlier versions, would have been wrong. The worst physical class sits two thirds of a standard deviation below the middle class on mental health at 55 and recovers half of that by 90; the healthiest class improves with age.
 		\item Mortality is strongly graded by class and converges with age: the yearly hazard of the worst class is 10.6 times the best class's at 55 and 3.3 times at 85 under AR(1) plus ``spike'' (7.1 and 2.7 under independent residuals), the sickest class having the flattest Gompertz slope ($0.09$ against $0.13$ per year). The Makeham constant is below $10^{-4}$ in every fit. Mortality describes survival by class; it does not define the classes. This is where the survivor-bias discussion lives.
 		\item Note that in the AR(1) plus ``spike'' case, the class composition by age now looks like it reflects mortality selection. We need to look into this a bit more, but it is certainly promising!
@@ -554,7 +554,7 @@ Small robustness exercise:
 	\label{sec:observables}
 	
 	\begin{itemize}
-		\item Figure~\ref{fig:obs}, in the layout of the earlier PCS version: (a) the three types; (b) every cell of highest qualification $\times$ sex $\times$ white/other ethnic group $\times$ income tercile, 40 groups with at least 30 people at an age; (c) education; (d) deciles of the person's mean within-wave rank of equivalised household net income (both built from the raw files, \code{data\_cleaning/06\_build\_observables.py}). Region is left out of (b) because twelve regions empty most cells; add it if the point needs making with more lines.
+		\item Figure~\ref{fig:obs}: (a) the three types; (b) every cell of highest qualification $\times$ sex $\times$ white/other ethnic group $\times$ income tercile, 40 groups with at least 30 people at an age; (c) education; (d) deciles of the person's mean within-wave rank of equivalised household net income (both built from the raw files, \code{data\_cleaning/06\_build\_observables.py}). Region is left out of (b) because twelve regions empty most cells; add it if the point needs making with more lines.
 		\item Gradients exist and are in the expected order: at 50, $\theta$ is $0.21$ for degree holders against $-0.20$ for no qualification, and $0.44$ for the top income decile against $-0.39$ for the bottom, with the income gap widest at 55 ($0.87$ standard deviations).
 		\item But even the 40-way partition spans a band of $0.9$ to $1.1$ standard deviations across ages 30 to 70, against $1.5$ to $2.0$ between the types.
 		\item The between-group share of the cross-sectional variance is 3\% for education, 5--8\% for income deciles and 6--9\% for the 40 cells, against 48--65\% for the types; the observable partitions are essentially independent of the types (ARI $0.01$--$0.03$).
@@ -578,11 +578,11 @@ Small robustness exercise:
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_prediction.png}
-		\caption{Out-of-sample gain over an age-only quadratic in predicting the measure, the cost proxy in pounds and employment (ages 20--64) one and two waves ahead, from each set of predictors known at $t$, on $\theta$, with every class posterior and forecast from a fit that held out the two target rows. In the employment panel the dashed ($t+1$) and dotted ($t+2$) lines mark age plus employment at $t$. The same figure on $h$ is in Appendix~\ref{app:measures}.}
+		\caption{Out-of-sample gain over an age-only quadratic in predicting the measure, the cost proxy in pounds and employment (ages 20--64) one and two waves ahead, from each set of predictors known at $t$, on $\theta$, with every class posterior and forecast from a fit that held out the two target rows; the cohort rows use the multidimensional fit with birth-decade shifts. In the employment panel the dashed ($t+1$) and dotted ($t+2$) lines mark age plus employment at $t$. The same figure on $h$ is in Appendix~\ref{app:measures}.}
 		\label{fig:pred}
 	\end{figure}
 	
-	\begin{table}[H]\centering\footnotesize
+	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
 		\input{tables/tab_prediction}
 		\caption{Out-of-sample scores by predictor set, outcome and horizon, on the held-out fits on $\theta$; $R^2$ for the continuous outcomes, AUC for employment. The same table on $h$ is in Appendix~\ref{app:measures}.}
 		\label{tab:pred}
@@ -596,9 +596,28 @@ Small robustness exercise:
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=0.62\linewidth]{fig_prediction_mortality.png}
-		\caption{Predicting death, AUC gain over an age-only quadratic. (a, c) Every person-wave at risk on the full-sample fits: death before the next wave. (b, d) The held-out fits: death after the last interview against leaving the panel alive, predicted from the last fitted row. On $\theta$; the same figure on $h$ is in Appendix~\ref{app:measures}.}
+		\caption{Predicting death, AUC gain over an age-only quadratic. (a, c) Every person-wave at risk on the full-sample fits: death before the next wave. (b, d) The held-out fits: death after the last interview against leaving the panel alive, predicted from the last fitted row. The cohort rows use the multidimensional fit with birth-decade shifts. On $\theta$; the same figure on $h$ is in Appendix~\ref{app:measures}.}
 		\label{fig:predmort}
 	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=0.95\linewidth]{fig_type_from_initial.png}
+		\caption{Predicting the type from a single initial observation, on $\theta$. Every typology is fitted without each person's first row (people with at least four rows, 33,880): partial K-means on the remaining rows, the independent-residuals and AR(1) plus ``spike'' mixtures with the first row held out, the type being the modal class of the posterior from the fitted window, and the multidimensional AR(1) plus ``spike'' fit with mortality likewise (on the multidimensional contract's people with at least four rows, 33,248; posterior from both channels and survival through the fitted window). (a) Accuracy on the test 30\% by predictor set, multinomial logit on what is known at the first row; dashed, the majority-type rate. ``Model posterior'': the class posterior the fitted mixture itself implies from the one observation, no regression. (b) The same accuracy by age at the first observation.}
+		\label{fig:typeinit}
+	\end{figure}
+
+	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
+		\input{tables/tab_type_from_initial}
+		\caption{Accuracy and macro one-vs-rest AUC on the test 30\% for each predictor set and typology, Figure~\ref{fig:typeinit}.}
+		\label{tab:typeinit}
+	\end{table}
+
+	\begin{itemize}
+		\item \textbf{Type from one observation} (Figure~\ref{fig:typeinit}, Table~\ref{tab:typeinit}; \code{descriptives/43\_paper\_type\_from\_initial.py}). The types are refitted without each person's first row, so that the first observation can be used to predict them without having shaped them. One reading of $\theta$ classifies about two people in three: accuracy $0.65$ on the K-means types and $0.66$ on the independent-residuals classes against majority rates of $0.42$--$0.43$, with a macro AUC of $0.81$ on both. Age at the first row adds nothing to the majority rate and the observables about five points; on top of $\theta$ they add one.
+		\item On the AR(1) plus ``spike'' classes the accuracy is $0.70$ but the majority rate is $0.59$: once persistence is in the model the posterior concentrates its modal assignments in the middle class (59\% modal against a 48\% share), so a single reading has less to separate. The AUC is the same $0.81$. The mixture's own posterior from the one observation, which discounts it for the ``spike'', does as well as the regression ($0.69$; $0.65$ on the independent-residuals classes): the fitted model already extracts what one observation has to say.
+		\item On the multidimensional classes, $\theta$ at the first row alone gives $0.64$ against a majority rate of $0.52$ (AUC $0.78$); adding the mental score at the first row takes it to $0.68$ (AUC $0.82$), and the model's own posterior from the two first-row scores gives $0.67$ ($0.82$). One reading of each channel classifies the joint type about as well as one reading of $\theta$ classifies the physical type.
+		\item By age at the first observation, a reading at 20--34 classifies the K-means and independent-residuals types worse ($0.60$--$0.61$) than one at 35 or later ($0.66$--$0.69$); on the AR(1) plus ``spike'' classes the gain over the majority rate is smallest at 20--34, where nearly everyone's modal class is the middle one. The second row is typically only a year after the first, so this measures what one observation says about the type, not how far ahead the type can be seen; holding out the first two or three rows would answer that.
+	\end{itemize}
 	
 	%% =============================================================================
 	\section{Prevention exercises}
@@ -788,11 +807,11 @@ Small robustness exercise:
 	
 	\begin{figure}[H]
 		\includegraphics[width=\linewidth]{fig_cost_convexity}
-		\caption{Cost index in pounds against five health measures: by decile, per standard deviation of each measure, and the sensitivity of the convexity to every costing assumption the index rests on. Measures oriented so higher means better health. Panel (c) varies the spell rule, maternity treatment, condition weighting and top-band value, each with a winsorised-at-the-99th-percentile twin.}
+		\caption{Cost index in pounds against the four health measures ($\theta$, $h$, and the frailty index and log frailty negated): by decile, per standard deviation of each measure, and the sensitivity of the convexity to every costing assumption the index rests on. Measures oriented so higher means better health. Panel (c) varies the spell rule, maternity treatment, condition weighting and top-band value, each with a winsorised-at-the-99th-percentile twin.}
 		\label{fig:costconvex}
 	\end{figure}
 	
-	\textbf{The costing assumptions do not matter, and neither does the health measure for the sign.} All twelve variants of the sensitivity grid --- one spell, two spells, one per five nights; maternity in or out; flat or condition-weighted; top band at 15 or 30 --- are convex in pounds on the health measure's $\theta$, with person-clustered $t$ between $19$ and $39$. Winsorising at the 99th percentile halves the magnitude and changes nothing else; the sickest-to-healthiest ratio stays between $8.2\times$ and $14.4\times$. The spell ambiguity, which looked like the most damaging gap in the data, is not binding. Convexity also holds on every health measure in the figure: $h$, the UKHLS PCS, the SF-6D utility and the mental-health $\theta$, with the smallest $t$ at $10.3$. What the horizontal measure sets is the size of the bend per standard deviation, not its sign: the quadratic term is \pounds201 on $\theta$ against \pounds113 on $h$, and \pounds106 against \pounds35 on capped costs.
+	\textbf{The costing assumptions do not matter, and neither does the health measure for the sign.} All twelve variants of the sensitivity grid --- one spell, two spells, one per five nights; maternity in or out; flat or condition-weighted; top band at 15 or 30 --- are convex in pounds on the health measure's $\theta$, with person-clustered $t$ between $19$ and $39$. Winsorising at the 99th percentile halves the magnitude and changes nothing else; the sickest-to-healthiest ratio stays between $8.2\times$ and $14.4\times$. The spell ambiguity, which looked like the most damaging gap in the data, is not binding. Convexity also holds on every health measure in the figure: $t = 10.3$ on $h$, $22.6$ on log frailty and $5.8$ on the frailty index in levels, against $19.5$ on $\theta$. What the horizontal measure sets is the size of the bend per standard deviation, not its sign: the quadratic term is \pounds201 on $\theta$ against \pounds113 on $h$, \pounds237 on log frailty and \pounds65 on the frailty index, and \pounds106 against \pounds35 on $\theta$ and $h$ on capped costs.
 	
 	\begin{figure}[H]
 		\includegraphics[width=\linewidth]{fig_cost_age_interaction}
@@ -894,7 +913,7 @@ Small robustness exercise:
 		\label{fig:pred_h}
 	\end{figure}
 	
-	\begin{table}[H]\centering\footnotesize
+	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
 		\input{tables/tab_prediction_h}
 		\caption{As Table~\ref{tab:pred}, on $h$.}
 		\label{tab:pred_h}
@@ -1121,6 +1140,16 @@ Small robustness exercise:
 		\item The level-change covariance across types is positive from the late twenties to the late fifties and negative from about 58 to 70, then small: the types fan out slowly in mid-life and close up around retirement, when the mean rises.
 	\end{itemize}
 
-	\todo{Bayesian mixtures on the mental GRM (independent residuals, AR(1) plus ``spike'', and with birth-decade shifts) to follow once the fits land; they are queued behind the multidimensional cohort fits.}
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_bayes_mixtures_mental.png}
+		\caption{As Figure~\ref{fig:bayes}, $K=3$ mixtures on the mental GRM, on the multidimensional contract's rows: (a) independent residuals, (b) an AR(1) latent state plus a one-period ``spike'', (c) the same with one level shift per birth decade common to the classes, paths and observed class means at the 1950s with every score net of its decade shift. Dashed red: the K-means types of Figure~\ref{fig:clusters_mental}.}
+		\label{fig:bayes_mental}
+	\end{figure}
+
+	\begin{itemize}
+		\item Under independent residuals the mixture reproduces the K-means types: shares $.16/.43/.41$ against $.20/.42/.38$, class paths at about $-1.3$, $-0.2$ and $+0.6$ at 50, each with the dip to 50 and the rise after 60.
+		\item Under AR(1) plus ``spike'' the classes are a different partition. The persistence is $.94/.80/.53$ with a ``spike'' scale of $0.54$, so the signal shares are $0.72/0.45/0.29$, and the largest class (48\%) is the lowest, running from $-0.2$ at 20 to $-0.5$ at 55 and back; nothing sits near the K-means worst type at $-1$. With half of the variance one-period, the mixture separates people by how persistent their mental score is rather than by its level: the small top class (15\%) is mostly ``spike''. The class composition is flat in age.
+		\item With birth-decade shifts the shares and persistence barely move ($.47/.35/.19$; $.94/.80/.63$), but the shifts are large: relative to the 1950s, $+0.2$ for the 1920s--40s and $-0.9$ for the 2000s, $1.1$ sd across the 1940s--2000s, twice the physical shift. At the 1950s every class path then declines with age, so the rise after 60 in Figure~\ref{fig:exhibit1_mental} is being read as the older cohorts' higher level. The age--cohort caveat of Section~\ref{subsec:parametric} applies with more force here, since the whole post-60 rise sits inside the fifteen-year window where age and birth year are nearly collinear.
+	\end{itemize}
 
 \end{document}

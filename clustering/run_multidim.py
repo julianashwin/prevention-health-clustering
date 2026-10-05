@@ -3,17 +3,15 @@
     python clustering/run_multidim.py --variant ssm --physical theta \
         --with-mortality --output artifacts/multidim-health/theta-ssm-mort
 
-Variants: baseline | holdout | ar1 | ar1-holdout | ssm | ssm-holdout.
-Channels: ``--physical`` picks the physical ruler (theta or h on the paper's
-contract; theta_phys_func on the archived one) and ``--mental`` the mental
-score; ``--with-chronic`` adds the negative-binomial condition count where the
-contract carries it. Mortality is Gompertz-Makeham (see the Stan header).
-Structural diagnostics are computed without touching person-level columns;
-per-person held-out densities are written when a holdout is requested.
-
-The earlier four-channel fits in artifacts/multidim* were run by the previous
-version of this script (logit-quadratic hazard, one persistence per class);
-their stan_data.json files no longer match the current Stan source.
+Variants: baseline | holdout | ar1 | ar1-holdout | ssm | ssm-holdout | ssm-firstho.
+Channels: ``--physical`` picks the physical measure (theta or h) and
+``--mental`` the mental score, both columns of the multidim health contract
+(data_cleaning/08_build_multidim_health_contract.py). Mortality is
+Gompertz-Makeham (see the Stan header). The Stan program also carries an
+optional negative-binomial chronic-count channel, switched off here: the
+condition count is already an item of the physical measure. Structural
+diagnostics are computed without touching person-level columns; per-person
+held-out densities are written when a last-rows holdout is requested.
 """
 
 from __future__ import annotations
@@ -50,6 +48,9 @@ VARIANTS = {
     # the chronic count and mortality hazard are unaffected.
     "ssm":         dict(ar_mode=2, holdout=False),
     "ssm-holdout": dict(ar_mode=2, holdout=True),
+    # each person's FIRST row held out instead (type-from-an-initial-value exercise); the held-out
+    # density is not reported, the class posteriors from the fitted window are what it is for
+    "ssm-firstho": dict(ar_mode=2, holdout=True, first=True),
 }
 
 
@@ -82,7 +83,6 @@ def main(argv=None) -> int:
                              "holdout variants default to holdout-last-k + 3")
     parser.add_argument("--no-mortality", action="store_true", default=True)
     parser.add_argument("--with-mortality", dest="no_mortality", action="store_false")
-    parser.add_argument("--with-chronic", action="store_true")
     parser.add_argument("--cohort", choices=["none", "decade"], default="none",
                         help="birth-decade level shifts on the Gaussian channels, common to the classes")
     parser.add_argument("--init-jitter", type=float, default=0.15)
@@ -99,8 +99,9 @@ def main(argv=None) -> int:
     channels = (args.physical, args.mental)
     payload = build_multidim_payload(
         long, gauss_channels=channels, n_classes=args.classes, ar_mode=cfg["ar_mode"],
-        holdout_last_k=args.holdout_last_k if cfg["holdout"] else None,
-        min_person_obs=min_obs, use_chronic=args.with_chronic,
+        holdout_last_k=args.holdout_last_k if cfg["holdout"] and not cfg.get("first") else None,
+        holdout_first_k=args.holdout_last_k if cfg.get("first") else None,
+        min_person_obs=min_obs, use_chronic=False,
         use_mortality=not args.no_mortality,
         emit_person_quantities=cfg["holdout"], cohort=args.cohort)
     d = payload.data
@@ -204,7 +205,8 @@ def main(argv=None) -> int:
               "wall_hours": wall / 3600, "max_structural_rhat": worst, "worst_param": worst_name,
               "channel_moments": payload.channel_moments, "params": summary,
               "per_chain_means": per_chain, "hazard_by_age": {str(a): v for a, v in hazard.items()}}
-    if cfg["holdout"]:
+    result["holdout"] = "first" if cfg.get("first") else "last" if cfg["holdout"] else "none"
+    if cfg["holdout"] and not cfg.get("first"):
         for label, var in (("ar_conditional", "log_lik_heldout"), ("class_only", "log_lik_heldout_marginal")):
             ll = fit.stan_variable(var)
             lpd = logsumexp(ll, axis=0) - np.log(ll.shape[0])

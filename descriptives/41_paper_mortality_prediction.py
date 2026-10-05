@@ -52,7 +52,9 @@ K = 3
 VARIANTS = ["h", "theta"]
 VL = {"h": "h", "theta": r"\theta"}
 EDUC = ["GCSE", "A-level", "degree or higher"]
-MD_CHAINS = {"theta-ssm-mort": None, "h-ssm-mort": [1, 2, 3]}
+MD_CHAINS = {"theta-ssm-mort": None, "h-ssm-mort": [1, 2, 3], "theta-ssm-mort-cohort": None}
+# the cohort version (birth-decade shifts on both channels, common to the classes) exists on theta only
+MD_COHORT = {"theta": "theta-ssm-mort-cohort"}
 
 
 def logistic_fit(X, y, iters=60, ridge=1e-4):
@@ -74,10 +76,12 @@ def auc(y, s):
     return float((r[y == 1].sum() - n1 * (n1 + 1) / 2) / (n1 * n0))
 
 
-def multidim_posteriors(v: str) -> pd.DataFrame:
+def multidim_posteriors(v: str, tag: str | None = None, prefix: str = "md") -> pd.DataFrame:
     """Full-sample multidim posteriors from the Gaussian channels only and from the full
-    likelihood, and the class-weighted yearly hazard at each row (Gaussian-only weights)."""
-    tag = f"{v}-ssm-mort"; fit_dir = M39.MD / tag
+    likelihood, and the class-weighted yearly hazard at each row (Gaussian-only weights).
+    ``tag`` names the fit (default {v}-ssm-mort); with birth-decade shifts in the fit the
+    scores are netted of each row's shift before the likelihood, as Stan computed it."""
+    tag = tag or f"{v}-ssm-mort"; fit_dir = M39.MD / tag
     d = json.load(open(fit_dir / "stan_data.json")); summ = json.load(open(fit_dir / "run_summary.json"))
     m, _, _ = M39.chain_means(fit_dir, MD_CHAINS[tag])
     theta = np.array([m[f"theta.{k}"] for k in range(1, K + 1)])
@@ -88,6 +92,12 @@ def multidim_posteriors(v: str) -> pd.DataFrame:
     log_b = np.array([m[f"log_b.{k}"] for k in range(1, K + 1)]); slope = np.array([m[f"gomp_slope.{k}"] for k in range(1, K + 1)])
     makeham = m["makeham.1"]
     X = np.asarray(d["X"]); Y = np.asarray(d["y"]); fs, fe = np.asarray(d["fit_start"]), np.asarray(d["fit_end"])
+    n_coh = d.get("N_cohort", 1)
+    if n_coh > 1:
+        ce = np.zeros((2, n_coh))
+        for c in range(2):
+            ce[c, 1:] = [m[f"cohort_effect.{c + 1}.{j}"] for j in range(2, n_coh + 1)]
+        Y = Y - ce[:, np.asarray(d["cohort_id"]) - 1]
     per = np.zeros((len(fs), K))
     for c in range(2):
         per += kalman_person_lp(Y[c], X, coef[c], sigma[c], smeas[c], rho[:, c], np.asarray(d["age_gap"], float), fs, fe)
@@ -101,9 +111,9 @@ def multidim_posteriors(v: str) -> pd.DataFrame:
     age = long["age"].to_numpy(float)
     hz = np.vstack([makeham + np.exp(log_b[k] + slope[k] * (age - 55)) for k in range(K)]).T      # rows x K
     rows = pd.DataFrame({"pidp": long["pidp"], "wave": long["wave"],
-                         "mdg_c1": w_g[person, 0], "mdg_c2": w_g[person, 1],
-                         "mdf_c1": w_full[person, 0], "mdf_c2": w_full[person, 1],
-                         "md_loghaz": np.log((w_g[person] * hz).sum(axis=1))})
+                         f"{prefix}g_c1": w_g[person, 0], f"{prefix}g_c2": w_g[person, 1],
+                         f"{prefix}f_c1": w_full[person, 0], f"{prefix}f_c2": w_full[person, 1],
+                         f"{prefix}_loghaz": np.log((w_g[person] * hz).sum(axis=1))})
     return rows
 
 
@@ -134,6 +144,8 @@ def main() -> int:
             post = post[post["variant"] == v].set_index("pidp")[["class1", "class2"]]
             d = d.join(post.rename(columns={"class1": f"{tag}_c1", "class2": f"{tag}_c2"}), on="pidp")
         d = d.merge(multidim_posteriors(v), on=["pidp", "wave"], how="left")
+        if v in MD_COHORT:
+            d = d.merge(multidim_posteriors(v, MD_COHORT[v], "mdc"), on=["pidp", "wave"], how="left")
         d["a"] = (d["age"] - 55) / 10
         obs = ["income_rank_mean", "female"] + [f"educ_{g}" for g in EDUC]
         SETS = {
@@ -144,6 +156,7 @@ def main() -> int:
             "+ multidim class (health channels only)": ["mdg_c1", "mdg_c2"],
             "+ multidim class (full likelihood, in sample)": ["mdf_c1", "mdf_c2"],
             "+ multidim model hazard": ["md_loghaz"],
+            **({"+ multidim cohort class (health channels only)": ["mdcg_c1", "mdcg_c2"]} if v in MD_COHORT else {}),
             f"+ {v}(t)": [v],
             f"+ {v}(t), {v}(t-1)": [v, "y_lag"],
             f'+ AR(1)+"spike" class, {v}(t)': ["ssm_c1", "ssm_c2", v],
@@ -173,6 +186,8 @@ def main() -> int:
         colmap = {"+ observables": INK2, "+ iid class": CLUSTER[2], '+ AR(1)+"spike" class': CLUSTER[1],
                   "+ multidim class (health channels only)": CLUSTER[0], "+ multidim class": CLUSTER[0],
                   "+ multidim class (full likelihood, in sample)": "#9e9ac8", "+ multidim model hazard": VERM,
+                  "+ multidim cohort class (health channels only)": "#6a51a3", "+ multidim cohort class": "#6a51a3",
+                  "+ multidim cohort forecast": "#6a51a3",
                   '+ AR(1)+"spike" forecast': VERM, "+ multidim forecast": VERM, "+ all": GREEN}
         def colour(n):
             if n in colmap:
@@ -189,7 +204,7 @@ def main() -> int:
                 ax.barh(np.arange(len(names)), q["gain"].fillna(0), color=[colour(n) for n in names])
                 for i, gval in enumerate(q["gain"]):
                     if np.isnan(gval):
-                        ax.text(0.0005, i, "fit running", va="center", fontsize=7, color=INK2)
+                        ax.text(0.0005, i, "no cohort fit on h" if "cohort" in names[i] else "fit running", va="center", fontsize=7, color=INK2)
                 ax.set_yticks(np.arange(len(names)))
                 ax.set_yticklabels([n.replace(f"{v}(t)", f"${VL[v]}(t)$").replace(f"{v}(t-1)", f"${VL[v]}(t-1)$") for n in names], fontsize=8)
                 ax.invert_yaxis(); ax.axvline(0, color=INK2, lw=0.8); ax.grid(True, axis="x")

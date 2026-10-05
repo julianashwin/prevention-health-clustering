@@ -37,7 +37,7 @@ BANDS = {"25-40": (25, 40), "40-60": (40, 60), "60-75": (60, 75), "75-90": (75, 
 OFFS4 = np.array([0, 2, 4, 6])
 
 
-def ident_panel(variants=("theta", "h", "fi10"), min_obs: int = 4) -> pd.DataFrame:
+def ident_panel(variants=("theta", "h"), min_obs: int = 4) -> pd.DataFrame:
     from _paper_common import read_scores
     d = read_scores(variants)
     d = d[d["age"].notna()].assign(age=lambda x: x["age"].astype(int)).sort_values(["pidp", "wave"])

@@ -1,6 +1,6 @@
-"""Baseline K=3 fits on the paper's health measure: theta, h and the deficit index.
+"""Baseline K=3 fits on the paper's health measure: theta and h.
 
-Three registry models on the one contract that carries all three variants
+Two registry models on the one contract that carries both variants
 (data_cleaning/07_build_health_contract.py), run one after another so that,
 with the K=5 fit still sampling, the machine stays within its cores. Each job
 logs to artifacts/health-base/<tag>/run.log; the queue writes digest.json.
@@ -22,8 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = ROOT / "data" / "processed" / "contracts" / "health_lifecycle_20_89_minobs3_v1"
 OUT = ROOT / "artifacts" / "health-base"
 JOBS = [("health-theta-base", "health-theta-base"),
-        ("health-h-base", "health-h-base"),
-        ("health-fi10-base", "health-fi10-base")]
+        ("health-h-base", "health-h-base")]
 
 
 def run_job(job, settings):

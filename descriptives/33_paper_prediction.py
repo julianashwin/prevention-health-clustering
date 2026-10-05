@@ -193,8 +193,12 @@ def single_channel(v: str, tag: str, sub: pd.DataFrame) -> pd.DataFrame:
                   "age_fe": window_ages(d, sub)[0]}
 
 
-def multidim(v: str) -> pd.DataFrame | None:
-    fit_dir = MD / f"{v}-ssm-mort-ho"
+def multidim(v: str, fit: str = "ssm-mort-ho", tag: str = "md"):
+    """The held-out multidimensional fit {v}-{fit}: class posteriors from the fitted window
+    and the forecast spec. With birth-decade shifts in the fit (the -cohort-ho twin) the
+    scores are netted of each row's shift before the likelihood, and the person's shift
+    on the physical channel is carried as ``offset`` so the forecast adds it back."""
+    fit_dir = MD / f"{v}-{fit}"
     if not (fit_dir / "run_summary.json").exists():
         return None
     d = json.load(open(fit_dir / "stan_data.json")); summ = json.load(open(fit_dir / "run_summary.json"))
@@ -211,11 +215,20 @@ def multidim(v: str) -> pd.DataFrame | None:
     sm = [p[f"sigma_meas[{c}]"]["mean"] for c in (1, 2)]
     mort = (np.array([p[f"log_b[{k}]"]["mean"] for k in range(1, K + 1)]),
             np.array([p[f"gomp_slope[{k}]"]["mean"] for k in range(1, K + 1)]), p["makeham[1]"]["mean"])
+    fs = np.asarray(d["fit_start"]); offset = np.zeros(len(fs))
+    n_coh = d.get("N_cohort", 1)
+    if n_coh > 1:
+        ce = np.zeros((2, n_coh))
+        for c in range(2):
+            ce[c, 1:] = [p[f"cohort_effect[{c + 1},{j}]"]["mean"] for j in range(2, n_coh + 1)]
+        cid = np.asarray(d["cohort_id"]) - 1
+        Ys = [Ys[c] - ce[c, cid] for c in range(2)]
+        offset = ce[0, cid[fs - 1]] * mom[ch[0]]["sd"]           # the person's shift, in the measure's units
     w, a0 = posterior_and_forecast(d, Ys, coefs, sigmas, sm, rhos, theta, mort=mort)
     pids = sub.groupby("pidp", sort=False)["pidp"].first().to_numpy()
-    post = pd.DataFrame({"pidp": pids, "md_c1": w[:, 0], "md_c2": w[:, 1]})
-    return post, {"tag": "md", "w": w, "a0": a0, "coef": coefs[0], "rho": rhos[:, 0], "m": mom[ch[0]]["mean"],
-                  "s": mom[ch[0]]["sd"], "pidp": pids, "age_fe": window_ages(d, sub)[0]}
+    post = pd.DataFrame({"pidp": pids, f"{tag}_c1": w[:, 0], f"{tag}_c2": w[:, 1]})
+    return post, {"tag": tag, "w": w, "a0": a0, "coef": coefs[0], "rho": rhos[:, 0], "m": mom[ch[0]]["mean"],
+                  "s": mom[ch[0]]["sd"], "pidp": pids, "age_fe": window_ages(d, sub)[0], "offset": offset}
 
 
 def add_forecasts(at: pd.DataFrame, specs: list[dict], target_age: np.ndarray) -> pd.DataFrame:
@@ -225,6 +238,8 @@ def add_forecasts(at: pd.DataFrame, specs: list[dict], target_age: np.ndarray) -
         ok = ~np.isnan(pos); idx = pos[ok].astype(int)
         fc = np.full(len(at), np.nan)
         fc[ok] = sp["m"] + sp["s"] * forecast(sp["w"][idx], sp["a0"][idx], sp["coef"], sp["rho"], target_age[ok], sp["age_fe"][idx])
+        if "offset" in sp:
+            fc[ok] += sp["offset"][idx]
         at[f"{sp['tag']}_fc"] = fc
     return at
 
@@ -267,7 +282,7 @@ def score_sets(s: pd.DataFrame, oc: str, kind: str, SETS: dict, extra: dict | No
     out = []
     for name, cols in {**SETS, **(extra or {})}.items():
         s2, t2, y2 = s, test, y
-        need = [c for c in cols if c in ("y_lag", "md_c1", "md_c2", "md_fc", "emp_t")]
+        need = [c for c in cols if c in ("y_lag", "md_c1", "md_c2", "md_fc", "mdc_c1", "mdc_c2", "mdc_fc", "emp_t")]
         if need:
             keep = s[need].notna().all(axis=1).to_numpy()
             s2, t2, y2 = s[keep], test[keep], y[keep]
@@ -292,7 +307,9 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
     parts = [single_channel(v, "base", sub), single_channel(v, "ssm", sub)]
     md = multidim(v)
     have_md = md is not None
-    specs = [sp for _, sp in parts] + ([md[1]] if have_md else [])
+    mdc = multidim(v, "ssm-mort-cohort-ho", "mdc")          # birth-decade shifts; theta only so far
+    have_mdc = mdc is not None
+    specs = [sp for _, sp in parts] + ([md[1]] if have_md else []) + ([mdc[1]] if have_mdc else [])
     d = json.load(open(HO / f"health-{v}-ssm-ho" / "stan_data.json"))
     fe, hs, he = (np.asarray(d[k]) for k in ("fit_end", "hold_start", "hold_end"))
     at = sub.iloc[fe - 1][["pidp", "wave", "age", v]].reset_index(drop=True)          # the row at t
@@ -302,11 +319,14 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
     for post, _ in parts:
         at = at.merge(post, on="pidp")
     at = at.merge(md[0], on="pidp", how="left") if have_md else at.assign(md_c1=np.nan, md_c2=np.nan)
+    at = at.merge(mdc[0], on="pidp", how="left") if have_mdc else at.assign(mdc_c1=np.nan, mdc_c2=np.nan)
     frames = {}
     for k, target in ((1, at["age_hs"].to_numpy()), (2, at["age_he"].to_numpy()), (3, at["age_he"].to_numpy() + 1.0)):
         f = add_forecasts(at.copy(), specs, target)
         if not have_md:
             f["md_fc"] = np.nan
+        if not have_mdc:
+            f["mdc_fc"] = np.nan
         frames[k] = outcomes(v, f, k)
     obs = ["income_rank_mean", "female"] + [f"educ_{g}" for g in EDUC]
     SETS = {
@@ -315,10 +335,12 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
         "+ iid class": ["base_c1", "base_c2"],
         '+ AR(1)+"spike" class': ["ssm_c1", "ssm_c2"],
         "+ multidim class": ["md_c1", "md_c2"],
+        "+ multidim cohort class": ["mdc_c1", "mdc_c2"],
         f"+ {v}(t)": [v],
         f"+ {v}(t), {v}(t-1)": [v, "y_lag"],
         '+ AR(1)+"spike" forecast': ["ssm_fc"],
         "+ multidim forecast": ["md_fc"],
+        "+ multidim cohort forecast": ["mdc_fc"],
         f'+ AR(1)+"spike" class, {v}(t)': ["ssm_c1", "ssm_c2", v],
         f"+ multidim class, {v}(t)": ["md_c1", "md_c2", v],
         "+ all": ["ssm_c1", "ssm_c2", v] + obs,
@@ -385,7 +407,8 @@ def main() -> int:
             f.write("\\bottomrule\n\\end{tabular}\n")
         # figure: gain over age, one row per measure, one panel per outcome, paired bars for the horizons
         fig, axes = plt.subplots(len(VSEL), len(OUT), figsize=(12.5, 5.2 * len(VSEL)), sharey="row", squeeze=False)
-        cols = [INK2, CLUSTER[2], CLUSTER[1], CLUSTER[0], ORANGE, ORANGE, VERM, VERM, PURPLE, PURPLE, GREEN]
+        COHORT_COL = "#6a51a3"
+        cols = [INK2, CLUSTER[2], CLUSTER[1], CLUSTER[0], COHORT_COL, ORANGE, ORANGE, VERM, VERM, COHORT_COL, PURPLE, PURPLE, GREEN]
         for r, v in enumerate(VSEL):
             tv = tabs[v]; sets = metas[v]["sets"]; names = sets[1:]
             for ax, (oc, olab, kind, horizons) in zip(axes[r], metas[v]["out"]):
@@ -402,7 +425,7 @@ def main() -> int:
                         ax.axvline(bm, color=INK2, lw=1.0, ls=(0, (4, 2)) if j == 0 else ":", alpha=0.9)
                     for i, gval in enumerate(g):
                         if np.isnan(gval) and j == 0:
-                            ax.text(0.002, i, "fit running", va="center", fontsize=7, color=INK2)
+                            ax.text(0.002, i, "no cohort fit on h" if "cohort" in names[i] else "fit running", va="center", fontsize=7, color=INK2)
                 ax.set_yticks(np.arange(len(names)))
                 ax.set_yticklabels([n.replace(f"{v}(t)", f"${VL[v]}(t)$").replace(f"{v}(t-1)", f"${VL[v]}(t-1)$") for n in names], fontsize=8)
                 ax.invert_yaxis(); ax.axvline(0, color=INK2, lw=0.8); ax.grid(True, axis="x")

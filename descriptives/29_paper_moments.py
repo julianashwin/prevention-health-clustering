@@ -67,8 +67,8 @@ if FRAIL or MENTAL:
     DESIGNS = {"main": DESIGNS["main"]}
 SUFFIX = MENTAL_SUFFIX if MENTAL else FRAILTY_SUFFIX if FRAIL else ""
 # the default run fits every measure once: theta for the main figure, h and the frailty indices for the
-# appendix, and the ten-item deficit index still read by the two appendix summaries
-FIT_VARIANTS = VARIANTS if (FRAIL or MENTAL) else [("theta", LABEL["theta"]), ("h", LABEL["h"]), ("fi10", LABEL["fi10"])] + FRAILTY_VARIANTS
+# appendix
+FIT_VARIANTS = VARIANTS if (FRAIL or MENTAL) else [("theta", LABEL["theta"]), ("h", LABEL["h"])] + FRAILTY_VARIANTS
 
 
 def fit_design(W: np.ndarray, spec: dict) -> dict:

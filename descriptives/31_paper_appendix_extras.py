@@ -108,7 +108,7 @@ def main() -> int:
     # ---- Part B: returns under the estimated cost curve ---------------------------
     d = load_measure()
     cs = d.merge(cost[["pidp", "wave", "cost_capped"]], on=["pidp", "wave"])
-    fig, axes = plt.subplots(5, 3, figsize=(12.5, 15), gridspec_kw={"hspace": 0.45, "wspace": 0.28})
+    fig, axes = plt.subplots(5, len(VARIANTS), figsize=(4.2 * len(VARIANTS), 15), gridspec_kw={"hspace": 0.45, "wspace": 0.28})
     table, recs, check, inv_rows = [], [], [], []
     ref = pd.read_csv(DESC / "paper_returns.csv")
     for j, (v, lab) in enumerate(VARIANTS):
@@ -179,7 +179,7 @@ def main() -> int:
     fig.text(0.01, -0.005, "Top row: the same polynomial refitted within six age bands over each band's 1st-99th "
              "percentile range, against the pooled fit (dashed).\nBelow: as the main-text returns figure, with c(.) the "
              f"polynomial fitted to the capped cost index (£{cap:,.0f} cap) on each variant; treatment moves a person a\n"
-             "share tau of the way to full health (1 for h and the deficit index, the sample maximum for theta), "
+             "share tau of the way to full health (1 for h, the sample maximum for theta), "
              "prevention a share mu of the type's preventable\ndecline. Expectations of c'(.) are age means over the "
              "clustered people, smoothed as the type paths.", fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / "fig_returns_cost.png"); plt.close(fig)

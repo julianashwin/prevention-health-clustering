@@ -57,6 +57,7 @@ def build_payload(
     age_scale: float = DEFAULT_AGE_SCALE,
     holdout_min_age: int | None = None,
     holdout_last_k: int | None = None,
+    holdout_first_k: int | None = None,
     holdout_min_person_obs: int | None = None,
     emit_person_quantities: bool = False,
     grainsize: int = 0,
@@ -73,14 +74,23 @@ def build_payload(
     ``min_obs - k`` fitted rows. The two holdout modes are mutually exclusive.
     Because held-out rows are a within-person suffix, the AR(1) age-gap
     recursion bridges the fit/hold boundary correctly in either mode.
+
+    ``holdout_first_k`` holds out each person's FIRST k observations instead:
+    the types are fitted without the person's initial rows, so that the initial
+    health value can then be used to predict the type (the "type from an initial
+    value" exercise). The held rows sit before the fitted window, so the
+    generated-quantities conditional density, which conditions on the fitted
+    window's last row, is not meaningful in this mode and the runner does not
+    report it; the class posteriors from the fitted window are what it is for.
     """
     spec.validate()
-    if holdout_min_age is not None and holdout_last_k is not None:
-        raise ValueError("holdout_min_age and holdout_last_k are exclusive.")
-    if holdout_last_k is not None:
-        min_obs = holdout_min_person_obs or (holdout_last_k + 1)
-        if min_obs <= holdout_last_k:
-            raise ValueError("holdout_min_person_obs must exceed holdout_last_k.")
+    if sum(x is not None for x in (holdout_min_age, holdout_last_k, holdout_first_k)) > 1:
+        raise ValueError("holdout_min_age, holdout_last_k and holdout_first_k are exclusive.")
+    held_k = holdout_last_k if holdout_last_k is not None else holdout_first_k
+    if held_k is not None:
+        min_obs = holdout_min_person_obs or (held_k + 1)
+        if min_obs <= held_k:
+            raise ValueError("holdout_min_person_obs must exceed the held-out k.")
     missing = [c for c in spec.channels if c not in long.columns]
     if missing:
         raise ValueError(f"Contract is missing channels: {', '.join(missing)}")
@@ -93,7 +103,7 @@ def build_payload(
     # design's population. Drop them here and record how many, rather than
     # failing on a legitimate data condition.
     dropped_no_history = 0
-    if holdout_last_k is not None:
+    if held_k is not None:
         n_obs_per = frame.groupby("pidp")["age"].size()
         keep_ids = n_obs_per[n_obs_per >= min_obs].index
         dropped_no_history = int((n_obs_per < min_obs).sum())
@@ -121,7 +131,7 @@ def build_payload(
         include_groups=False,
     )
 
-    if holdout_min_age is None and holdout_last_k is None:
+    if holdout_min_age is None and held_k is None:
         fit_start = bounds["lo"].to_numpy()
         fit_end = bounds["hi"].to_numpy()
         hold_start = np.zeros(len(bounds), dtype=int)
@@ -130,6 +140,9 @@ def build_payload(
         if holdout_last_k is not None:
             # the last k rows of each person's age-sorted block are held out
             held = frame.groupby("_person").cumcount(ascending=False) < holdout_last_k
+        elif holdout_first_k is not None:
+            # the first k rows of each person's age-sorted block are held out
+            held = frame.groupby("_person").cumcount() < holdout_first_k
         else:
             held = frame["age"] >= holdout_min_age
         fit_start, fit_end, hold_start, hold_end = [], [], [], []

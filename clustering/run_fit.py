@@ -6,9 +6,9 @@ diagnostics computed WITHOUT invoking stansummary over person-level columns,
 and per-person held-out predictive densities extracted directly when a
 holdout is requested.
 
-    python clustering/run_fit.py --model pcs-ar1 \
-        --contract data/processed/contracts/pcs_lifecycle_20_89_minobs3_v1 \
-        --output artifacts/overnight/pcs-ar1 \
+    python clustering/run_fit.py --model health-theta-ssm \
+        --contract data/processed/contracts/health_lifecycle_20_89_minobs3_v1 \
+        --output artifacts/health-ssm/health-theta-ssm \
         [--holdout-last-k 2 --holdout-min-obs 5]
 """
 
@@ -58,6 +58,8 @@ def main(argv=None) -> int:
                              "Use to cap the CPU footprint on a shared machine.")
     parser.add_argument("--init-jitter", type=float, default=0.15)
     parser.add_argument("--holdout-last-k", type=int, default=None)
+    parser.add_argument("--holdout-first-k", type=int, default=None,
+                        help="hold out each person's FIRST k rows (type-from-initial-value exercise)")
     parser.add_argument("--holdout-min-obs", type=int, default=None)
     args = parser.parse_args(argv)
 
@@ -68,8 +70,9 @@ def main(argv=None) -> int:
     payload = build_payload(
         spec, long,
         holdout_last_k=args.holdout_last_k,
+        holdout_first_k=args.holdout_first_k,
         holdout_min_person_obs=args.holdout_min_obs,
-        emit_person_quantities=holdout,
+        emit_person_quantities=holdout or args.holdout_first_k is not None,
     )
     d = payload.data
     n_held = sum(
@@ -142,6 +145,8 @@ def main(argv=None) -> int:
         "model": args.model, "contract": str(args.contract),
         "n_person": int(d["N_person"]), "n_obs": int(d["N_obs"]),
         "held_rows": int(n_held), "wall_hours": wall / 3600,
+        "holdout": ("last" if args.holdout_last_k is not None else "first" if args.holdout_first_k is not None else "none"),
+        "holdout_k": args.holdout_last_k if args.holdout_last_k is not None else args.holdout_first_k,
         "chains": args.chains, "warmup": args.warmup,
         "sampling": args.sampling, "max_structural_rhat": worst_rhat,
         "worst_param": worst_name, "params": summary,

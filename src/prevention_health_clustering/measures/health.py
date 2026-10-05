@@ -19,10 +19,11 @@ limitation in every wave (the wave 1-7 routing applied to all waves), and a top
 count category holding less than 0.5% of person-waves merges into the one
 below, decided on the sample before any fitting.
 
-The measure is reported three ways, all monotone in the same answers:
-``theta`` from the graded-response model, ``h`` from its expected-score curve
-on [0, 1], and ``fi10``, a ten-deficit index anyone can compute by hand. The
-weighted sum that reproduces ``h`` is in ``projection_weights``.
+The measure is reported two ways, both monotone in the same answers:
+``theta`` from the graded-response model and ``h`` from its expected-score
+curve on [0, 1]. The weighted sum that reproduces ``h`` is in
+``projection_weights``; the 31-deficit frailty index and its shifted log, the
+paper's robustness measures, are ``build_frailty_index``.
 
 The search that chose this bank is archived: see the measures note and
 redo_concepts/baseline_measure_comparison.xlsx.
@@ -55,7 +56,6 @@ SF_DEFICITS: dict[str, tuple[str, int, bool]] = {
     "gh": ("sf1", 5, False), "pf_moderate": ("sf2a", 3, True), "pf_stairs": ("sf2b", 3, True),
     "rp_less": ("sf3a", 5, True), "rp_kind": ("sf3b", 5, True), "pain": ("sf5", 5, False),
 }
-DEFICIT_COND_CAP = 6
 # one whole deficit, 1/31: the shift in log(frailty + c). Half the smallest positive value, 0.125/31, was tried
 # first and put the zeros so far below the next value up that they drove the young-age variance.
 FRAILTY_SHIFT = 1 / 31
@@ -92,31 +92,6 @@ def build_health_items(
         c: ncat[c] for c in HEALTH_ITEMS}
 
 
-def build_deficit_index(items: pd.DataFrame, chronic: pd.DataFrame,
-                        age_range: tuple[int, int] = (20, 90)) -> pd.DataFrame:
-    """The ten-deficit index, one minus the mean deficit so 1 is no deficits.
-
-    Deficits: the six SF-12 physical items graded 0 to 1 by response step; the
-    three impairment groups as the share of their areas mentioned; and the
-    condition count capped at six and scaled to 0 to 1. Equal weights, which is
-    only defensible once the areas are grouped: scored area by area the index
-    stops being convex in healthcare cost (archived measures note).
-    """
-    d = items[items["age"].notna() & items["age"].between(*age_range)].copy()
-    D = pd.DataFrame(index=d.index)
-    for name, (col, k, reverse) in SF_DEFICITS.items():
-        x = d[col].where(d[col].isin(range(1, k + 1)))
-        D[name] = (k - x) / (k - 1) if reverse else (x - 1) / (k - 1)
-    for g, codes in HEALTH_GROUPS.items():
-        D[g] = pd.concat([limitation_count(d, (c,)) for c in codes], axis=1).mean(axis=1)
-    ngroups = [f"n_{g}" for g in CONDITION_GROUPS]
-    ch = d[["pidp", "wave"]].merge(chronic[["pidp", "wave", *ngroups]], on=["pidp", "wave"], how="left")
-    total = ch[ngroups].sum(axis=1).where(ch[ngroups].notna().all(axis=1))
-    D["conditions"] = (total.clip(upper=DEFICIT_COND_CAP) / DEFICIT_COND_CAP).to_numpy()
-    fi = D.mean(axis=1).where(D.notna().all(axis=1))
-    return pd.DataFrame({"pidp": d["pidp"].to_numpy(), "wave": d["wave"].to_numpy(),
-                         "fi10": (1 - fi).to_numpy()})
-
 
 def build_frailty_index(items: pd.DataFrame, chronic: pd.DataFrame,
                         age_range: tuple[int, int] = (20, 90)) -> pd.DataFrame:
@@ -128,7 +103,7 @@ def build_frailty_index(items: pd.DataFrame, chronic: pd.DataFrame,
     as a 0/1 deficit, and each ever-diagnosed condition in the chronic inventory
     as a 0/1 deficit (31 deficits on the current inventory). A person-wave is
     scored only when every deficit is observed. Higher is frailer, the opposite
-    orientation of ``h``, ``theta`` and ``fi10``.
+    orientation of ``h`` and ``theta``.
 
     ``log_frailty`` is the log of the index shifted by ``FRAILTY_SHIFT``, one whole
     deficit (1/31), so the 7% of person-waves with no deficit stay in at the floor
@@ -208,7 +183,6 @@ __all__ = [
     "CONDITION_GROUPS",
     "HEALTH_GROUPS",
     "HEALTH_ITEMS",
-    "build_deficit_index",
     "build_frailty_index",
     "FRAILTY_SHIFT",
     "build_health_items",

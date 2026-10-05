@@ -18,7 +18,6 @@ from pathlib import Path
 STAN_DIR = Path(__file__).resolve().parent / "stan"
 
 GAUSSIAN_PANEL = STAN_DIR / "mixture_gaussian_panel.stan"
-MIXED_PANEL = STAN_DIR / "mixture_mixed_panel.stan"
 
 
 @dataclass(frozen=True)
@@ -31,8 +30,8 @@ class ModelSpec:
 
     # Structure
     n_classes: int = 3
-    channels: tuple[str, ...] = ("sf12pcs_dv",)
-    anchor_channel: str = "sf12pcs_dv"
+    channels: tuple[str, ...] = ("theta",)
+    anchor_channel: str = "theta"
     design: str = "quadratic"          # quadratic | linear
     ar_mode: int = 0                   # 0 none | 1 AR(1) | 2 AR(1) + meas. error
     homosigma: bool = True
@@ -101,211 +100,9 @@ class ModelSpec:
 # Registered models
 # ---------------------------------------------------------------------------
 
-PCS_HEADLINE = ModelSpec(
-    name="pcs-headline",
-    stan_file=GAUSSIAN_PANEL,
-    description=(
-        "PCS-only K=3 quadratic growth mixture, shared residual scale, no AR "
-        "term. Matches the published ar1-mixture-residual-rho0-homosigma fit."
-    ),
-    channels=("sf12pcs_dv",),
-    anchor_channel="sf12pcs_dv",
-)
-
-MCS_HEADLINE = ModelSpec(
-    name="mcs-headline",
-    stan_file=GAUSSIAN_PANEL,
-    description="MCS-only K=3, anchored on MCS itself.",
-    channels=("sf12mcs_dv",),
-    anchor_channel="sf12mcs_dv",
-)
-
-JOINT_HEADLINE = ModelSpec(
-    name="joint-headline",
-    stan_file=GAUSSIAN_PANEL,
-    description="Joint PCS+MCS K=3 with one shared latent class, PCS-anchored.",
-    channels=("sf12pcs_dv", "sf12mcs_dv"),
-    anchor_channel="sf12pcs_dv",
-    # The published joint fit used concentration 0.5 where the univariate fits
-    # used 1.5. Negligible against 50k people, but kept for faithfulness.
-    theta_prior_concentration=0.5,
-)
-
-PCS_AR1 = ModelSpec(
-    name="pcs-ar1",
-    stan_file=GAUSSIAN_PANEL,
-    description="PCS-only K=3 with AR(1) persistence in the class residual.",
-    channels=("sf12pcs_dv",),
-    anchor_channel="sf12pcs_dv",
-    ar_mode=1,
-)
-
-PHYSGRM_HEADLINE = ModelSpec(
-    name="physgrm-headline",
-    stan_file=GAUSSIAN_PANEL,
-    description=(
-        "Physical GRM (P-FULL theta: functioning + condition groups) K=3 "
-        "quadratic growth mixture, no AR term."
-    ),
-    channels=("theta_phys_full",),
-    anchor_channel="theta_phys_full",
-)
-
-PHYSGRM_AR1 = ModelSpec(
-    name="physgrm-ar1",
-    stan_file=GAUSSIAN_PANEL,
-    description="Physical GRM (P-FULL theta) K=3 with AR(1) persistence.",
-    channels=("theta_phys_full",),
-    anchor_channel="theta_phys_full",
-    ar_mode=1,
-)
-
-COMBGRM_HEADLINE = ModelSpec(
-    name="combgrm-headline",
-    stan_file=GAUSSIAN_PANEL,
-    description=(
-        "Combined physical+mental GRM theta K=3 quadratic growth mixture, "
-        "no AR term. NOTE the combined bank's known unidimensionality caveat "
-        "(docs/health_measures_note.pdf section 6)."
-    ),
-    channels=("theta_combined",),
-    anchor_channel="theta_combined",
-)
-
-COMBGRM_AR1 = ModelSpec(
-    name="combgrm-ar1",
-    stan_file=GAUSSIAN_PANEL,
-    description="Combined GRM theta K=3 with AR(1) persistence.",
-    channels=("theta_combined",),
-    anchor_channel="theta_combined",
-    ar_mode=1,
-)
-
-PCS_COHORT = ModelSpec(
-    name="pcs-cohort",
-    stan_file=GAUSSIAN_PANEL,
-    description="PCS-only K=3 with shared birth-decade level shifts.",
-    channels=("sf12pcs_dv",),
-    anchor_channel="sf12pcs_dv",
-    cohort="decade",
-)
-
-MIXED_HEALTH = ModelSpec(
-    name="mixed-health",
-    stan_file=MIXED_PANEL,
-    description=(
-        "Five-channel mixed-outcome model: PCS, MCS (Gaussian), self-rated "
-        "health (ordered logit), chronic count (neg. binomial), ADL "
-        "(hurdle neg. binomial). One shared latent class, PCS-anchored, "
-        "class 1 = worst physical health. No survival channel (five-channel "
-        "family); no tanh caps, unlike the quarantined predecessor fits."
-    ),
-    channels=("sf12pcs_dv", "sf12mcs_dv"),  # gaussian block; other channels fixed
-    anchor_channel="sf12pcs_dv",
-    theta_prior_concentration=0.5,
-)
-
-JOINT_AR1_COHORT = ModelSpec(
-    name="joint-ar1-cohort",
-    stan_file=GAUSSIAN_PANEL,
-    description="Joint PCS+MCS with AR(1) persistence and birth-decade shifts.",
-    channels=("sf12pcs_dv", "sf12mcs_dv"),
-    anchor_channel="sf12pcs_dv",
-    ar_mode=1,
-    cohort="decade",
-)
-
-# ---------------------------------------------------------------------------
-# AR(1) state plus one-period measurement error (ar_mode = 2)
-#
-# Under ar_mode 1 the observation is the state, so rho absorbs both true
-# persistence and any transient noise, and is biased towards zero whenever the
-# instrument is noisy. Separating them asks how much of the year-to-year
-# movement in a GRM score is real change in health and how much is the
-# measurement. These three fits put the same question to the original GRM and
-# to both physical variants.
-# ---------------------------------------------------------------------------
-
-GRM_SSM = ModelSpec(
-    name="grm-ssm",
-    stan_file=GAUSSIAN_PANEL,
-    description=(
-        "Original GRM theta, K=3 quadratic growth mixture, AR(1) latent state "
-        "plus i.i.d. measurement error, marginalised by Kalman filter."
-    ),
-    channels=("grm_theta",),
-    anchor_channel="grm_theta",
-    ar_mode=2,
-)
-
-PHYSGRM_FUNC_SSM = ModelSpec(
-    name="physgrm-func-ssm",
-    stan_file=GAUSSIAN_PANEL,
-    description=(
-        "P-FUNC theta (functioning items only), K=3, AR(1) state plus "
-        "measurement error."
-    ),
-    channels=("theta_phys_func",),
-    anchor_channel="theta_phys_func",
-    ar_mode=2,
-)
-
-PHYSGRM_FULL_SSM = ModelSpec(
-    name="physgrm-full-ssm",
-    stan_file=GAUSSIAN_PANEL,
-    description=(
-        "P-FULL theta (functioning plus diagnosed conditions), K=3, AR(1) "
-        "state plus measurement error."
-    ),
-    channels=("theta_phys_full",),
-    anchor_channel="theta_phys_full",
-    ar_mode=2,
-)
-
-
-# K = 4 under the AR(1) plus measurement error specification. Everything else matches the K = 3
-# fits, so the only difference is the number of classes. More classes means
-# more adjacent pairs the ordered anchor intercept has to separate, which is
-# the configuration that produced a mode split in the multidim smoke, so
-# these are watched rather than assumed.
-
-PHYSGRM_FUNC_SSM_K4 = ModelSpec(
-    name="physgrm-func-ssm-k4",
-    stan_file=GAUSSIAN_PANEL,
-    description="P-FUNC theta, K=4, AR(1) state plus measurement error.",
-    channels=("theta_phys_func",),
-    anchor_channel="theta_phys_func",
-    ar_mode=2,
-    n_classes=4,
-)
-
-PHYSGRM_FULL_SSM_K4 = ModelSpec(
-    name="physgrm-full-ssm-k4",
-    stan_file=GAUSSIAN_PANEL,
-    description="P-FULL theta, K=4, AR(1) state plus measurement error.",
-    channels=("theta_phys_full",),
-    anchor_channel="theta_phys_full",
-    ar_mode=2,
-    n_classes=4,
-)
-
-# K = 5 for P-FUNC under the AR(1) plus measurement error specification. Identical to the K=4
-# fit apart from the class count, on the same contract and people.
-
-PHYSGRM_FUNC_SSM_K5 = ModelSpec(
-    name="physgrm-func-ssm-k5",
-    stan_file=GAUSSIAN_PANEL,
-    description="P-FUNC theta, K=5, AR(1) state plus measurement error.",
-    channels=("theta_phys_func",),
-    anchor_channel="theta_phys_func",
-    ar_mode=2,
-    n_classes=5,
-)
-
-
-# The paper's health measure (P-LIM3+CC), baseline K=3 on each reported
-# variant: independent residuals, no AR term, on the one contract that carries
-# all three, so the fits differ by the variant alone.
+# The paper's health measure, baseline K=3 on theta and h: independent
+# residuals, no AR term, on the one contract that carries both, so the fits
+# differ by the variant alone.
 
 HEALTH_THETA_BASE = ModelSpec(
     name="health-theta-base",
@@ -323,16 +120,8 @@ HEALTH_H_BASE = ModelSpec(
     anchor_channel="h",
 )
 
-HEALTH_FI10_BASE = ModelSpec(
-    name="health-fi10-base",
-    stan_file=GAUSSIAN_PANEL,
-    description="Health measure ten-deficit index, K=3, no AR term.",
-    channels=("fi10",),
-    anchor_channel="fi10",
-)
 
-
-# The same three variants under AR(1) plus measurement error: an AR(1) latent
+# The same two variants under AR(1) plus measurement error: an AR(1) latent
 # state plus a one-period measurement error, the paper's stochastic specification.
 
 HEALTH_THETA_SSM = ModelSpec(
@@ -353,18 +142,9 @@ HEALTH_H_SSM = ModelSpec(
     ar_mode=2,
 )
 
-HEALTH_FI10_SSM = ModelSpec(
-    name="health-fi10-ssm",
-    stan_file=GAUSSIAN_PANEL,
-    description="Health measure ten-deficit index, K=3, AR(1) state plus measurement error.",
-    channels=("fi10",),
-    anchor_channel="fi10",
-    ar_mode=2,
-)
-
 
 # The AR(1) plus measurement error fits with a shared birth-decade level shift (the same
-# cohort intercept for every class), as pcs-cohort did on the baseline.
+# cohort intercept for every class).
 
 HEALTH_THETA_SSM_COHORT = ModelSpec(
     name="health-theta-ssm-cohort",
@@ -382,16 +162,6 @@ HEALTH_H_SSM_COHORT = ModelSpec(
     description="Health measure h, K=3, AR(1) plus measurement error, shared birth-decade shifts.",
     channels=("h",),
     anchor_channel="h",
-    ar_mode=2,
-    cohort="decade",
-)
-
-HEALTH_FI10_SSM_COHORT = ModelSpec(
-    name="health-fi10-ssm-cohort",
-    stan_file=GAUSSIAN_PANEL,
-    description="Health measure ten-deficit index, K=3, AR(1) plus measurement error, shared birth-decade shifts.",
-    channels=("fi10",),
-    anchor_channel="fi10",
     ar_mode=2,
     cohort="decade",
 )
@@ -417,15 +187,6 @@ HEALTH_H_AR1 = ModelSpec(
     description="Health measure h, K=3, AR(1) in the class residual, no measurement error.",
     channels=("h",),
     anchor_channel="h",
-    ar_mode=1,
-)
-
-HEALTH_FI10_AR1 = ModelSpec(
-    name="health-fi10-ar1",
-    stan_file=GAUSSIAN_PANEL,
-    description="Health measure ten-deficit index, K=3, AR(1), no measurement error.",
-    channels=("fi10",),
-    anchor_channel="fi10",
     ar_mode=1,
 )
 
@@ -476,42 +237,46 @@ MENTAL_THETA_SSM_COHORT = ModelSpec(
 )
 
 
+# The 31-deficit frailty index and its shifted log, log(frailty + 1/31), the paper's
+# robustness measures (data_cleaning/04b_build_frailty.py; auxiliary columns of the health
+# contract). Higher is frailer, so the ordered anchor puts the HEALTHIEST class first.
+HEALTH_FRAILTY_BASE = ModelSpec(
+    name="health-frailty-base", stan_file=GAUSSIAN_PANEL,
+    description="31-deficit frailty index, K=3 quadratic growth mixture, no AR term.",
+    channels=("frailty",), anchor_channel="frailty")
+HEALTH_FRAILTY_SSM = ModelSpec(
+    name="health-frailty-ssm", stan_file=GAUSSIAN_PANEL,
+    description="31-deficit frailty index, K=3, AR(1) state plus measurement error.",
+    channels=("frailty",), anchor_channel="frailty", ar_mode=2)
+HEALTH_LOGFRAILTY_BASE = ModelSpec(
+    name="health-logfrailty-base", stan_file=GAUSSIAN_PANEL,
+    description="log(frailty + 1/31), K=3 quadratic growth mixture, no AR term.",
+    channels=("logfrailty",), anchor_channel="logfrailty")
+HEALTH_LOGFRAILTY_SSM = ModelSpec(
+    name="health-logfrailty-ssm", stan_file=GAUSSIAN_PANEL,
+    description="log(frailty + 1/31), K=3, AR(1) state plus measurement error.",
+    channels=("logfrailty",), anchor_channel="logfrailty", ar_mode=2)
+
+
 REGISTRY: dict[str, ModelSpec] = {
     spec.name: spec
     for spec in (
-        PCS_HEADLINE,
-        MCS_HEADLINE,
-        JOINT_HEADLINE,
-        PCS_AR1,
-    PHYSGRM_HEADLINE,
-    PHYSGRM_AR1,
-    COMBGRM_HEADLINE,
-    COMBGRM_AR1,
-        PCS_COHORT,
-        JOINT_AR1_COHORT,
-        MIXED_HEALTH,
-        GRM_SSM,
-        PHYSGRM_FUNC_SSM,
-        PHYSGRM_FULL_SSM,
-        PHYSGRM_FUNC_SSM_K4,
-        PHYSGRM_FULL_SSM_K4,
-        PHYSGRM_FUNC_SSM_K5,
         HEALTH_THETA_BASE,
         HEALTH_H_BASE,
-        HEALTH_FI10_BASE,
         HEALTH_THETA_SSM,
         HEALTH_H_SSM,
-        HEALTH_FI10_SSM,
         HEALTH_THETA_SSM_COHORT,
         HEALTH_H_SSM_COHORT,
-        HEALTH_FI10_SSM_COHORT,
         HEALTH_THETA_AR1,
         HEALTH_H_AR1,
-        HEALTH_FI10_AR1,
         *HEALTH_K45,
         MENTAL_THETA_BASE,
         MENTAL_THETA_SSM,
         MENTAL_THETA_SSM_COHORT,
+        HEALTH_FRAILTY_BASE,
+        HEALTH_FRAILTY_SSM,
+        HEALTH_LOGFRAILTY_BASE,
+        HEALTH_LOGFRAILTY_SSM,
     )
 }
 

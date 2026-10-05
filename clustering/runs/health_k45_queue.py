@@ -3,8 +3,7 @@
 theta and h, each under independent residuals (ar_mode 0) and under AR(1)
 plus measurement error (ar_mode 2). Every spec is its K = 3 counterpart with
 only the class count changed (models/registry.py, HEALTH_K45), on the same
-contract, so the comparison across K is clean. The deficit index is left out:
-it has tracked h in every fit so far.
+contract, so the comparison across K is clean.
 
 Order: all four K = 4 fits, independent residuals first because they are
 cheapest, then the same four at K = 5. Warmup is 1,500 rather than 1,000, as
