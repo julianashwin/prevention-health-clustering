@@ -38,7 +38,7 @@ from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import AGES, DESC, FIG, LABEL, MAX_AGE, MIN_AGE, kalman_person_lp  # noqa: E402
-from _style import CLUSTER, INK2, apply_style  # noqa: E402
+from _style import CLUSTER, INK2, apply_style, share_ylim  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
 
@@ -261,6 +261,8 @@ def main() -> int:
               f"shares {np.round(f['share'], 3)}; rho phys {np.round(f['rho'][:, 0], 2)} ment {np.round(f['rho'][:, 1], 2)}; "
               f"hazard ratio 1/{f['K']} at 55 {f['hazard'][0][35] / f['hazard'][-1][35]:.1f}x, at 85 {f['hazard'][0][65] / f['hazard'][-1][65]:.1f}x; "
               + (f"ARI vs single-channel {agree['ari_vs_univariate']:.2f}, same class {agree['same_class']:.0%}" if agree else ""))
+    for c in range(2):       # each channel on one vertical scale across the rows (specifications or class counts)
+        share_ylim(list(axes[:, c]))
     n = fits[0]["n_person"]; ev = fits[0]["events"]
     fig.text(0.01, 0.005,
              f"Multidimensional K = 3 mixtures on the multidim health contract ({n:,} people, the health contract's people with a mental score on every row; "
@@ -268,7 +270,7 @@ def main() -> int:
              "in each channel's units (dotted: the observed class mean at each age, posterior-weighted), the class-specific Gompertz-Makeham yearly hazard "
              "(circles: the posterior-weighted crude death rate by five-year band), and the posterior class composition of the person-waves observed at each age.\n"
              "Under AR(1) + \"spike\" the legend gives each class's persistence on that channel; the innovation and \"spike\" scales are common to the classes. "
-             "The Makeham constant is below 0.0001 in every fit."
+             "The Makeham constant is below 0.0001 in every fit. Each column has one vertical scale across its rows."
              + (" Class paths and observed class means are at the 1950s birth decade, every score net of its estimated decade shift." if COHORT else "")
              + (" Rows: the class count K = 3, 4 and 5 under AR(1) + \"spike\"; classes ordered worst to best." if KMODE else "")
              + (" h + AR(1) + \"spike\" is read over the three chains that share a mode; the fourth sat in the mode "

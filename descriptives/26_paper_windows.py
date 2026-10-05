@@ -23,7 +23,7 @@ from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import DESC, FIG, K, LABEL, MAX_AGE, MIN_AGE, load_labels, load_trajectories  # noqa: E402
-from _style import CLUSTER, INK2, INK3, apply_style  # noqa: E402
+from _style import CLUSTER, INK2, INK3, apply_style, share_ylim  # noqa: E402
 
 SLIDING = [(20, 40), (30, 50), (40, 60), (50, 70), (60, 80), (70, 90)]
 BACKWARD = [(70, 90), (60, 90), (50, 90), (40, 90), (30, 90), (20, 90)]
@@ -81,6 +81,7 @@ def main() -> int:
              "Panel (c): adjusted Rand index between a window's assignment and the lifecycle assignment, on the "
              "people both contain.", fontsize=7.4, color=INK2, va="top")
     sfx = "" if V_ONLY == "theta" else "_h"
+    share_ylim([axes[0, 0], axes[0, 1]])      # the two trajectory panels show the same measure
     fig.savefig(FIG / f"fig_windows{sfx}.png", bbox_inches="tight")
     out = pd.DataFrame(rows)
     out.to_csv(DESC / f"paper_windows_agreement{sfx}.csv", index=False)

@@ -25,3 +25,21 @@ def apply_style() -> None:
         "figure.dpi": 150, "savefig.dpi": 200, "savefig.bbox": "tight",
         "text.color": INK, "axes.labelcolor": INK2,
     })
+
+
+def share_ylim(axes, pad: float = 0.0, label_first_only: bool = False) -> None:
+    """Give every axis in ``axes`` the same vertical limits, the union of their own.
+
+    For panels that show the same quantity (the same measure across class counts,
+    specifications or windows), so that heights can be compared across panels.
+    ``label_first_only`` hides the tick labels on all but the first axis.
+    """
+    axes = [a for a in axes if a is not None]
+    if not axes:
+        return
+    lo = min(a.get_ylim()[0] for a in axes); hi = max(a.get_ylim()[1] for a in axes)
+    span = hi - lo
+    for i, a in enumerate(axes):
+        a.set_ylim(lo - pad * span, hi + pad * span)
+        if label_first_only and i > 0:
+            a.tick_params(labelleft=False)

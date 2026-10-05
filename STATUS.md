@@ -40,7 +40,7 @@ fits; h at K = 4/5 in the multidimensional model; Bayesian expanding windows.
 | Relabel "spike" as "episodic" | Open (a global rename in the draft and the figure footers; `descriptives/` prints "spike" in about 30 places) |
 | Is the C_Hd reversal driven by the small very-ill group? | Open; the bottom-decile and worst-class composition figures exist (`fig:decomp`, `fig:multidim`) but the statement has not been made |
 | Result 2: focus on the by-type form and why the evolution of the mean matters | Open (Section 2 rewrite; see the framework todos below) |
-| Same vertical axis across K panels | Open for `fig_class_trajectories_by_K` and the coming multidimensional K figure |
+| Same vertical axis across K panels | Done (5 Oct): `_style.share_ylim` gives one vertical scale to the six K panels (`fig_class_trajectories_by_K`, theta and h), to each channel across rows in the multidimensional figures (specifications, and K = 3/4/5 when those land), to the sliding and expanding windows, to the raw and net decade profiles, and to the two specifications in the returns figure. Panels on different measures or quantities keep their own scales |
 | More discrimination in the unhealthy type as K rises and as the stochastic structure is added? | Partly: the K = 4/5 single-channel rows are in; the multidimensional K = 4/5 fits are queued |
 | Is there always a bad group, and does K-means understate it because the process is noisy? | Open; the ingredients are `fig:bayes` (dashed K-means lines) and the composition strips |
 | Express type differences as LE / HLE | Open; the Gompertz-Makeham hazards by class in `fig:multidim` give LE directly, HLE needs a health threshold |

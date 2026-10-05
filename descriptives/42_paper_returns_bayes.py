@@ -36,7 +36,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import AGES, DESC, FIG, K, MAX_AGE, MIN_AGE, TAB, bayes_fit, load_labels, load_measure, load_trajectories, smooth_path, write_table  # noqa: E402
-from _style import BLUE, CLUSTER, INK2, ORANGE, VERM, apply_style  # noqa: E402
+from _style import BLUE, CLUSTER, INK2, ORANGE, VERM, apply_style, share_ylim  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
 
@@ -194,6 +194,8 @@ def main() -> int:
         ax.set_title(f"({'ef'[j] if len(SETS) > 1 else 'c'}) ratios", loc="left", fontsize=9.5); ax.legend(fontsize=7.5); ax.set_xlabel("start age $r$")
         for a in axes[:, j]:
             a.grid(True, axis="y"); a.set_xlim(R_GRID[0], R_GRID[-1])
+    for r in range(3):       # the two specifications side by side on one vertical scale per row
+        share_ylim(list(axes[r, :]))
     import textwrap
     footer = (f"Returns on the K = 3 {'partial K-means types' if KMEANS else 'mixture classes'} on {V}, with the cost curve estimated in pounds on {V} (a degree-{deg} polynomial on the cost index, "
              f"{'uncapped' if UNCAPPED else 'capped at the 99th percentile'}, waves 7-15).\nTreatment closes a share tau of the gap to the healthiest observed score; "

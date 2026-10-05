@@ -33,7 +33,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import AGES, CONTRACT, DESC, FIG, K, MAX_AGE, MIN_AGE, bayes_fit, observed_class_means  # noqa: E402
-from _style import CLUSTER, INK2, apply_style  # noqa: E402
+from _style import CLUSTER, INK2, apply_style, share_ylim  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR  # noqa: E402
 
@@ -116,6 +116,7 @@ def main() -> int:
     fig = plt.figure(figsize=(13.5, 8.6))
     gs = fig.add_gridspec(2 * len(row_specs), len(KS), height_ratios=[3.0, 0.55] * len(row_specs), hspace=0.32, wspace=0.16,
                           top=0.95, bottom=0.08)
+    traj_axes = []       # every trajectory panel shows the same measure: one vertical scale for all
     for r, (v, tag, spec) in enumerate(row_specs):
         for c, Kc in enumerate(KS):
             ax = fig.add_subplot(gs[2 * r, c]); axc = fig.add_subplot(gs[2 * r + 1, c])
@@ -133,11 +134,13 @@ def main() -> int:
                     ax.set_ylabel(f"{LABEL[v]}, {spec}", fontsize=9)
                 continue
             draw(ax, axc, fit, show_rho=(tag == "ssm"), ylabel=f"{LABEL[v]}, {spec}" if c == 0 else None)
+            traj_axes.append(ax)
             if r == len(row_specs) - 1:
                 axc.set_xlabel("age")
             record(rows, tag, v, fit)
             print(f"{v} {tag} K={Kc}: rhat {fit['rhat']:.4f}, shares {np.round(fit['share'], 3)}"
                   + (f", rho {np.round(fit['rho'], 2)}" if tag == "ssm" else ""))
+    share_ylim(traj_axes)
     dropped = [f"{name}: chains {', '.join(map(str, ch))} of 4" for name, ch in CHAINS.items()
                if name.split('-')[1] == V_ONLY and name not in missing]
     fig.text(0.01, 0.0,
@@ -146,7 +149,7 @@ def main() -> int:
              "and, under AR(1), the class persistence. Dotted: the observed class mean at each age, the measure averaged over the people observed at that "
              "age weighted by their posterior class probabilities\n(where the summed weight is at least 25). The strip beneath each panel is the "
              "posterior class composition of the person-waves observed at each age. Rows: the variant and the stochastic specification,\nindependent "
-             'residuals or an AR(1) latent state plus a one-period "spike"; columns: the number of classes.' + (f" Not yet fitted: {', '.join(missing)}." if missing else "")
+             'residuals or an AR(1) latent state plus a one-period "spike"; columns: the number of classes. All six panels share one vertical scale.' + (f" Not yet fitted: {', '.join(missing)}." if missing else "")
              + (f" Posterior mean over the chains that share a mode for {'; '.join(dropped)} (the other chain sat in a worse mode)." if dropped else ""),
              fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / ("fig_class_trajectories_by_K.png" if V_ONLY == "theta" else "fig_class_trajectories_by_K_h.png"), bbox_inches="tight")

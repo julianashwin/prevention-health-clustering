@@ -30,7 +30,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import AGES, DESC, FIG, K, MAX_AGE, MIN_AGE, load_measure  # noqa: E402
 VARIANTS = [("theta", r"$\theta$"), ("h", "$h$")]
-from _style import CLUSTER, INK2, INK3, apply_style  # noqa: E402
+from _style import CLUSTER, INK2, INK3, apply_style, share_ylim  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
 
@@ -108,6 +108,8 @@ def main() -> int:
              "omitted from the bottom row. Rows 2 and 3: age-specific means within decades, cells of at least 50 person-waves, "
              "three-year rolling means; row 3 subtracts each decade's estimated shift.",
              fontsize=7.4, color=INK2, va="top")
+    for j in range(len(VARIANTS)):          # rows 2 and 3 are the same profiles, raw and net of the shift
+        share_ylim([axes[1, j], axes[2, j]])
     fig.savefig(FIG / "fig_cohort.png")
     pd.DataFrame(rows).to_csv(DESC / "paper_cohort_effects.csv", index=False)
     print(pd.DataFrame(rows).pivot(index="decade", columns="variant", values="effect_units").round(3).to_string())
