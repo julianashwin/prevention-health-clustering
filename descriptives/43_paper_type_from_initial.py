@@ -134,6 +134,7 @@ def bayes_types(tag: str, sub: pd.DataFrame, first: pd.DataFrame):
     out = pd.DataFrame({"pidp": pids, "type": w.argmax(axis=1)})
     for k in range(K):
         out[f"model_p{k}"] = w0[:, k]
+        out[f"post_p{k}"] = w[:, k]          # the fitted-window posterior, the "truth" the targeting exercise scores against
     return first.merge(out, on="pidp")
 
 

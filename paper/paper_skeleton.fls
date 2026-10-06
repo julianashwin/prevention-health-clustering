@@ -305,6 +305,15 @@ INPUT ./tables/tab_returns_bayes.tex
 INPUT ./tables/tab_returns_bayes.tex
 INPUT ./tables/tab_returns_bayes.tex
 INPUT tables/tab_returns_bayes.tex
+INPUT ./figures/fig_targeting.png
+INPUT ./figures/fig_targeting.png
+INPUT ./figures/fig_targeting.png
+INPUT ./figures/fig_targeting.png
+INPUT ./tables/tab_targeting.tex
+INPUT ./tables/tab_targeting.tex
+INPUT ./tables/tab_targeting.tex
+INPUT ./tables/tab_targeting.tex
+INPUT tables/tab_targeting.tex
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmbx7.tfm

@@ -48,6 +48,11 @@ birth-decade-shift twins of the first-two-rows fits; and
 which waits for the frailty/first-held queue) the multidimensional theta
 AR(1) plus "spike" + mortality fit at K = 4 and K = 5
 (`artifacts/multidim-health/theta-ssm-mort-k{4,5}/`).
+`runs/windows_queue.py` (launcher `runs/windows_launch.sh`) cuts a contract per age
+window from the health contract (`data/processed/contracts/health_window_{lo}_{hi}_v1`,
+rows inside the window, people with at least three) and fits `health-theta-ssm` on
+each, into `artifacts/health-windows/theta-ssm-{lo}-{hi}/`: the Bayesian version of
+the K-means windows figure.
 `run_multidim.py` fits the multidimensional mixture: a physical channel
 (`--physical theta` or `h`) and the mental GRM, Gaussian with optional AR(1)
 or AR(1) plus "spike" and persistence by class and channel, and a Gompertz-Makeham mortality hazard (`--with-mortality`, class-specific

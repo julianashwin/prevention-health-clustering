@@ -15,6 +15,7 @@ the output directory named.
 | `clustering/runs/frailty_firstheld_launch.sh` | frailty base/ssm, logfrailty base/ssm (all done 5-6 Oct, clean), h base first row (done); running: h ssm first row; then theta and h base/ssm with the first two rows held out | `artifacts/health-frailty/queue.log` | `32_paper_bayes_fits.py combined --frailty` / `--logfrailty` (done, in the draft as `fig:bayes_frailty`, `fig:bayes_logfrailty`); `43_paper_type_from_initial.py --h`, `--first2`, `--first2 --h` |
 | `clustering/runs/cohort_first2_launch.sh` | theta and h ssm-cohort with the first two rows held out: both done 6 Oct, clean | `artifacts/health-firstheld/queue_cohort_first2.log` | `43 --first2` (the cohort typology is drawn; the base and ssm rows wait for the first queue) |
 | `clustering/runs/multidim_health_k45_launch.sh` (after the first queue) | theta multidimensional ssm at K = 4, then K = 5 | `artifacts/multidim-health/queue_k45.log` | `39_paper_multidim.py --k` (`fig_multidim_trajectories_by_K.png`) |
+| `clustering/runs/windows_launch.sh` (alongside, launched 6 Oct 16:17) | theta ssm refitted on the ten age windows of the K-means windows figure (window contracts `health_window_{lo}_{hi}_v1`) | `artifacts/health-windows/queue.log` | a Bayesian version of `fig:windows` (script to write: `26` logic on `bayes_fit` with the window contracts); replaces the K-means figure in the main text, K-means version to the appendix (todo at the windows bullet) |
 
 K-means twins for the first-rows exercises (`22_paper_kmeans.py --first-held 1 --variants h`,
 `--first-held 2`) were run on 5 October; the labels sit in
@@ -28,7 +29,7 @@ multidimensional rows as a figure in Section 4 next to `fig:multidim`, with the
 same vertical axis across panels (a feedback item).
 
 On ice by decision (5 October): cohort-shift versions of the first-*one*-row
-fits; h at K = 4/5 in the multidimensional model; Bayesian expanding windows.
+fits; h at K = 4/5 in the multidimensional model.
 
 ## Feedback of 29 September (`paper/feedback_29sept.txt`)
 
@@ -44,7 +45,7 @@ fits; h at K = 4/5 in the multidimensional model; Bayesian expanding windows.
 | Express type differences as LE / HLE | Done (6 Oct): `fig:le` / `tab:le` at the end of subsection (B), from `44_paper_life_expectancy.py`: class hazards of the multidimensional K = 3 AR(1)+"spike" fit, one common age-varying factor calibrated so population LE at 65 and 90 matches ONS 2020-22 (attrition correction); HLE with healthy = self-rated good or better. Open todo: whether to calibrate the healthy share to ONS health state life expectancies too |
 | Univariate mental-health clusters versus the multidimensional classes | Done: Appendix `app:mental`, and (6 Oct) `fig:multidim_vs_uni` in Section 4 after the multidimensional figure: the multidimensional classes are the physical classes (73% same class) with a mental path attached; the univariate mental classes partition by persistence, ARI 0.20 with the multidimensional ones. The main-text multidimensional figure is now the cohort fit (the no-cohort fit moved to Appendix `app:cohort`) |
 | Windows (`fig:windows`): class composition by age as the window moves | Done (6 Oct): lower row of `fig:windows`, the worst type's share by age per window and per window's people. Within shared ages the by-age shares coincide with the lifecycle typology's; the worst type's share of people rises as the window moves later because the window's people are older, and only windows confined to 60+ relabel late decliners (21-25% at 65-75 against 18-19%) |
-| Returns (`fig:returnsbayes`) with targeting on observables or on theta(t-1) | Open; `42_paper_returns_bayes.py` has the class-level returns, targeting needs a rule |
+| Returns (`fig:returnsbayes`) with targeting on observables or on theta(t-1) | Done (6 Oct): `fig:targeting` / `tab:targeting` after the returns table, from `46_paper_targeting.py`: rules on what is known at the first observation (age; + observables; + one theta reading; both; the model's posterior; the oracle), treating the top q by predicted return and scored by the realised return. One theta reading closes 43% of the age-to-oracle gap at 10% coverage, observables a fifth, the two together 45%; `--first2` (two readings) and `--h` versions written, not yet in the draft. Open todo: net of a screening cost; targeting on the predicted class rather than the predicted return |
 | Treatment as the cost prevented; when the savings come; LE and inequality effects of prevention | Treatment as the cost prevented: done (6 Oct). The tau instrument and T(r) are gone; the framework and Section 5 now price the treatment bill still to come C(r), split into the cost at the mean path, type differences and realised deviations (the unpreventable part, 16% from 30), and prevention as the share of the bill it avoids (P/C 0.91, 0.67, 0.39 from 30, 50, 70). The note's T(r) is 2C(r) under the quadratic. Timing of the savings and the LE / inequality effects of prevention: open |
 
 ## Open decisions in the draft (the red todos)

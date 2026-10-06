@@ -1,0 +1,14 @@
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+targeting on & \multicolumn{3}{c}{top 10\% treated} & \multicolumn{3}{c}{top 25\% treated} & \multicolumn{3}{c}{top 50\% treated} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+ & \pounds & /uniform & /oracle & \pounds & /uniform & /oracle & \pounds & /uniform & /oracle \\
+\midrule
+age(0) & 16,784 & 1.26 & 0.38 & 16,709 & 1.26 & 0.53 & 16,514 & 1.24 & 0.76 \\
++ education, income, sex & 24,697 & 1.86 & 0.56 & 20,836 & 1.57 & 0.66 & 17,879 & 1.35 & 0.82 \\
++ $h$(0) & 32,414 & 2.44 & 0.74 & 24,376 & 1.84 & 0.78 & 19,027 & 1.43 & 0.87 \\
++ $h$(0), education, income, sex & 32,617 & 2.46 & 0.74 & 24,847 & 1.87 & 0.79 & 19,342 & 1.46 & 0.89 \\
+model posterior from the first row & 32,337 & 2.44 & 0.73 & 24,418 & 1.84 & 0.78 & 19,190 & 1.45 & 0.88 \\
+oracle: the fitted-window class & 44,068 & 3.32 & 1.00 & 31,377 & 2.36 & 1.00 & 21,748 & 1.64 & 1.00 \\
+\bottomrule
+\end{tabular}

@@ -657,7 +657,7 @@ Small robustness exercise:
 	\begin{itemize}
 		\item \textbf{The bill and what prevention avoids} (Figure~\ref{fig:returnsbayes}, Table~\ref{tab:returnsbayes}). The treatment bill from 30 is \pounds38{,}000 per person to 90, \pounds30{,}000 from 50 and \pounds18{,}000 from 70. On the AR(1) plus ``spike'' classes about 71\% of it is the cost along the mean path, 13\% is what the type differences add and 16\% is realised deviations, the part no prevention reaches (15\% from 50, 13\% from 70). Uniform prevention from 30 avoids \pounds35{,}000 of it per unit of $\mu$, so $P(r)/C(r)$ is $0.91$ at 30, falling to $0.67$ at 50 and $0.39$ at 70: the later the start, the larger the share of the remaining bill that is already determined. On the independent-residuals classes the shares are $0.68$, $0.47$ and $0.26$, since more of the decline is read as noise.
 		\item \textbf{Timing.} On the AR(1) plus ``spike'' classes the between-class channel of $P(r)$ is positive at every start age: $+35\%$ of $P(30)$, $+25\%$ of $P(50)$ and $+7\%$ of $P(70)$. On the independent-residuals classes it is $+13\%$ at 30 and turns negative by 50 ($-8\%$), reaching $-42\%$ at 70: the sign change of Figure~\ref{fig:exhibit1} priced. Once the one-period noise is absorbed, the classes fan out for longer, and divergence keeps working for uniform prevention into old age.
-		\item \textbf{Targeting.} From 30 the worst class's return is \pounds72{,}000, against \pounds35{,}000 uniform and \pounds5{,}600 for the best class, so class targeting collects about twice the uniform return (a gain of 107\%). From 50 the worst class still has the highest return and the gain is 32\%; from 70 the middle class does, and the gain is 50\%. On the independent-residuals classes the gains are 151\%, 49\% and 50\%.
+		\item \textbf{Targeting on the class.} From 30 the worst class's return is \pounds72{,}000, against \pounds35{,}000 uniform and \pounds5{,}600 for the best class, so class targeting collects about twice the uniform return (a gain of 107\%). From 50 the worst class still has the highest return and the gain is 32\%; from 70 the middle class does, and the gain is 50\%. On the independent-residuals classes the gains are 151\%, 49\% and 50\%.
 		\item Skeleton for the full version:
 		\begin{itemize}
 			\item posterior uncertainty, from the draws;
@@ -679,6 +679,25 @@ Small robustness exercise:
 		\caption{The bill and the returns at three start ages on $\theta$, in pounds under the estimated cost curve. $C(r)$ is the treatment bill still to come and ``within'' the share of it that realised deviations add, the part prevention cannot reach; $P(r)$ is the treatment cost uniform prevention avoids per unit of $\mu$ and $P/C$ its share of the bill; ``between'' is the between-class channel of $P(r)$ as a share of $P(r)$; $P_j$ the return by class; the gain is $(\max_jP_j-P)/P$.}
 		\label{tab:returnsbayes}
 	\end{table}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_targeting.png}
+		\caption{What to target on when the type is not observed. The return to prevention by class, $P_j(r)$, at each person's age at their first observation, on the $K=3$ AR(1) plus ``spike'' classes fitted with the first row held out (33,877 people). Each rule predicts a person's return from what is known at that row (a multinomial logit of the class on a quadratic in age plus the information set shown, fitted on a 70\% split; the model's own posterior and the oracle need no regression), treats the top share $q$ of the other 30\% by predicted return, and is scored by the realised return, the fitted-window class posterior times $P_j(r)$. (a) Return per treated person against coverage; dotted, everyone treated. (b) The share of the total return collected. The age-only rule is the benchmark, since returns fall with age; what the health reading and the observables add on top is the value of type information.}
+		\label{fig:targeting}
+	\end{figure}
+
+	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3pt}
+		\input{tables/tab_targeting}
+		\caption{Realised return per treated person, in pounds of treatment avoided per unit of $\mu$, when the top 10\%, 25\% or 50\% by predicted return are treated, by targeting rule; as a multiple of the uniform return (everyone treated, \pounds23,900) and as a share of the oracle's.}
+		\label{tab:targeting}
+	\end{table}
+
+	\begin{itemize}
+		\item \textbf{What to target on} (Figure~\ref{fig:targeting}, Table~\ref{tab:targeting}; \code{descriptives/46\_paper\_targeting.py}). The class returns of Table~\ref{tab:returnsbayes} assume the class is known. It is not: a policy can target only on what it sees. Pricing rules on what is known at a person's first observation, treating the top tenth by predicted return collects \pounds39,300 per treated person on age alone (returns fall with age, so the young come first), \pounds42,900 adding education, income and sex, \pounds46,700 adding one reading of $\theta$, \pounds47,200 with both, against \pounds56,700 for the oracle that knows the fitted class and \pounds23,900 for treating everyone.
+		\item \textbf{The health reading is the information that matters, and it is already most of what there is.} Of the gap between the age-only rule and the oracle at 10\% coverage, the observables close a fifth, one reading of $\theta$ closes 43\%, and the observables add two points on top of the reading. The mixture's own posterior from the one reading (\pounds46,000) does as well as the regression. At 25\% coverage the ordering is the same and the gaps halve (\pounds37,900, \pounds38,500, \pounds40,000, \pounds40,600 against \pounds44,300); by half coverage every rule is within 5\% of the oracle, because the oracle's advantage is in finding the small worst class.
+		\item A second reading helps about as much as the observables: with the first two rows held out, two readings of $\theta$ collect \pounds47,800 at 10\% coverage against \pounds45,700 for one and \pounds55,700 for the oracle. On $h$ (the appendix version) the age-only rule is far weaker (\pounds16,800 against \pounds32,400 with one reading and \pounds44,100 for the oracle), because on the bounded scale the young and healthy are indistinguishable and the worst class is smaller.
+		\item The remaining gap to the oracle is what a longer health history buys: the class is identified from a person's whole fitted window, and one or two readings recover about half of the return it would collect. \todo{Price the rules net of a cost of screening, and add targeting on the predicted class rather than on the predicted return (which mixes age and type).}
+	\end{itemize}
 	
 	%% =============================================================================
 	
