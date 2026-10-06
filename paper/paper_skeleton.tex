@@ -472,7 +472,7 @@ Small robustness exercise:
 
 	Figure~\ref{fig:bayes}(a) shows the Bayesian equivalent of the partial K-means:
 	\begin{itemize}
-		\item Same data as the partial K-means, fitted on $\theta$; the $h$ version is in Appendix~\ref{app:measures}. We have not yet fit the mixtures on the frailty indices.
+		\item Same data as the partial K-means, fitted on $\theta$; the $h$, frailty-index and log-frailty versions are in Appendix~\ref{app:measures}.
 		\item The baseline $K=3$ mixture (quadratic paths, independent residuals, no AR term) converged (max $\hat R = 1.001$, about 3 h).
 		\item The mixture and the K-means types are the same typology. Shares agree to a few points ($.15/.44/.41$ against $.18/.43/.40$), the class paths track the type means, and person by person 95\% of people are in the same class (ARI $0.85$, mean maximum posterior $0.93$).
 		\item The same holds on $h$ (ARI $0.82$, 94\% in the same class): there both methods isolate a 10\% sick tail, where on $\theta$ both split the healthy majority, so the $h$--$\theta$ split is a property of the scale, not of the method.
@@ -493,7 +493,7 @@ Small robustness exercise:
 		\item The same specification on $\theta$ (and on $h$ for the appendix), on the same contract; converged (max $\hat R = 1.002$, 4--8 h).
 		\item On $\theta$ the story carries over. Shares $.25/.47/.29$, persistence $.96/.90/.87$, a ``spike'' of $0.42$ against a state innovation of $0.23$: between a fifth and a half of the variance around each class's path is the ``spike'' (signal shares $0.78$, $0.63$ and $0.56$), the worst class starts within half a standard deviation of the middle and falls away, and the composition drift reverses: the worst class is 26\% of the observed person-waves at 30 and 17\% at 85, against $13\%\to16\%$ under the baseline.
 		\item Agreement with the K-means types falls to ARI $0.42$ (77\% in the same class), and classification is less certain (mean maximum posterior $0.69$ against $0.93$).
-		\item On $h$ (Appendix~\ref{app:measures}) the healthiest class collapses: its persistence is $0.25$, against $0.96$ and $0.78$ for the other two, and agreement with the K-means types falls to ARI $0.46$, with half of K-means type 2 reassigned to the worst class. This bounded-scale problem is one reason we report $\theta$. \note{when we go to $K=4$ then we start getting a convergence again though}
+		\item On $h$ (Appendix~\ref{app:measures}) the healthiest class collapses: its persistence is $0.25$, against $0.96$ and $0.78$ for the other two, and agreement with the K-means types falls to ARI $0.46$, with half of K-means type 2 reassigned to the worst class. This bounded-scale problem is one reason we report $\theta$. The frailty index, bounded at zero, does the same at its floor (Figures~\ref{fig:bayes_frailty} and \ref{fig:bayes_logfrailty}): under AR(1) plus ``spike'' its healthiest class has persistence $0.36$ against $0.98$ and $0.81$, and agreement with the K-means types falls to ARI $0.34$; the shifted log lifts the floor only partly, with a small healthiest class ($10\%$) at persistence $0.44$ against $0.96$ and $0.92$ for the other two and ARI $0.29$. Under independent residuals all four measures reproduce their K-means types (ARI $0.81$--$0.89$, at least 94\% of people in the same type). \note{when we go to $K=4$ then we start getting a convergence again though}
 		\item The specification is close to that of \citet{hosseini2022}, who model log frailty as a fixed effect plus an AR(1) plus white noise. Our classes play the role of a coarse fixed effect, and their persistence of $0.991$ compares with our $0.87$--$0.96$.
 	\end{itemize}
 	
@@ -883,6 +883,18 @@ Small robustness exercise:
 		\includegraphics[width=\linewidth]{fig_bayes_mixtures_h.png}
 		\caption{As Figure~\ref{fig:bayes}, the $K=3$ mixtures on $h$: (a) independent residuals, (b) AR(1) plus ``spike''. Under (b) the healthiest class collapses to a persistence of $0.25$.}
 		\label{fig:bayes_h}
+	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_bayes_mixtures_frailty.png}
+		\caption{As Figure~\ref{fig:bayes}, the $K=3$ mixtures on the 31-deficit frailty index, classes relabelled so that class 1 is the frailest: (a) independent residuals, (b) AR(1) plus ``spike''. Under (b) the healthiest class, at the floor of the index, collapses to a persistence of $0.36$.}
+		\label{fig:bayes_frailty}
+	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_bayes_mixtures_logfrailty.png}
+		\caption{As Figure~\ref{fig:bayes}, the $K=3$ mixtures on $\log(\text{frailty}+1/31)$, classes relabelled so that class 1 is the frailest: (a) independent residuals, (b) AR(1) plus ``spike''. The shifted log lifts the floor only partly: under (b) a small healthiest class ($10\%$) keeps a persistence of $0.44$.}
+		\label{fig:bayes_logfrailty}
 	\end{figure}
 	
 	\begin{figure}[H]\centering

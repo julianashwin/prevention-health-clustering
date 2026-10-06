@@ -340,6 +340,14 @@ INPUT ./figures/fig_bayes_mixtures_h.png
 INPUT ./figures/fig_bayes_mixtures_h.png
 INPUT ./figures/fig_bayes_mixtures_h.png
 INPUT ./figures/fig_bayes_mixtures_h.png
+INPUT ./figures/fig_bayes_mixtures_frailty.png
+INPUT ./figures/fig_bayes_mixtures_frailty.png
+INPUT ./figures/fig_bayes_mixtures_frailty.png
+INPUT ./figures/fig_bayes_mixtures_frailty.png
+INPUT ./figures/fig_bayes_mixtures_logfrailty.png
+INPUT ./figures/fig_bayes_mixtures_logfrailty.png
+INPUT ./figures/fig_bayes_mixtures_logfrailty.png
+INPUT ./figures/fig_bayes_mixtures_logfrailty.png
 INPUT ./figures/fig_class_trajectories_by_K_h.png
 INPUT ./figures/fig_class_trajectories_by_K_h.png
 INPUT ./figures/fig_class_trajectories_by_K_h.png

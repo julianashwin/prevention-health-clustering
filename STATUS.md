@@ -1,6 +1,6 @@
 # Status
 
-Last updated 5 October 2026. The draft is `paper/paper_skeleton.tex` (68 pages,
+Last updated 6 October 2026. The draft is `paper/paper_skeleton.tex` (68 pages,
 builds clean); red `\todo` marks in the PDF are open decisions, grey `\note`
 marks are drafting notes.
 
@@ -12,8 +12,8 @@ the output directory named.
 
 | Queue | Fits, in order | Log | Hook that reads them |
 |---|---|---|---|
-| `clustering/runs/frailty_firstheld_launch.sh` | frailty base (done), frailty ssm, logfrailty base, logfrailty ssm; then h base/ssm with the first row held out; then theta and h base/ssm with the first two rows held out | `artifacts/health-frailty/queue.log` | `32_paper_bayes_fits.py combined --frailty` / `--logfrailty` (figure drawn on the base fit already; the ssm column fills in); `43_paper_type_from_initial.py --h`, `--first2`, `--first2 --h` |
-| `clustering/runs/cohort_first2_launch.sh` (alongside) | theta and h ssm-cohort with the first two rows held out | `artifacts/health-firstheld/queue_cohort_first2.log` | `43 --first2` (the fourth typology) |
+| `clustering/runs/frailty_firstheld_launch.sh` | frailty base/ssm, logfrailty base/ssm (all done 5-6 Oct, clean), h base first row (done); running: h ssm first row; then theta and h base/ssm with the first two rows held out | `artifacts/health-frailty/queue.log` | `32_paper_bayes_fits.py combined --frailty` / `--logfrailty` (done, in the draft as `fig:bayes_frailty`, `fig:bayes_logfrailty`); `43_paper_type_from_initial.py --h`, `--first2`, `--first2 --h` |
+| `clustering/runs/cohort_first2_launch.sh` | theta and h ssm-cohort with the first two rows held out: both done 6 Oct, clean | `artifacts/health-firstheld/queue_cohort_first2.log` | `43 --first2` (the cohort typology is drawn; the base and ssm rows wait for the first queue) |
 | `clustering/runs/multidim_health_k45_launch.sh` (after the first queue) | theta multidimensional ssm at K = 4, then K = 5 | `artifacts/multidim-health/queue_k45.log` | `39_paper_multidim.py --k` (`fig_multidim_trajectories_by_K.png`) |
 
 K-means twins for the first-rows exercises (`22_paper_kmeans.py --first-held 1 --variants h`,
@@ -22,9 +22,7 @@ K-means twins for the first-rows exercises (`22_paper_kmeans.py --first-held 1 -
 `theta_first2held`, `h_first2held`.
 
 **When each lands:** run the hook, look at the figure, then write the bullets.
-The draft places are: the frailty mixtures in Appendix `app:measures` next to
-`fig:bayes_h` (and the main-text bullet "We have not yet fit the mixtures on
-the frailty indices" goes); the first-two-rows and h versions of the
+The draft places are: the first-two-rows and h versions of the
 type-from-initial exercise next to `fig:typeinit`; the K = 4/5
 multidimensional rows as a figure in Section 4 next to `fig:multidim`, with the
 same vertical axis across panels (a feedback item).
