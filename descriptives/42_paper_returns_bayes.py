@@ -1,11 +1,15 @@
-"""Section 5: the returns to prevention and treatment on the Bayesian classes, priced in pounds.
+"""Section 5: the returns to prevention on the Bayesian classes, as treatment cost avoided, in pounds.
 
-The framework's returns (Section 2.2, general-cost form) on the K = 3 mixture classes:
-  T(r)   = sum_{a>=r} E[ -c'(h_a) (h_max - h_a) ]                       treatment
-  P_j(r) = sum_{a>=r} E[ -c'(h_a) | j ] (hbar_{j,r-1} - hbar_{j,a})    prevention, class j
+Prevention is priced as the future treatment cost it avoids. The framework's objects
+(Section 2.2, general-cost form) on the K = 3 mixture classes:
+  C(r)   = sum_{a>=r} E[ c(h_a) ]                                        the treatment bill still to come
+         = sum_a [ c(hbar_a) + (sum_j pi_{j,a} c(hbar_{j,a}) - c(hbar_a)) + (E c(h_a) - sum_j pi_{j,a} c(hbar_{j,a})) ]
+           mean path       between-class (type differences)              within-class (realised deviations, incl. the "spike")
+  P_j(r) = sum_{a>=r} E[ -c'(h_a) | j ] (hbar_{j,r-1} - hbar_{j,a})    prevention, class j: treatment avoided per unit mu
   P(r)   = sum_j pi_j P_j(r) = mean channel + between-class channel
-  class targeting: max_j P_j(r) - P(r)
-with c(.) the cost curve estimated in pounds on the measure (a cubic in the score on the cost
+  P(r)/C(r): the share of the remaining bill a unit of prevention avoids; class targeting: max_j P_j(r) - P(r)
+The within-class part of C(r) is what is paid for as treatment but is not preventable: realised
+shocks, including the one-period "spike". With c(.) the cost curve estimated in pounds on the measure (a cubic in the score on the cost
 index, made monotone; fit_cost_curve in 31_paper_appendix_extras.py), on the uncapped index by
 default (--capped to cap it at the 99th percentile). The class shares pi_j and paths hbar_{j,a}
 are the fitted mixture at its posterior mean (quadratics in age, 20-90); E[-c'(h) | j] at each age
@@ -61,19 +65,27 @@ def smooth(x: pd.Series, n: pd.Series, min_n: int = 100) -> np.ndarray:
     return y.interpolate(limit_direction="both").to_numpy()
 
 
-def returns(rows: pd.DataFrame, W: np.ndarray, paths: np.ndarray, pi: np.ndarray, cprime, top: float) -> pd.DataFrame:
-    cp = -cprime(rows[V].to_numpy(float))                    # -c'(h) >= 0
-    t = cp * (top - rows[V].to_numpy(float))
+def returns(rows: pd.DataFrame, W: np.ndarray, paths: np.ndarray, pi: np.ndarray, cfun, cprime) -> pd.DataFrame:
+    x = rows[V].to_numpy(float)
+    cp = -cprime(x)                                           # -c'(h) >= 0
+    cost = cfun(x)                                            # the treatment bill each person-wave implies
     age = rows["age"].to_numpy()
-    g = pd.DataFrame({"age": age, "t": t, "cp": cp, "m": rows[V].to_numpy(float)}).groupby("age")
+    g = pd.DataFrame({"age": age, "c": cost, "cp": cp, "m": x}).groupby("age")
     n = g.size()
-    t_a, g_a, hbar = smooth(g["t"].mean(), n), smooth(g["cp"].mean(), n), smooth(g["m"].mean(), n)
-    G = []
+    c_a, g_a, hbar = smooth(g["c"].mean(), n), smooth(g["cp"].mean(), n), smooth(g["m"].mean(), n)
+    G, M, S = [], [], []                                      # by class and age: E[-c'|j], the class mean, the share
     for k in range(K):
         wk = W[:, k]
-        num = pd.Series(wk * cp).groupby(age).sum(); den = pd.Series(wk).groupby(age).sum()
-        G.append(smooth(num / den, den, min_n=25))
-    G = np.vstack(G)
+        den = pd.Series(wk).groupby(age).sum()
+        G.append(smooth(pd.Series(wk * cp).groupby(age).sum() / den, den, min_n=25))
+        M.append(smooth(pd.Series(wk * x).groupby(age).sum() / den, den, min_n=25))
+        S.append(smooth(den / n, n))
+    G, M, S = np.vstack(G), np.vstack(M), np.vstack(S)
+    S = S / S.sum(axis=0, keepdims=True)
+    # the bill by age and its three parts: cost at the mean path; what type differences add; realised deviations
+    c_mean = cfun(hbar)
+    c_between = (S * cfun(M)).sum(axis=0) - c_mean
+    c_within = c_a - c_mean - c_between
     recs = []
     for r in R_GRID:
         idx = slice(r - MIN_AGE, MAX_AGE - MIN_AGE + 1)
@@ -81,8 +93,10 @@ def returns(rows: pd.DataFrame, W: np.ndarray, paths: np.ndarray, pi: np.ndarray
         Pj = (G[:, idx] * prevd).sum(axis=1)
         P = float(pi @ Pj)
         mean_ch = float((g_a[idx] * (hbar[r - 1 - MIN_AGE] - hbar[idx])).sum())
-        T = float(t_a[idx].sum())
-        recs.append({"r": r, "T": T, "P": P, "P_over_T": P / T, "mean_channel": mean_ch, "cov_channel": P - mean_ch,
+        C = float(c_a[idx].sum()); C_mean = float(c_mean[idx].sum()); C_between = float(c_between[idx].sum()); C_within = float(c_within[idx].sum())
+        recs.append({"r": r, "C": C, "C_mean": C_mean, "C_between": C_between, "C_within": C_within,
+                     "within_share": C_within / C, "between_share_C": C_between / C,
+                     "P": P, "P_over_C": P / C, "mean_channel": mean_ch, "cov_channel": P - mean_ch,
                      "cov_share": (P - mean_ch) / P, "P_max_class": Pj.max(), "best_class": int(Pj.argmax()) + 1,
                      "type_gain": (Pj.max() - P) / P, **{f"P_{c + 1}": Pj[c] for c in range(K)}})
     return pd.DataFrame(recs).set_index("r")
@@ -140,6 +154,7 @@ def main() -> int:
         return 0
     coef, dcoef, deg = M31.fit_cost_curve(cs[V].to_numpy(float), cs["y"].to_numpy(float))
     cprime = lambda z: np.polynomial.polynomial.polyval(z, dcoef)  # noqa: E731
+    cfun = lambda z: np.maximum(np.polynomial.polynomial.polyval(z, coef), 0.0)  # noqa: E731
     print(f"cost curve on {V}: degree {deg}, {'uncapped' if UNCAPPED else f'capped at p99 (£{cap:,.0f})'}, {len(cs):,} person-waves")
     long = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv").sort_values(["pidp", "age"]).reset_index(drop=True)
     A = (AGES - 55) / 10
@@ -158,19 +173,18 @@ def main() -> int:
             W = post.loc[long["pidp"], [f"class{k + 1}" for k in range(K)]].to_numpy()
             paths = np.vstack([f["mom"]["mean"] + f["mom"]["sd"] * (c[0] + c[1] * A + c[2] * A ** 2) for c in f["coef"]])
             shares = f["theta"]
-        top = float(long[V].max())
-        R = returns(long, W, paths, shares, cprime, top)
+        R = returns(long, W, paths, shares, cfun, cprime)
         out[fs] = (R, shares, name)
         R.assign(variant=V, set=fs, degree=deg).reset_index().to_csv(DESC / f"paper_returns_bayes{SFX}_{fs}.csv", index=False)
         for r in R_TABLE:
             q = R.loc[r]
-            tabrows.append([name.replace('"spike"', "``spike''"), f"{r}", f"{q['T']:,.0f}", f"{q['P']:,.0f}", f"{q['P_over_T']:.2f}",
+            tabrows.append([name.replace('"spike"', "``spike''"), f"{r}", f"{q['C']:,.0f}", f"{100 * q['within_share']:.0f}\\%", f"{q['P']:,.0f}", f"{q['P_over_C']:.2f}",
                             f"{100 * q['cov_share']:+.0f}\\%", *[f"{q[f'P_{c + 1}']:,.0f}" for c in range(K)], f"{q['type_gain']:.2f}"])
         print(f"{fs}: shares {np.round(shares, 3)}")
-        print(R.loc[R_TABLE, ["T", "P", "P_over_T", "cov_share", "P_1", "P_2", "P_3", "best_class", "type_gain"]].round(3).to_string())
+        print(R.loc[R_TABLE, ["C", "C_mean", "C_between", "C_within", "within_share", "P", "P_over_C", "cov_share", "P_1", "P_2", "P_3", "best_class", "type_gain"]].round(3).to_string())
     write_table(TAB / f"tab_returns_bayes{SFX}.tex",
-                ["classes", "$r$", "$T(r)$, \\pounds", "$P(r)$, \\pounds", "$P/T$", "between-class share", "$P_1$", "$P_2$", "$P_3$", "class gain"],
-                tabrows, colspec="lrrrrrrrrr")
+                ["classes", "$r$", "$C(r)$", "within", "$P(r)$", "$P/C$", "between", "$P_1$", "$P_2$", "$P_3$", "gain"],
+                tabrows, colspec="lrrrrrrrrrr")
     # figure: one column per class set, as the K-means returns figure
     fig, axes = plt.subplots(3, len(SETS), figsize=(5.4 * len(SETS), 9.6), gridspec_kw={"hspace": 0.42, "wspace": 0.25}, squeeze=False)
     for j, (fs, _) in enumerate(SETS):
@@ -182,12 +196,13 @@ def main() -> int:
         ax.axhline(0, color=INK2, lw=0.6)
         ax.set_title(f"({'ab'[j] if len(SETS) > 1 else 'a'}) {VL}, {name}: $P_j(r)$, £", loc="left", fontsize=9.5); ax.legend(fontsize=7.5)
         ax = axes[1, j]
-        ax.plot(R.index, R["T"], color=VERM, lw=1.8, label="treatment $T(r)$")
-        ax.plot(R.index, R["P"], color=BLUE, lw=1.8, label="uniform prevention $P(r)$")
-        ax.plot(R.index, R["mean_channel"], color=BLUE, lw=1.0, ls=":", label="its mean channel")
-        ax.set_yscale("log"); ax.set_title(f"({'cd'[j] if len(SETS) > 1 else 'b'}) treatment and prevention, £ (log scale)", loc="left", fontsize=9.5); ax.legend(fontsize=7.5)
+        ax.stackplot(R.index, R["C_mean"], R["C_between"], R["C_within"], colors=[INK2, CLUSTER[1], "#d9d9d9"], alpha=0.85,
+                     labels=["$C(r)$: cost at the mean path", "+ type differences (between-class)", "+ realised deviations (within-class)"])
+        ax.plot(R.index, R["P"], color=VERM, lw=2.0, label="uniform prevention $P(r)$: treatment avoided")
+        ax.plot(R.index, R["mean_channel"], color=VERM, lw=1.0, ls=":", label="its mean channel")
+        ax.set_title(f"({'cd'[j] if len(SETS) > 1 else 'b'}) the bill $C(r)$ and what prevention avoids, £", loc="left", fontsize=9.5); ax.legend(fontsize=7.0)
         ax = axes[2, j]
-        ax.plot(R.index, R["P_over_T"], color=ORANGE, lw=1.8, label="$P(r)/T(r)$")
+        ax.plot(R.index, R["P_over_C"], color=ORANGE, lw=1.8, label="$P(r)/C(r)$: share of the bill avoided")
         ax.plot(R.index, R["type_gain"], color=CLUSTER[0], lw=1.8, label=r"$(\max_j P_j - P)/P$")
         ax.plot(R.index, R["cov_share"], color=CLUSTER[2], lw=1.4, ls="--", label=f"between-{'type' if KMEANS else 'class'} share of $P(r)$")
         ax.axhline(0, color=INK2, lw=0.6)
@@ -198,8 +213,9 @@ def main() -> int:
         share_ylim(list(axes[r, :]))
     import textwrap
     footer = (f"Returns on the K = 3 {'partial K-means types' if KMEANS else 'mixture classes'} on {V}, with the cost curve estimated in pounds on {V} (a degree-{deg} polynomial on the cost index, "
-             f"{'uncapped' if UNCAPPED else 'capped at the 99th percentile'}, waves 7-15).\nTreatment closes a share tau of the gap to the healthiest observed score; "
-             "prevention scales each class's future decline by (1 - mu). Pounds of lifetime cost to 90 per unit of intensity; no survival weighting, no discounting.\n"
+             f"{'uncapped' if UNCAPPED else 'capped at the 99th percentile'}, waves 7-15). C(r) is the expected treatment cost from r to 90 on the observed cross-section, "
+             "split into the cost at the mean path, what the type differences add and what realised deviations add (the part prevention cannot reach); "
+             "prevention scales each class's future decline by (1 - mu) and P(r) is the treatment cost that avoids, to first order, per unit of mu. Pounds to 90; no survival weighting, no discounting.\n"
              + ("Type shares and smoothed type means; E[-c'(h) | type] from the members observed at each age." if KMEANS else
                 "Class shares and quadratic paths at the posterior mean; E[-c'(h) | class] from the person-waves observed at each age, weighted by the posterior class probabilities."))
     fig.text(0.01, 0.0, "\n".join(textwrap.wrap(footer.replace("\n", " "), 95 * len(SETS))), fontsize=7.2, color=INK2, va="top")

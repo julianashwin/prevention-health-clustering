@@ -45,7 +45,7 @@ fits; h at K = 4/5 in the multidimensional model; Bayesian expanding windows.
 | Univariate mental-health clusters versus the multidimensional classes | Done: Appendix `app:mental` |
 | Windows (`fig:windows`): class composition by age as the window moves | Open; `26_paper_windows.py` has the labels, the composition panel is not drawn |
 | Returns (`fig:returnsbayes`) with targeting on observables or on theta(t-1) | Open; `42_paper_returns_bayes.py` has the class-level returns, targeting needs a rule |
-| Treatment as the cost prevented; when the savings come; LE and inequality effects of prevention | Open (Section 5) |
+| Treatment as the cost prevented; when the savings come; LE and inequality effects of prevention | Treatment as the cost prevented: done (6 Oct). The tau instrument and T(r) are gone; the framework and Section 5 now price the treatment bill still to come C(r), split into the cost at the mean path, type differences and realised deviations (the unpreventable part, 16% from 30), and prevention as the share of the bill it avoids (P/C 0.91, 0.67, 0.39 from 30, 50, 70). The note's T(r) is 2C(r) under the quadratic. Timing of the savings and the LE / inequality effects of prevention: open |
 
 ## Open decisions in the draft (the red todos)
 

@@ -1,4 +1,4 @@
-Extra prediction exercise - predict health type based on some initial observables or an initial (ideally held out) health value. Do this for some "baseline" clustering and then also for the "full" bells and whistles clustering
+DONE: Extra prediction exercise - predict health type based on some initial observables or an initial (ideally held out) health value. Do this for some "baseline" clustering and then also for the "full" bells and whistles clustering
 
 Relabel "spike" as "episodic". 
 
@@ -12,7 +12,7 @@ As we add more clusters and as we add the stochastic framework, are we getting m
 
 Is the narrative around the clusters that there is always a bad group driving things - and more structure makes things stronger. Very noisy process is difficult for the K means, so it understates the importance/size/decline of this bad group?
 
-Can we express the differences across types in terms of LE and HLE?
+DONE: Can we express the differences across types in terms of LE and HLE?
 
 Look at univariate mental health clusters - are these different from the clusters that the multidimensional model learns?
 

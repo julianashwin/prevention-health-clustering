@@ -60,9 +60,9 @@
 			\item what is \emph{in the moment} (transitory variation and measurement error), 
 			\item how one is \emph{evolving} ($d_{j,a}$, the only component that predicts future \emph{changes}).
 		\end{enumerate} 
-		Prevention targets the third; treatment acts on the first two as realised.
+		Prevention targets the third; the first two are what is paid for, as treatment, once realised.
 		\item Only what is carried from one wave to the next produces covariance between waves: the three components leave different traces on the covariance matrix, which is the basis for our identification.
-		\item Two-by-two matrix of possibilities: dispersion is deterministic (across types) or stochastic (within type), and actionable or not. Deterministic and actionable is \emph{targetable} prevention; stochastic and actionable is untargeted prevention or treatment. Predictability of levels $\neq$ predictability of changes.
+		\item Two-by-two matrix of possibilities: dispersion is deterministic (across types) or stochastic (within type), and actionable or not. Deterministic and actionable is \emph{targetable} prevention; stochastic and actionable is untargeted prevention, or treatment once the shock has arrived. Predictability of levels $\neq$ predictability of changes.
 		\item Health types are thus the object of interest: they are the support of $(H, d)$, and clustering estimates it. Between/within variance maps to type/individual. 
 		\item Link to other life course: With the base age at birth, the life-course accounts are second moments: critical period $=\Var(H)$, accumulation $=\Var(d)$, pathway $=\Cov(H,d)$; at a later base age the triple's evolution with the base age separates them.
 		\item Throughout this section, we will use a linear illustration (constant type slopes, $d_{j,a}=d_j$): a random-coefficients growth model with $V_H, V_d, C_{Hd}$ and noise variances $v_a$,
@@ -80,7 +80,7 @@
 	\end{itemize}
 	
 	
-	\subsection{Policy: healthcare cost, treatment and prevention}
+	\subsection{Policy: the treatment bill, and prevention as avoiding it}
 	\label{sec:policy_fw}
 	
 	
@@ -91,24 +91,24 @@
 			\E[c(h_{i,a})]=(1-\bar h_a)^2+\Var_j(\bar h_{j,a})+\textstyle\sum_j\pi_j\Var(u_{i,a}\mid j).
 			\label{eq:popcost}
 		\end{equation}
-		\item Two instruments. 
-		\begin{enumerate}
-			\item \textbf{Treatment} is ex post and proportional to the realised gap, from age $r$
-			$$
-			h\mapsto h+\tau(1-h)
-			$$
-			\item \textbf{Prevention} is ex ante and scales every future type change by $(1-\mu)$ from age $r$, so health gained is $\mu$ times the type's preventable decline
-			$$
-			\bar h_{j,r-1}-\bar h_{j,a}
-			$$
-		\end{enumerate}
+		\item Cost is treatment: $c(h)$ is what the health system spends on a person in health $h$, and the cost index of Section~\ref{sec:data} measures exactly that (utilisation at unit costs). The object a policy acts on is the \textbf{treatment bill still to come} from age $r$,
+		\begin{equation}
+			C(r)=\sum_{a\ge r}\E[c(h_{i,a})]=\sum_{a\ge r}\Bigl[\underbrace{c(\bar h_a)}_{\text{mean path}}+\underbrace{\textstyle\sum_j\pi_{j,a}c(\bar h_{j,a})-c(\bar h_a)}_{\text{type differences}}+\underbrace{\E[c(h_{i,a})]-\textstyle\sum_j\pi_{j,a}c(\bar h_{j,a})}_{\text{realised deviations}}\Bigr],
+			\label{eq:C}
+		\end{equation}
+		which for the quadratic is \eqref{eq:popcost} summed over ages: the mean gap, the between-type variance and the within-type variance. The third part is paid as treatment but is not preventable: it is the in-the-moment variation, including the ``spike''.
+		\item One instrument. \textbf{Prevention} is ex ante and scales every future type change by $(1-\mu)$ from age $r$, so health gained is $\mu$ times the type's preventable decline
+		$$
+		\bar h_{j,r-1}-\bar h_{j,a},
+		$$
+		and its return is the treatment cost that avoids.
 	\end{itemize}
 	
-	\begin{result}[Return to treatment; note Result 1]\label{res:treat}
+	\begin{result}[The treatment bill; note Result 1]\label{res:treat}
 		$$
-		T(r)=2\sum_{a\ge r}\bigl[(1-\bar h_a)^2+\Var(h_{i,a})\bigr]
+		C(r)=\sum_{a\ge r}\bigl[(1-\bar h_a)^2+\Var(h_{i,a})\bigr]
 		$$
-		Twice the expected cost still to come. Cross-sectional moments only; no identification problem.
+		under the quadratic. Cross-sectional moments only; no identification problem. (The note's ``return to treatment'' $T(r)$ is $2C(r)$: restoring a share $\tau$ of every realised gap is worth $\tau$ times twice the bill.)
 	\end{result}
 	
 	\begin{result}[Return to prevention; note Results 2 and 3]\label{res:prev}
@@ -123,13 +123,12 @@
 		\\~\\
 		By type, $P_j(r)=2\sum_{a\ge r}(1-\bar h_{j,a})(\bar h_{j,r-1}-\bar h_{j,a})$: gap times preventable decline. 
 	\end{result}
+	\todo{Reformulate this result around the returns by type - gap times preventable decline. Explains why we want the evolution of the mean by type.}
 	
 	\begin{itemize}
-		\item For a general increasing convex cost $c(\cdot)$ the returns keep their form, with the derivative as the weight: $T(r)=\sum_{a\ge r}\E[-c'(h_{i,a})(h^{\max}-h_{i,a})]$ and $P_j(r)=\sum_{a\ge r}\E[-c'(h_{i,a})\mid j]\,(\bar h_{j,r-1}-\bar h_{j,a})$, to first order in the policy intensity; the quadratic case reproduces Results~\ref{res:treat} and~\ref{res:prev}. On an unbounded scale full health has no natural value, so treatment closes a share $\tau$ of the gap to the healthiest observed score, $h^{\max}$.
-		\item Treatment reaches all realised variance, between and within, but only when gaps are already open. 
-		\item Prevention averts future gaps but must be assigned ex ante; the uniform policy pays the population-average preventable decline and its between-type channel is bounded by deterministic heterogeneity. 
-		\item Measurement error belongs in neither return and is removed by Case~4 below. 
-		\item \note{We should discuss how to treat the ``measurement error" in our policy scenarios later - should they be part of the treatment or not?}
+		\item For a general increasing convex cost $c(\cdot)$ the bill is \eqref{eq:C} as written and the prevention return keeps its form with the derivative as the weight: $P_j(r)=\sum_{a\ge r}\E[-c'(h_{i,a})\mid j]\,(\bar h_{j,r-1}-\bar h_{j,a})$, to first order in the policy intensity; the quadratic case reproduces Results~\ref{res:treat} and~\ref{res:prev}. $P(r)/C(r)$ is the share of the remaining bill a unit of prevention avoids.
+		\item Prevention averts future gaps but must be assigned ex ante; the uniform policy pays the population-average preventable decline and its between-type channel is bounded by deterministic heterogeneity. What it can reach at most is the first two parts of \eqref{eq:C}: the realised deviations are treated, not prevented.
+		\item Measurement error sits in the third part of the bill and in no prevention return; Case~4 below removes it from the type dynamics.
 	\end{itemize}
 	
 	
@@ -155,7 +154,7 @@
 			\toprule
 			& Policy object & Moments it needs \\
 			\midrule
-			P(i) & $T(r)$, and the mean channel of $P(r)$ & the mean path $\bar h_a$ and the cross-sectional
+			P(i) & $C(r)$, and the mean channel of $P(r)$ & the mean path $\bar h_a$ and the cross-sectional
 			variance $\Var(h_a)$: Figure \ref{fig:exhibit1} panels (a) and (b) 
 			\\~\\
 			P(ii) & the accumulation margin of $P(r)$; the timing profile $r\mapsto P(r)$ & $V_d$ (with
@@ -170,7 +169,7 @@
 	
 	\begin{itemize}
 		\item If we've already shown/foreshadowed Figure \ref{fig:exhibit1}, we could explain that through \eqref{eq:Pr}: an accelerating mean raises the mean channel for later starts; a $V_d$ that falls with age puts the accumulation margin early; a $C_{Hd}(a)$ that changes over time works through the pathway margin, and the sign of $C_{Hd}$ is crucial for targetting on initial health.
-		\item \note{In the data the mean channel dominates $P(r)$ and the between-type channel is small . The between-type moments matter for \emph{targeting} far more than for the uniform return, so we could organise this section more around that: treatment and uniform prevention priced by the cross-section, targeting priced by the types.}
+		\item \note{In the data the mean channel dominates $P(r)$ and the between-type channel is small . The between-type moments matter for \emph{targeting} far more than for the uniform return, so we could organise this section more around that: the bill and uniform prevention priced by the cross-section, targeting priced by the types.}
 	\end{itemize}
 	
 	\subsection{Identification}
@@ -642,10 +641,10 @@ Small robustness exercise:
 	\label{sec:policy}
 	%% =============================================================================
 	
-	We price the returns of Section~\ref{sec:framework} on the $K=3$ AR(1) plus ``spike'' classes on $\theta$ (Figure~\ref{fig:bayes}(b)), with the independent-residuals classes alongside for comparison. The cost function is the curve estimated in pounds on $\theta$ (Figure~\ref{fig:cost}), a cubic fitted to the uncapped cost index over waves 7--15, and the returns take the general-cost form of Section~\ref{sec:policy_fw}. Class shares and paths are the fitted mixture at its posterior mean; $\E[-c'(\theta)\mid j]$ at each age is the posterior-weighted mean over the person-waves observed there; treatment closes a share $\tau$ of the gap to the healthiest observed score. Returns are pounds of lifetime cost to 90 per unit of policy intensity, with no survival weighting and no discounting. The K-means versions and the quadratic cost are in Appendix~\ref{app:returns}; the same exercise on $h$ is in Appendix~\ref{app:measures}.
+	We price the returns of Section~\ref{sec:framework} on the $K=3$ AR(1) plus ``spike'' classes on $\theta$ (Figure~\ref{fig:bayes}(b)), with the independent-residuals classes alongside for comparison. The cost function is the curve estimated in pounds on $\theta$ (Figure~\ref{fig:cost}), a cubic fitted to the uncapped cost index over waves 7--15, and the returns take the general-cost form of Section~\ref{sec:policy_fw}. Class shares and paths are the fitted mixture at its posterior mean; $\E[-c'(\theta)\mid j]$ at each age is the posterior-weighted mean over the person-waves observed there, and the bill $C(r)$ and its three parts are the observed cross-section priced by the same curve. Returns are pounds of treatment cost to 90 avoided per unit of $\mu$, with no survival weighting and no discounting. The K-means version and the capped cost curve are in Appendix~\ref{app:returns}; the same exercise on $h$ is in Appendix~\ref{app:measures}.
 	
 	\begin{itemize}
-		\item \textbf{Prevention versus treatment} (Figure~\ref{fig:returnsbayes}, Table~\ref{tab:returnsbayes}). On the AR(1) plus ``spike'' classes, uniform prevention from 30 is worth \pounds35{,}000 of lifetime cost per unit of $\mu$ against \pounds81{,}000 for treatment per unit of $\tau$, so $P(r)/T(r)$ is $0.43$; it falls to $0.29$ at 50 and $0.16$ at 70.
+		\item \textbf{The bill and what prevention avoids} (Figure~\ref{fig:returnsbayes}, Table~\ref{tab:returnsbayes}). The treatment bill from 30 is \pounds38{,}000 per person to 90, \pounds30{,}000 from 50 and \pounds18{,}000 from 70. On the AR(1) plus ``spike'' classes about 71\% of it is the cost along the mean path, 13\% is what the type differences add and 16\% is realised deviations, the part no prevention reaches (15\% from 50, 13\% from 70). Uniform prevention from 30 avoids \pounds35{,}000 of it per unit of $\mu$, so $P(r)/C(r)$ is $0.91$ at 30, falling to $0.67$ at 50 and $0.39$ at 70: the later the start, the larger the share of the remaining bill that is already determined. On the independent-residuals classes the shares are $0.68$, $0.47$ and $0.26$, since more of the decline is read as noise.
 		\item \textbf{Timing.} On the AR(1) plus ``spike'' classes the between-class channel of $P(r)$ is positive at every start age: $+35\%$ of $P(30)$, $+25\%$ of $P(50)$ and $+7\%$ of $P(70)$. On the independent-residuals classes it is $+13\%$ at 30 and turns negative by 50 ($-8\%$), reaching $-42\%$ at 70: the sign change of Figure~\ref{fig:exhibit1} priced. Once the one-period noise is absorbed, the classes fan out for longer, and divergence keeps working for uniform prevention into old age.
 		\item \textbf{Targeting.} From 30 the worst class's return is \pounds72{,}000, against \pounds35{,}000 uniform and \pounds5{,}600 for the best class, so class targeting collects about twice the uniform return (a gain of 107\%). From 50 the worst class still has the highest return and the gain is 32\%; from 70 the middle class does, and the gain is 50\%. On the independent-residuals classes the gains are 151\%, 49\% and 50\%.
 		\item Skeleton for the full version:
@@ -654,20 +653,19 @@ Small robustness exercise:
 			\item survival-weighted sums $\sum_{a\ge r}S(a\mid r)(\cdot)$ using the Gompertz--Makeham class hazards of the multidimensional model, both ways (the sickest die, prevention raises survival);
 			\item targeting on observables versus on early health history versus on the class, priced by the targeting identity of Section~\ref{sec:framework}, using the Section~\ref{sec:observables} partitions;
 			\item the additive-prevention robustness check (the multiplicative $(1-\mu)d$ favours decliners by construction), and prevention as moving a person to a better class;
-			\item cost sides: the returns are now in pounds of lifetime cost per unit of intensity, so comparing instruments still needs the cost of delivering a unit of $\mu$ or $\tau$;
-			\item \note{$T(r)$ is computed on the observed cross-section, so it includes the one-period ``spike'' variance: whether treatment should act on the persistent part only is the open question of Section~\ref{sec:policy_fw}.}
+			\item cost sides: the returns are pounds of treatment avoided per unit of $\mu$, so a policy's value still needs the cost of delivering a unit of $\mu$; and when the savings come, since prevention is paid at $r$ and the avoided treatment falls decades later.
 		\end{itemize}
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_returns_bayes.png}
-		\caption{Returns to prevention and treatment by start age $r$ on $\theta$, in pounds of lifetime cost under the estimated cost curve: (left) the AR(1) plus ``spike'' classes, (right) the independent-residuals classes. Top: $P_j(r)$ by class and the uniform $P(r)$; middle: $T(r)$, $P(r)$ and its mean channel (log scale); bottom: $P/T$, the gain from class targeting relative to the uniform return, and the between-class share of $P(r)$.}
+		\caption{The treatment bill and the return to prevention by start age $r$ on $\theta$, in pounds under the estimated cost curve: (left) the AR(1) plus ``spike'' classes, (right) the independent-residuals classes. Top: $P_j(r)$ by class and the uniform $P(r)$, the treatment cost avoided per unit of $\mu$. Middle: the bill $C(r)$ stacked into the cost at the mean path, what the type differences add and what realised deviations add, with $P(r)$ and its mean channel. Bottom: $P/C$, the share of the bill avoided; the gain from class targeting relative to the uniform return; and the between-class share of $P(r)$.}
 		\label{fig:returnsbayes}
 	\end{figure}
 	
 	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
 		\input{tables/tab_returns_bayes}
-		\caption{Returns at three start ages on $\theta$, in pounds of lifetime cost under the estimated cost curve. The between-class share is the between-class channel of $P(r)$ as a share of $P(r)$; the class gain is $(\max_jP_j-P)/P$.}
+		\caption{The bill and the returns at three start ages on $\theta$, in pounds under the estimated cost curve. $C(r)$ is the treatment bill still to come and ``within'' the share of it that realised deviations add, the part prevention cannot reach; $P(r)$ is the treatment cost uniform prevention avoids per unit of $\mu$ and $P/C$ its share of the bill; ``between'' is the between-class channel of $P(r)$ as a share of $P(r)$; $P_j$ the return by class; the gain is $(\max_jP_j-P)/P$.}
 		\label{tab:returnsbayes}
 	\end{table}
 	
@@ -979,8 +977,8 @@ Small robustness exercise:
 \end{figure}
 
 \begin{itemize}
-\item Cost is what $c(h)$ stands for, so its mean and variance by age are the objects $T(r)$ prices directly: the mean is flat to 40 and then rises steeply, from \pounds330 to \pounds960 by 88; its variance rises fourfold. 
-\item The rows say what kind of variance it is: every row drops to about a fifth of the diagonal within a year and is flat after. Realised cost is almost entirely a one-period draw around the health state, which is exactly the within-type, in-the-moment variance that treatment reaches (Result~\ref{res:treat}) and prevention cannot (Result~\ref{res:prev}).
+\item Cost is what $c(h)$ stands for, so its mean by age is the bill $C(r)$ sums directly: the mean is flat to 40 and then rises steeply, from \pounds330 to \pounds960 by 88; its variance rises fourfold. 
+\item The rows say what kind of variance it is: every row drops to about a fifth of the diagonal within a year and is flat after. Realised cost is almost entirely a one-period draw around the health state, which is exactly the within-type, in-the-moment part of the bill (Result~\ref{res:treat}) that is treated and that prevention cannot reach (Result~\ref{res:prev}).
 \end{itemize}
 
 	
@@ -1085,7 +1083,7 @@ Small robustness exercise:
 	\end{table}
 	
 	\begin{itemize}
-		\item On the K-means types $P(r)/T(r)$ is $0.35$ at 30, $0.20$ at 50 and $0.14$ at 70, below the $0.43$, $0.29$ and $0.16$ of the AR(1) plus ``spike'' classes.
+		\item On the K-means types $P(r)/C(r)$ is $0.74$ at 30, $0.45$ at 50 and $0.35$ at 70, below the $0.91$, $0.67$ and $0.39$ of the AR(1) plus ``spike'' classes; the within-type part of the bill is 11\%, 10\% and 9\%.
 		\item The between-type channel is $+20\%$ of $P(30)$ and turns negative from about 40 ($-13\%$ at 50, $-5\%$ at 70), as on the independent-residuals classes: the K-means types converge after midlife, where the AR(1) plus ``spike'' classes keep fanning out.
 		\item Type targeting gains 148\% over the uniform return from 30, 51\% from 50 and 35\% from 70.
 	\end{itemize}
@@ -1106,7 +1104,7 @@ Small robustness exercise:
 	\end{table}
 	
 	\begin{itemize}
-		\item With costs capped at the 99th percentile every return falls by about a third, treatment from 30 from \pounds81{,}000 to \pounds52{,}000 and uniform prevention from \pounds35{,}000 to \pounds22{,}000, but the ratios barely move: on the AR(1) plus ``spike'' classes $P/T$ is $0.42$, $0.30$ and $0.17$ at 30, 50 and 70, the between-class shares are $+31\%$, $+23\%$ and $+6\%$, and the class-targeting gains 90\%, 28\% and 47\%.
+		\item With costs capped at the 99th percentile the bill from 30 falls from \pounds38{,}000 to \pounds32{,}000 and uniform prevention from \pounds35{,}000 to \pounds22{,}000, so $P/C$ falls to $0.69$, $0.52$ and $0.31$ at 30, 50 and 70 on the AR(1) plus ``spike'' classes (the cap removes most of the sick tail, which is where prevention's pounds are); the within-class part of the bill is 11\%, 9\% and 8\%; the between-class shares of $P$ are $+31\%$, $+23\%$ and $+6\%$, and the class-targeting gains 90\%, 28\% and 47\%.
 		\item The one change is at 50, where the middle class rather than the worst has the highest return under the capped curve.
 	\end{itemize}
 	
