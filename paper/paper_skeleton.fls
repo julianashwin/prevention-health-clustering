@@ -254,6 +254,15 @@ INPUT ./figures/fig_windows.png
 INPUT ./figures/fig_windows.png
 INPUT ./figures/fig_windows.png
 INPUT ./figures/fig_windows.png
+INPUT ./figures/fig_life_expectancy.png
+INPUT ./figures/fig_life_expectancy.png
+INPUT ./figures/fig_life_expectancy.png
+INPUT ./figures/fig_life_expectancy.png
+INPUT ./tables/tab_life_expectancy.tex
+INPUT ./tables/tab_life_expectancy.tex
+INPUT ./tables/tab_life_expectancy.tex
+INPUT ./tables/tab_life_expectancy.tex
+INPUT tables/tab_life_expectancy.tex
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm
 INPUT ./figures/fig_observables.png
 INPUT ./figures/fig_observables.png

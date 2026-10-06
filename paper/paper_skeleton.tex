@@ -522,6 +522,11 @@ Small robustness exercise:
 		\item Mortality is strongly graded by class and converges with age: the yearly hazard of the worst class is 10.6 times the best class's at 55 and 3.3 times at 85 under AR(1) plus ``spike'' (7.1 and 2.7 under independent residuals), the sickest class having the flattest Gompertz slope ($0.09$ against $0.13$ per year). The Makeham constant is below $10^{-4}$ in every fit. Mortality describes survival by class; it does not define the classes. This is where the survivor-bias discussion lives.
 		\item Note that in the AR(1) plus ``spike'' case, the class composition by age now looks like it reflects mortality selection. We need to look into this a bit more, but it is certainly promising!
 		\item Windows (Figure~\ref{fig:windows}, K-means version): types refitted on twenty-year windows agree with the lifecycle typology at ARI $0.74$--$0.83$ up to the 60--80 window and $0.61$ at 70--90; backward-expanding windows from 90 reach ARI $0.76$ once the window starts at 60 and $0.93$ from 30. What a late window sees are the types after the divergence phase: the worst type's share rises from 15\% (20--40) to 27\% (70--90) as the window moves. \todo{Bayesian version of this figure for the main text; move the K-means version to the appendix.}
+		\item \textbf{Cohort effects.} The AR(1) plus ``spike'' fits, single-channel and multidimensional, were repeated with one level shift per birth decade, common to the classes (Appendix~\ref{app:cohort}). With fifteen waves the panel observes each person over at most a fifteen-year span, so a cohort's level is identified from the overlap of neighbouring decades at the ages they share.
+		\item \textbf{The typology is unaffected.} Shares, persistence and the ``spike'' scale agree with the fits without cohort effects to two or three decimals on every variant, and the class paths keep their shape; the worst class is a little steeper once the decade shifts carry part of the level. Whatever cohort variation there is, it is not what separates the classes.
+		\item \textbf{The cohort effects themselves should not be read strongly.} The fit reports a monotone decline between the 1950s and the 2000s of about two thirds of a standard deviation on $\theta$ (a third on $h$). But the raw decade profiles line up almost exactly at the ages they share, and subtracting the estimated shifts opens gaps that were not there. Over a fifteen-year window age and birth year are nearly collinear, and a decade dummy is close to a linear function of age within it, so with a single quadratic age path per class the dummies absorb the curvature the quadratic cannot follow. With single-year age dummies in place of the quadratic, the pre-1960 shifts vanish and only the post-1970 cohorts decline (Appendix~\ref{app:kmeans_cohort}), so the mixture's shifts should not be read as cohort effects.
+		\item \textbf{Specification.} The same $K=3$ fits with an AR(1) in the class residual but no ``spike'' give persistence of $0.79/0.28/0.40$ on $\theta$, against $0.87$--$0.96$ once the one-period term is separated: without it $\rho$ has to absorb the one-period noise and is pulled down.
+		\item \todo{still to do for the bounded measures in the appendix: a bounded observation model (scores at the ceiling of $h$ or the floor of frailty treated as censored).}
 	\end{itemize}
 	
 
@@ -540,16 +545,27 @@ Small robustness exercise:
 		\label{fig:windows}
 	\end{figure}
 	
-	\paragraph{Robustness (appendix).}
+
 	
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_life_expectancy.png}
+		\caption{Remaining life expectancy and healthy life expectancy by class, $K=3$ AR(1) plus ``spike'' (the multidimensional fit: $\theta$, the mental GRM and Gompertz--Makeham mortality). (a) Remaining life expectancy from each age, by class and for the population; (b) remaining healthy life expectancy, healthy meaning general health reported good or better; (c) the healthy share of remaining life. Every class hazard is scaled by one common age-varying factor so that the population life expectancy at 65 and at 90 matches the ONS national life tables for the UK, 2020 to 2022, which corrects for the deaths the panel does not record; the class differences are the fit's, the level is the UK's.}
+		\label{fig:le}
+	\end{figure}
+
+	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
+		\input{tables/tab_life_expectancy}
+		\caption{Remaining life expectancy (LE) and healthy life expectancy (HLE), in years, by class and for the population, from ages 20, 40, 65 and 80; Figure~\ref{fig:le}.}
+		\label{tab:le}
+	\end{table}
+
 	\begin{itemize}
-		\item \textbf{Cohort effects.} The AR(1) plus ``spike'' fits, single-channel and multidimensional, were repeated with one level shift per birth decade, common to the classes (Appendix~\ref{app:cohort}). With fifteen waves the panel observes each person over at most a fifteen-year span, so a cohort's level is identified from the overlap of neighbouring decades at the ages they share.
-		\item \textbf{The typology is unaffected.} Shares, persistence and the ``spike'' scale agree with the fits without cohort effects to two or three decimals on every variant, and the class paths keep their shape; the worst class is a little steeper once the decade shifts carry part of the level. Whatever cohort variation there is, it is not what separates the classes.
-		\item \textbf{The cohort effects themselves should not be read strongly.} The fit reports a monotone decline between the 1950s and the 2000s of about two thirds of a standard deviation on $\theta$ (a third on $h$). But the raw decade profiles line up almost exactly at the ages they share, and subtracting the estimated shifts opens gaps that were not there. Over a fifteen-year window age and birth year are nearly collinear, and a decade dummy is close to a linear function of age within it, so with a single quadratic age path per class the dummies absorb the curvature the quadratic cannot follow. With single-year age dummies in place of the quadratic, the pre-1960 shifts vanish and only the post-1970 cohorts decline (Appendix~\ref{app:kmeans_cohort}), so the mixture's shifts should not be read as cohort effects.
-		\item \textbf{Specification.} The same $K=3$ fits with an AR(1) in the class residual but no ``spike'' give persistence of $0.79/0.28/0.40$ on $\theta$, against $0.87$--$0.96$ once the one-period term is separated: without it $\rho$ has to absorb the one-period noise and is pulled down.
-		\item \todo{still to do for the bounded measures in the appendix: a bounded observation model (scores at the ceiling of $h$ or the floor of frailty treated as censored).}
+		\item \textbf{Life expectancy by class} (Figure~\ref{fig:le}, Table~\ref{tab:le}; \code{descriptives/44\_paper\_life\_expectancy.py}). The panel records a death only when the survey learns of it, so the fitted hazards understate mortality: left alone they give a population life expectancy of $23.5$ years at 65 against the ONS figure of $19.7$ (both sexes, at the sample's 56\% female). One common factor on every class hazard, rising from $1.17$ at 20 to $1.54$ at 65 and $1.81$ at 90, matches the ONS values at 65 and at 90 exactly, and then gives $61.1$ years at 20 against the $60.8$ implied by the ONS figure at birth, which it was not fitted to. The class \emph{differences} are the fit's; only the level is calibrated.
+		\item From age 20 the three classes expect $52.6$, $62.2$ and $67.2$ more years: a gap of $14.6$ years between the worst and the best class, which narrows to $9.9$ years at 65 ($13.2$ against $23.1$) and $5.2$ at 80.
+		\item Healthy life expectancy separates the classes far more. From 20 the worst class expects $21.1$ healthy years of its $52.6$, the best $64.1$ of $67.2$: the worst class spends 60\% of its remaining life in less than good health, the best 5\%. From 65 the worst class has $2.2$ healthy years left of $13.2$, the middle class $11.4$ of $19.1$, the best $21.0$ of $23.1$. Most of what separates the types is years of ill health lived, not years of life.
+		\item The population line weights the classes by their posterior composition among the people observed at each age, so it carries the selection of Figure~\ref{fig:multidim}. Its healthy life expectancy at 65 ($13.5$ years) is above the ONS healthy life expectancy, which uses the same self-rated definition, because the panel's survivors at each age are healthier than the population's; the mortality calibration corrects the length of life but not the health of those observed. \todo{Decide whether to calibrate the healthy share as well, against the ONS health state life expectancies.}
 	\end{itemize}
-	
+
 	\subsection{(C) Types against observables}
 	\label{sec:observables}
 	

@@ -6,7 +6,7 @@ Is there an overall takeaway that the C_{Hd} reversal is driven by a small propo
 
 Result 2 - focus on main result which is *by type* -> 2 \sum_a (a - hbar_{ja})(hbar_{j,r-1} - hbar_{ja}). Why we want the evolution of the mean 
 
-K=5 plots and the like -> make sure we use the same vertical axis scale across panels wherever appropriate. 
+DONE: K=5 plots and the like -> make sure we use the same vertical axis scale across panels wherever appropriate. 
 
 As we add more clusters and as we add the stochastic framework, are we getting more discrimination in the unhealthy type?
 
