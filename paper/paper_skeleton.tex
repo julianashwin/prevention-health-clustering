@@ -655,7 +655,7 @@ Small robustness exercise:
 	We price the returns of Section~\ref{sec:framework} on the $K=3$ AR(1) plus ``spike'' classes on $\theta$ (Figure~\ref{fig:bayes}(b)), with the independent-residuals classes alongside for comparison. The cost function is the curve estimated in pounds on $\theta$ (Figure~\ref{fig:cost}), a cubic fitted to the uncapped cost index over waves 7--15, and the returns take the general-cost form of Section~\ref{sec:policy_fw}. Class shares and paths are the fitted mixture at its posterior mean; $\E[-c'(\theta)\mid j]$ at each age is the posterior-weighted mean over the person-waves observed there, and the bill $C(r)$ and its three parts are the observed cross-section priced by the same curve. Returns are pounds of treatment cost to 90 avoided per unit of $\mu$, with no survival weighting and no discounting. The K-means version and the capped cost curve are in Appendix~\ref{app:returns}; the same exercise on $h$ is in Appendix~\ref{app:measures}.
 	
 	\begin{itemize}
-		\item \textbf{The bill and what prevention avoids} (Figure~\ref{fig:returnsbayes}, Table~\ref{tab:returnsbayes}). The treatment bill from 30 is \pounds38{,}000 per person to 90, \pounds30{,}000 from 50 and \pounds18{,}000 from 70. On the AR(1) plus ``spike'' classes about 71\% of it is the cost along the mean path, 13\% is what the type differences add and 16\% is realised deviations, the part no prevention reaches (15\% from 50, 13\% from 70). Uniform prevention from 30 avoids \pounds35{,}000 of it per unit of $\mu$, so $P(r)/C(r)$ is $0.91$ at 30, falling to $0.67$ at 50 and $0.39$ at 70: the later the start, the larger the share of the remaining bill that is already determined. On the independent-residuals classes the shares are $0.68$, $0.47$ and $0.26$, since more of the decline is read as noise.
+		\item \textbf{The bill and what prevention avoids} (Figure~\ref{fig:prevention}(a), (c); Table~\ref{tab:returnsbayes}). The treatment bill from 30 is \pounds38{,}000 per person to 90, \pounds30{,}000 from 50 and \pounds18{,}000 from 70. On the AR(1) plus ``spike'' classes about 71\% of it is the cost along the mean path, 13\% is what the type differences add and 16\% is realised deviations, the part no prevention reaches (15\% from 50, 13\% from 70). Uniform prevention from 30 avoids \pounds35{,}000 of it per unit of $\mu$, so $P(r)/C(r)$ is $0.91$ at 30, falling to $0.67$ at 50 and $0.39$ at 70: the later the start, the larger the share of the remaining bill that is already determined. On the independent-residuals classes the shares are $0.68$, $0.47$ and $0.26$, since more of the decline is read as noise.
 		\item \textbf{Timing.} On the AR(1) plus ``spike'' classes the between-class channel of $P(r)$ is positive at every start age: $+35\%$ of $P(30)$, $+25\%$ of $P(50)$ and $+7\%$ of $P(70)$. On the independent-residuals classes it is $+13\%$ at 30 and turns negative by 50 ($-8\%$), reaching $-42\%$ at 70: the sign change of Figure~\ref{fig:exhibit1} priced. Once the one-period noise is absorbed, the classes fan out for longer, and divergence keeps working for uniform prevention into old age.
 		\item \textbf{Targeting on the class.} From 30 the worst class's return is \pounds72{,}000, against \pounds35{,}000 uniform and \pounds5{,}600 for the best class, so class targeting collects about twice the uniform return (a gain of 107\%). From 50 the worst class still has the highest return and the gain is 32\%; from 70 the middle class does, and the gain is 50\%. On the independent-residuals classes the gains are 151\%, 49\% and 50\%.
 		\item Skeleton for the full version:
@@ -669,9 +669,9 @@ Small robustness exercise:
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_returns_bayes.png}
-		\caption{The treatment bill and the return to prevention by start age $r$ on $\theta$, in pounds under the estimated cost curve: (left) the AR(1) plus ``spike'' classes, (right) the independent-residuals classes. Top: $P_j(r)$ by class and the uniform $P(r)$, the treatment cost avoided per unit of $\mu$. Middle: the bill $C(r)$ stacked into the cost at the mean path, what the type differences add and what realised deviations add, with $P(r)$ and its mean channel. Bottom: $P/C$, the share of the bill avoided; the gain from class targeting relative to the uniform return; and the between-class share of $P(r)$.}
-		\label{fig:returnsbayes}
+		\includegraphics[width=\linewidth]{fig_prevention.png}
+		\caption{Prevention on the $K=3$ AR(1) plus ``spike'' classes on $\theta$, in pounds under the estimated cost curve. Left: (a) the return to prevention by class, $P_j(r)$, the treatment cost avoided per unit of $\mu$ by start age $r$, with the uniform return dashed; (c) the treatment bill still to come $C(r)$, stacked into the cost at the mean path, what the class differences add and what realised deviations add, with $P(r)$ and its mean channel. Right, the same classes refitted with each person's first row held out: (b) the realised return per treated person when the top share $q$ by predicted return is treated, by what the prediction uses (age; education, income and sex; one reading of $\theta$; both; the model's own posterior; the oracle that knows the class), dotted everyone treated; (d) the share of the total return collected. The detailed versions, with the independent-residuals classes alongside, are in Appendix~\ref{app:returns_detail}.}
+		\label{fig:prevention}
 	\end{figure}
 	
 	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3.5pt}
@@ -680,11 +680,6 @@ Small robustness exercise:
 		\label{tab:returnsbayes}
 	\end{table}
 
-	\begin{figure}[H]\centering
-		\includegraphics[width=\linewidth]{fig_targeting.png}
-		\caption{What to target on when the type is not observed. The return to prevention by class, $P_j(r)$, at each person's age at their first observation, on the $K=3$ AR(1) plus ``spike'' classes fitted with the first row held out (33,877 people). Each rule predicts a person's return from what is known at that row (a multinomial logit of the class on a quadratic in age plus the information set shown, fitted on a 70\% split; the model's own posterior and the oracle need no regression), treats the top share $q$ of the other 30\% by predicted return, and is scored by the realised return, the fitted-window class posterior times $P_j(r)$. (a) Return per treated person against coverage; dotted, everyone treated. (b) The share of the total return collected. The age-only rule is the benchmark, since returns fall with age; what the health reading and the observables add on top is the value of type information.}
-		\label{fig:targeting}
-	\end{figure}
 
 	\begin{table}[H]\centering\footnotesize\setlength{\tabcolsep}{3pt}
 		\input{tables/tab_targeting}
@@ -693,7 +688,7 @@ Small robustness exercise:
 	\end{table}
 
 	\begin{itemize}
-		\item \textbf{What to target on} (Figure~\ref{fig:targeting}, Table~\ref{tab:targeting}; \code{descriptives/46\_paper\_targeting.py}). The class returns of Table~\ref{tab:returnsbayes} assume the class is known. It is not: a policy can target only on what it sees. Pricing rules on what is known at a person's first observation, treating the top tenth by predicted return collects \pounds39,300 per treated person on age alone (returns fall with age, so the young come first), \pounds42,900 adding education, income and sex, \pounds46,700 adding one reading of $\theta$, \pounds47,200 with both, against \pounds56,700 for the oracle that knows the fitted class and \pounds23,900 for treating everyone.
+		\item \textbf{What to target on} (Figure~\ref{fig:prevention}(b), (d); Table~\ref{tab:targeting}; \code{descriptives/46\_paper\_targeting.py}). The class returns of Table~\ref{tab:returnsbayes} assume the class is known. It is not: a policy can target only on what it sees. Pricing rules on what is known at a person's first observation, treating the top tenth by predicted return collects \pounds39,300 per treated person on age alone (returns fall with age, so the young come first), \pounds42,900 adding education, income and sex, \pounds46,700 adding one reading of $\theta$, \pounds47,200 with both, against \pounds56,700 for the oracle that knows the fitted class and \pounds23,900 for treating everyone.
 		\item \textbf{The health reading is the information that matters, and it is already most of what there is.} Of the gap between the age-only rule and the oracle at 10\% coverage, the observables close a fifth, one reading of $\theta$ closes 43\%, and the observables add two points on top of the reading. The mixture's own posterior from the one reading (\pounds46,000) does as well as the regression. At 25\% coverage the ordering is the same and the gaps halve (\pounds37,900, \pounds38,500, \pounds40,000, \pounds40,600 against \pounds44,300); by half coverage every rule is within 5\% of the oracle, because the oracle's advantage is in finding the small worst class.
 		\item A second reading helps about as much as the observables: with the first two rows held out, two readings of $\theta$ collect \pounds47,800 at 10\% coverage against \pounds45,700 for one and \pounds55,700 for the oracle. On $h$ (the appendix version) the age-only rule is far weaker (\pounds16,800 against \pounds32,400 with one reading and \pounds44,100 for the oracle), because on the bounded scale the young and healthy are indistinguishable and the worst class is smaller.
 		\item The remaining gap to the oracle is what a longer health history buys: the class is identified from a person's whole fitted window, and one or two readings recover about half of the return it would collect. \todo{Price the rules net of a cost of screening, and add targeting on the predicted class rather than on the predicted return (which mixes age and type).}
@@ -1097,6 +1092,42 @@ Small robustness exercise:
 		\item Capping at the 99th percentile flattens the curve at the sick end, where the capped fit is a quadratic, and lowers every return by about a third (Appendix~\ref{app:returns_capped}).
 	\end{itemize}
 	
+	\subsection{The detailed returns figure and the targeting rules}
+	\label{app:returns_detail}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_returns_bayes.png}
+		\caption{The treatment bill and the return to prevention by start age $r$ on $\theta$, in pounds under the estimated cost curve: (left) the AR(1) plus ``spike'' classes, (right) the independent-residuals classes. Top: $P_j(r)$ by class and the uniform $P(r)$, the treatment cost avoided per unit of $\mu$. Middle: the bill $C(r)$ stacked into the cost at the mean path, what the type differences add and what realised deviations add, with $P(r)$ and its mean channel. Bottom: $P/C$, the share of the bill avoided; the gain from class targeting relative to the uniform return; and the between-class share of $P(r)$.}
+		\label{fig:returnsbayes}
+	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_targeting.png}
+		\caption{What to target on when the type is not observed. The return to prevention by class, $P_j(r)$, at each person's age at their first observation, on the $K=3$ AR(1) plus ``spike'' classes fitted with the first row held out (33,877 people). Each rule predicts a person's return from what is known at that row (a multinomial logit of the class on a quadratic in age plus the information set shown, fitted on a 70\% split; the model's own posterior and the oracle need no regression), treats the top share $q$ of the other 30\% by predicted return, and is scored by the realised return, the fitted-window class posterior times $P_j(r)$. (a) Return per treated person against coverage; dotted, everyone treated. (b) The share of the total return collected. The age-only rule is the benchmark, since returns fall with age; what the health reading and the observables add on top is the value of type information.}
+		\label{fig:targeting}
+	\end{figure}
+
+	\subsection{The return by class under other typologies and on the other measures}
+	\label{app:returns_models}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_returns_by_model.png}
+		\caption{The return to prevention by class, $P_j(r)$, on $\theta$ under six typologies, all $K=3$ and all priced with the same cost curve: (a) the partial K-means types; (b) the independent-residuals mixture; (c) the AR(1) plus ``spike'' mixture of Figure~\ref{fig:prevention}; (d) the same with birth-decade shifts, paths at the 1950s (the preventable decline is shift invariant); (e), (f) the physical channel of the multidimensional fits ($\theta$, the mental GRM and mortality) without and with the shifts, on the multidimensional contract's rows. Line width is proportional to the class share; dashed, the uniform return; one vertical scale.}
+		\label{fig:returnsmodels}
+	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_returns_by_measure.png}
+		\caption{The return to prevention by class under the $K=3$ AR(1) plus ``spike'' mixture on each of the four measures, each with its own cost curve in pounds: (a) $\theta$, (b) $h$, (c) the frailty index, (d) log frailty. On the frailty indices higher is frailer, so the preventable decline is the class's rise in frailty and class 1 is the frailest. One vertical scale.}
+		\label{fig:returnsmeasures}
+	\end{figure}
+
+	\begin{itemize}
+		\item \textbf{The shape of the return by class is the same under every typology} (Figure~\ref{fig:returnsmodels}): the worst class's return falls steeply from about \pounds80,000--100,000 at 30 to meet the middle class's between 50 and 60, the best class's is flat and small, and the uniform return tracks the middle class until the worst class's return crosses below it. The K-means types give \pounds70,000 for the worst type at 30 against \pounds72,000 for the AR(1) plus ``spike'' classes and \pounds65,000 under independent residuals; the uniform returns are \pounds28,000, \pounds35,000 and \pounds26,000.
+		\item \textbf{The birth-decade shifts raise every return by a quarter to a third}: \pounds43,000 uniform at 30 against \pounds35,000 without them on the single-channel classes, \pounds45,000 against \pounds35,000 on the multidimensional ones, with the worst class at \pounds87,000 and \pounds103,000. This is the age--cohort collinearity of Section~\ref{subsec:parametric} read through the returns: once the shifts carry the younger cohorts' lower level, the within-cohort age path is steeper, and prevention scales that steeper decline. The multidimensional classes return more than the single-channel ones at every start age because their worst class is a little lower and smaller.
+		\item \textbf{Across measures the worst class carries the return everywhere, but the bounded measures move it around} (Figure~\ref{fig:returnsmeasures}, each measure priced with its own cost curve). On $h$ and on the frailty index the uniform return at 30 is \pounds21,000--23,000 against \pounds35,000 on $\theta$, and the worst class's \pounds57,000--60,000 against \pounds72,000, because the collapsed healthiest class (persistence $0.25$ on $h$, $0.36$ on frailty) has almost no preventable decline and the middle class is flatter too. Log frailty gives the largest uniform return, \pounds39,000, with a middle class worth \pounds26,000 and a small healthiest class worth nothing (its path barely moves), and its worst class \pounds68,000. The ranking of the classes and the crossing of the worst and middle class between 50 and 60 are common to all four; the level of the return depends on which measure's decline the cost curve is read against, which is the cardinality point of Section~\ref{sec:data}.
+	\end{itemize}
+
 	\subsection{K-means types under the estimated cost curve}
 	\label{app:returns_kmeans}
 	

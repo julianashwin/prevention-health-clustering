@@ -6,6 +6,8 @@ Is there an overall takeaway that the C_{Hd} reversal is driven by a small propo
 
 Result 2 - focus on main result which is *by type* -> 2 \sum_a (a - hbar_{ja})(hbar_{j,r-1} - hbar_{ja}). Why we want the evolution of the mean 
 
+Figure 5 - can we smooth this out a little better (e.g. use the same age windows as Exhibit 2)?
+
 DONE: K=5 plots and the like -> make sure we use the same vertical axis scale across panels wherever appropriate. 
 
 As we add more clusters and as we add the stochastic framework, are we getting more discrimination in the unhealthy type?
@@ -16,9 +18,9 @@ DONE: Can we express the differences across types in terms of LE and HLE?
 
 DONE: Look at univariate mental health clusters - are these different from the clusters that the multidimensional model learns?
 
-Figure 9 (overlapping and expanding windows) - how does the class composition by age change here? Do we have an expanding or shrinking bad type as we extend the window?
+DONE: Figure 9 (overlapping and expanding windows) - how does the class composition by age change here? Do we have an expanding or shrinking bad type as we extend the window?
 
-Figure 13 (returns to prevention by type) - we should show this with targeting based on observables, or based on $\theta_{t-1}$ or things like that. The question here would be what we should target on?
+DONE: Figure 13 (returns to prevention by type) - we should show this with targeting based on observables, or based on $\theta_{t-1}$ or things like that. The question here would be what we should target on?
 ...
 
 DONE Rather than contrasting with "treatment", we can think of treatment as the cost that we are trying to prevent. SO prevention is about avoiding treatment...

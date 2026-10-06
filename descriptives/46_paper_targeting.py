@@ -57,12 +57,12 @@ def predicted_probs(df: pd.DataFrame, cols: list[str], test: np.ndarray) -> np.n
     return clf.predict_proba(X)
 
 
-def main() -> int:
-    apply_style()
+def compute() -> dict | None:
+    """The targeting curves: realised return per treated person by rule and coverage, on the test 30%."""
     sub, first = M43.first_rows()
     df = M43.bayes_types("ssm", sub, first)
     if df is None:
-        print("the first-rows-held-out AR(1) + spike fit is not finished"); return 1
+        print("the first-rows-held-out AR(1) + spike fit is not finished"); return None
     df = df.dropna(subset=["y0", "income_rank_mean"]).reset_index(drop=True)
     df["y0a"] = df["y0"] * df["a0"]
     if "y1" in df:
@@ -98,9 +98,39 @@ def main() -> int:
     print(f"{len(df):,} people ({test.sum():,} scored); uniform return per person £{uniform:,.0f}")
     piv = t.pivot(index="q", columns="rule", values="return_per_treated")
     print(piv.loc[list(Q_TABLE)].round(0).to_string())
+    rules = list(SETS) + [MODEL, ORACLE]
+    cols = {"age(0)": INK2, "+ education, income, sex": ORANGE, f"+ {V}(0)": CLUSTER[1], f"+ {V}(0), education, income, sex": CLUSTER[0],
+            f"+ {V}(0), {V}(1)": PURPLE, MODEL: VERM, ORACLE: GREEN}
+    return {"t": t, "piv": piv, "uniform": uniform, "rules": rules, "cols": cols, "n": len(df), "MODEL": MODEL, "ORACLE": ORACLE}
+
+
+def draw_targeting(ax_a, ax_b, res: dict, letters: str = "ab") -> None:
+    """Panels (a), (b): return per treated person and share of the total collected, against coverage."""
+    piv, t, uniform, rules, cols = res["piv"], res["t"], res["uniform"], res["rules"], res["cols"]
+    MODEL, ORACLE = res["MODEL"], res["ORACLE"]
+    for name in rules:
+        q = piv.index.to_numpy()
+        ax_a.plot(q, piv[name] / 1000, color=cols[name], lw=2.2 if name in (ORACLE, MODEL) else 1.6, ls="--" if name == ORACLE else "-",
+                  label=name.replace(V + "(", VL + "("))
+        sh = t[t["rule"] == name].set_index("q")["share_of_total"].reindex(q)
+        ax_b.plot(q, sh, color=cols[name], lw=2.2 if name in (ORACLE, MODEL) else 1.6, ls="--" if name == ORACLE else "-")
+    ax_a.axhline(uniform / 1000, color=INK2, lw=1.0, ls=":", label="uniform: everyone treated")
+    ax_a.set_xlabel("share of people treated $q$ (the top $q$ by predicted return)"); ax_a.set_ylabel("realised return per treated person, £000")
+    ax_a.set_title(f"({letters[0]}) targeting: return per treated person against coverage", loc="left", fontsize=9.5); ax_a.grid(True, axis="y"); ax_a.legend(fontsize=7, loc="upper right")
+    ax_b.plot([0, 1], [0, 1], color=INK2, lw=1.0, ls=":")
+    ax_b.set_xlabel("share of people treated $q$"); ax_b.set_ylabel("share of the total return collected")
+    ax_b.set_title(f"({letters[1]}) targeting: share of the total return collected", loc="left", fontsize=9.5); ax_b.grid(True, axis="y")
+
+
+def main() -> int:
+    apply_style()
+    res = compute()
+    if res is None:
+        return 1
+    t, piv, uniform, rules = res["t"], res["piv"], res["uniform"], res["rules"]
+    MODEL, ORACLE, n = res["MODEL"], res["ORACLE"], res["n"]
 
     # ---- table: return per treated person at three coverages, and the share of the oracle's
-    rules = list(SETS) + [MODEL, ORACLE]
     tabrows = []
     for name in rules:
         cells = []
@@ -118,23 +148,8 @@ def main() -> int:
 
     # ---- figure
     fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.6), gridspec_kw={"wspace": 0.25})
-    cols = {"age(0)": INK2, "+ education, income, sex": ORANGE, f"+ {V}(0)": CLUSTER[1], f"+ {V}(0), education, income, sex": CLUSTER[0],
-            f"+ {V}(0), {V}(1)": PURPLE, MODEL: VERM, ORACLE: GREEN}
-    ax = axes[0]
-    for name in rules:
-        q = piv.index.to_numpy(); ax.plot(q, piv[name] / 1000, color=cols[name], lw=2.2 if name in (ORACLE, MODEL) else 1.6,
-                                         ls="--" if name == ORACLE else "-", label=name.replace(V + "(", VL + "("))
-    ax.axhline(uniform / 1000, color=INK2, lw=1.0, ls=":", label="uniform: everyone treated")
-    ax.set_xlabel("share of people treated $q$ (the top $q$ by predicted return)"); ax.set_ylabel("realised return per treated person, £000")
-    ax.set_title("(a) return per treated person against coverage", loc="left", fontsize=9.5); ax.grid(True, axis="y"); ax.legend(fontsize=7, loc="upper right")
-    ax = axes[1]
-    for name in rules:
-        q = piv.index.to_numpy(); sh = t[t["rule"] == name].set_index("q")["share_of_total"].reindex(q)
-        ax.plot(q, sh, color=cols[name], lw=2.2 if name in (ORACLE, MODEL) else 1.6, ls="--" if name == ORACLE else "-")
-    ax.plot([0, 1], [0, 1], color=INK2, lw=1.0, ls=":")
-    ax.set_xlabel("share of people treated $q$"); ax.set_ylabel("share of the total return collected")
-    ax.set_title("(b) share of the total return collected against coverage", loc="left", fontsize=9.5); ax.grid(True, axis="y")
-    footer = (f"The K = 3 AR(1) + \"spike\" classes on {V} with the {'first row' if KHELD == 1 else 'first two rows'} held out ({len(df):,} people); the return to prevention by class P_j(r) of the returns figure, "
+    draw_targeting(axes[0], axes[1], res)
+    footer = (f"The K = 3 AR(1) + \"spike\" classes on {V} with the {'first row' if KHELD == 1 else 'first two rows'} held out ({n:,} people); the return to prevention by class P_j(r) of the returns figure, "
               f"at each person's age at the first row. Each rule predicts a person's return from what is known at that row (a multinomial logit of the fitted-window class on a quadratic in age plus the set shown, "
               f"fitted on a 70% split; the model posterior and the oracle need no regression), treats the top q of the other 30% by predicted return, and is scored by the realised return, "
               "the fitted-window class posterior times P_j(r). The age-only rule is the benchmark: returns fall with age, so what the reading and the observables add is the value of type information. "
