@@ -25,6 +25,47 @@ def apply_style() -> None:
         "figure.dpi": 150, "savefig.dpi": 200, "savefig.bbox": "tight",
         "text.color": INK, "axes.labelcolor": INK2,
     })
+    _install_footer_guard()
+
+
+def fit_footers(fig, margin: float = 0.985) -> None:
+    """Re-wrap any footer wider than the figure so it never sticks out past the panels.
+
+    A footer is a figure-level text anchored at its top near the bottom edge (va="top",
+    y <= 0.05). Its widest line is measured against the figure width; when it overflows,
+    the text is re-flowed to as many characters per line as fit. Explicit newlines in the
+    original are dropped in that case, so authors need not size footers by hand."""
+    import textwrap
+    if not fig.texts:
+        return
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    width = fig.bbox.width * margin
+    for t in list(fig.texts):
+        if t.get_va() != "top" or t.get_position()[1] > 0.05 or not t.get_text().strip():
+            continue
+        ext = t.get_window_extent(renderer=renderer)
+        if ext.width <= width:
+            continue
+        text = t.get_text()
+        longest = max(len(line) for line in text.split("\n"))
+        chars = max(40, int(longest * width / ext.width) - 1)
+        t.set_text("\n".join(textwrap.wrap(text.replace("\n", " "), chars)))
+
+
+def _install_footer_guard() -> None:
+    """Make every Figure.savefig fit its footers first (idempotent)."""
+    from matplotlib.figure import Figure
+    if getattr(Figure, "_phc_footer_guard", False):
+        return
+    original = Figure.savefig
+
+    def savefig(self, *args, **kwargs):
+        fit_footers(self)
+        return original(self, *args, **kwargs)
+
+    Figure.savefig = savefig
+    Figure._phc_footer_guard = True
 
 
 def share_ylim(axes, pad: float = 0.0, label_first_only: bool = False) -> None:

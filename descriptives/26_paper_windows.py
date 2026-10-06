@@ -34,8 +34,10 @@ def main() -> int:
     apply_style()
     # the paper's figure is theta alone; --h the appendix version
     V_ONLY = "h" if "--h" in sys.argv else "theta"
-    fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.9), gridspec_kw={"wspace": 0.25}, squeeze=False)
+    fig, axes = plt.subplots(2, 3, figsize=(12.5, 7.6), gridspec_kw={"wspace": 0.25, "hspace": 0.42}, squeeze=False)
     rows = []
+    comp_all = pd.read_csv(DESC / "paper_kmeans_composition.csv")
+    cmap = plt.get_cmap("viridis")
     for i, v in enumerate([V_ONLY]):
         full_lab = load_labels(v)
         full_tr = load_trajectories(v)
@@ -75,11 +77,34 @@ def main() -> int:
         ax.set_title(f"(c) {LABEL[v]}: agreement with the lifecycle typology", loc="left", fontsize=9.5)
         ax.legend(loc="lower left", fontsize=7.5)
         ax.set_xlabel("age")
+        # ---- lower row: the worst type's share of the person-waves observed at each age, window by window
+        comp_v = comp_all[(comp_all["variant"] == v) & (comp_all["cluster"] == 0)]
+        full_c = comp_v[(comp_v["lo"] == MIN_AGE) & (comp_v["hi"] == MAX_AGE)].set_index("age")["share"].sort_index()
+        for col, (wins, name) in enumerate([(SLIDING, "sliding twenty-year windows"), (BACKWARD, "windows expanding backwards from 90")]):
+            ax = axes[1, col]
+            ax.plot(full_c.index, full_c.rolling(5, center=True, min_periods=1).mean(), color=INK3, lw=3.0, alpha=0.35, zorder=1, label="lifecycle typology")
+            wl = [w for w in wins if w != (MIN_AGE, MAX_AGE)]
+            for i_w, (lo, hi) in enumerate(wl):
+                q = comp_v[(comp_v["lo"] == lo) & (comp_v["hi"] == hi)].set_index("age")["share"].sort_index()
+                ax.plot(q.index, q.rolling(5, center=True, min_periods=1).mean(), color=cmap(0.85 * i_w / max(len(wl) - 1, 1)), lw=1.4, zorder=2, label=f"{lo}-{hi}")
+            ax.set_title(f"({'de'[col]}) worst type's share by age: {'sliding' if col == 0 else 'backward'}", loc="left", fontsize=9.5)
+            ax.set_ylim(0, 0.5); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_xlabel("age"); ax.legend(fontsize=6.8, ncols=2, loc="upper left")
+        ax = axes[1, 2]
+        for kind, mk, c in [("sliding", "o", CLUSTER[1]), ("backward", "s", CLUSTER[0])]:
+            q = r[r["kind"] == kind]
+            x = q["lo"] + (q["hi"] - q["lo"]) / 2 if kind == "sliding" else q["lo"]
+            ax.plot(x, q["worst_share"], marker=mk, color=c, lw=1.4, label=f"{kind} windows" + (" (x = midpoint)" if kind == "sliding" else " (x = start age)"))
+        ax.axhline((full_lab == 0).mean(), color=INK3, lw=1.4, ls="--", label="lifecycle typology")
+        ax.set_ylim(0, 0.5); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
+        ax.set_title("(f) worst type's share of a window's people", loc="left", fontsize=9.5)
+        ax.legend(loc="upper left", fontsize=7.5); ax.set_xlabel("age")
     fig.text(0.01, -0.01,
              "Each window refits K = 3 on the people observed at least three times inside it. Coloured lines: the "
              "window's type means over its own age range (tick at the start); grey: the full 20-90 typology.\n"
              "Panel (c): adjusted Rand index between a window's assignment and the lifecycle assignment, on the "
-             "people both contain.", fontsize=7.4, color=INK2, va="top")
+             "people both contain. Panels (d), (e): the share of the person-waves observed at each age that the window assigns to its worst type (five-year rolling mean), "
+             "one line per window, against the lifecycle typology in grey; (f) the worst type's share of each window's people. Types are ordered worst to best within each window.",
+             fontsize=7.4, color=INK2, va="top")
     sfx = "" if V_ONLY == "theta" else "_h"
     share_ylim([axes[0, 0], axes[0, 1]])      # the two trajectory panels show the same measure
     fig.savefig(FIG / f"fig_windows{sfx}.png", bbox_inches="tight")

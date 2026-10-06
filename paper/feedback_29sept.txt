@@ -14,7 +14,7 @@ Is the narrative around the clusters that there is always a bad group driving th
 
 DONE: Can we express the differences across types in terms of LE and HLE?
 
-Look at univariate mental health clusters - are these different from the clusters that the multidimensional model learns?
+DONE: Look at univariate mental health clusters - are these different from the clusters that the multidimensional model learns?
 
 Figure 9 (overlapping and expanding windows) - how does the class composition by age change here? Do we have an expanding or shrinking bad type as we extend the window?
 

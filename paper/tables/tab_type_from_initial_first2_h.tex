@@ -1,17 +1,17 @@
-\begin{tabular}{lrr}
+\begin{tabular}{lrrrr}
 \toprule
-predictors at the first row & \multicolumn{2}{c}{K-means} \\
-\cmidrule(lr){2-3}
- & accuracy & AUC \\
+predictors at the first row & \multicolumn{2}{c}{K-means} & \multicolumn{2}{c}{AR(1) + "spike", cohort shifts} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+ & accuracy & AUC & accuracy & AUC \\
 \midrule
-majority type & 0.604 &  \\
-age(0) & 0.604 & 0.578 \\
-+ education & 0.602 & 0.622 \\
-+ income rank & 0.601 & 0.656 \\
-+ education, income, sex & 0.609 & 0.664 \\
-+ $h$(0) & 0.709 & 0.814 \\
-+ $h$(0), $h$(1) & 0.750 & 0.864 \\
-+ $h$(0), education, income, sex & 0.710 & 0.826 \\
-model posterior from the first row &  &  \\
+majority type & 0.604 &  & 0.445 &  \\
+age(0) & 0.604 & 0.578 & 0.481 & 0.608 \\
++ education & 0.602 & 0.622 & 0.488 & 0.634 \\
++ income rank & 0.601 & 0.656 & 0.490 & 0.657 \\
++ education, income, sex & 0.609 & 0.664 & 0.504 & 0.665 \\
++ $h$(0) & 0.709 & 0.814 & 0.628 & 0.785 \\
++ $h$(0), $h$(1) & 0.750 & 0.864 & 0.672 & 0.827 \\
++ $h$(0), education, income, sex & 0.710 & 0.826 & 0.626 & 0.795 \\
+model posterior from the first row &  &  & 0.615 & 0.746 \\
 \bottomrule
 \end{tabular}

@@ -77,7 +77,7 @@ def main() -> int:
         for k in range(K):
             ax.plot(AGES, P_c[k] + shift_ref, color=CLUSTER[k], lw=1.2 + 4 * theta_c[k], label=f"class {k + 1} ({theta_c[k]:.0%}), with cohort")
             ax.plot(AGES, P_n[k], color=CLUSTER[k], lw=1.1, ls="--", label=f"class {k + 1} ({theta_n[k]:.0%}), without")
-        ax.set_title(f"{lab}\nclass paths: with cohort effects, at the 1950s (solid); without (dashed)", loc="left", fontsize=9)
+        ax.set_title(f"{lab}: class paths at the 1950s with the decade shifts (solid),\nwithout them (dashed)", loc="left", fontsize=9)
         ax.legend(fontsize=6.5, loc="lower left", ncols=2); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
         # raw and net decade profiles
         s = d[["pidp", "age", "decade", v]].copy()

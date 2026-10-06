@@ -23,7 +23,7 @@ Paper scripts (`2x`-`4x`, all on the health measure; figures to
 | `23_paper_exhibit1.py` | Exhibit 1: mean, variance and covariance rows, h and theta (`fig_exhibit1.png`) |
 | `24_paper_measure_tables.py` | correlations with PCS/MCS/chronic count, mortality by age band, cost gradient by age band (`tab_measure_*.tex`) |
 | `25_paper_clusters.py` | Figures 3 and 4: types with within-type bands and autocorrelation; between/within, Var(d) and Cov(H, d) by age |
-| `26_paper_windows.py` | Figure 7: types over limited and backward-expanding windows, agreement with the lifecycle typology |
+| `26_paper_windows.py` | Figure: partial K-means types refitted on sliding twenty-year windows and on windows expanding backwards from 90, against the lifecycle typology, with the agreement (ARI) and, in the lower row, the worst type's share of the person-waves observed at each age per window and of each window's people (`fig_windows.png`; `--h` the appendix version; `paper_windows_agreement.csv`) |
 | `27_paper_observables.py` | Figure 8: trajectories by education and income against the types (needs `data_cleaning/06_build_observables.py`) |
 | `29_paper_moments.py` | Exhibit 2 and the identification moments behind it, self-contained: four ages two years apart, Cases 2-4, balanced and pairwise, theta / h / fi10 |
 | `31_paper_appendix_extras.py` | Appendix B: Exhibit 1 for the cost index (`fig_exhibit1_cost.png`); also `fit_cost_curve`, the polynomial cost curve on the measure that `42` prices the returns with |
@@ -51,7 +51,7 @@ Paper scripts (`2x`-`4x`, all on the health measure; figures to
 
 **Mental health.** The same five scripts take `--mental`, which runs Figures 1-5 on the mental GRM (`theta_ment_nodepr` in `data/processed/measures/mental_grm.parquet`, variant `mental`, higher = better) for the paper's mental-health appendix, writing `*_mental.png` and `*_mental.csv`. The K-means (`22 --mental`, then `25 --mental`) runs on the multidim health contract's rows, the rows the univariate mental Bayesian fits (`clustering/runs/mental_queue.py`) and the multidimensional fits use.
 
-`_paper_common.py` holds the loaders, the path smoother and the Exhibit 1 helpers they share; `_paper_moments.py` the identification panel (one row per person-age, at least four observed ages) and the pooled-moment, case-fit and row-fit machinery ported from the companion pipeline.
+`_style.py` holds the shared figure style, `share_ylim` (one vertical scale across panels that show the same quantity) and a footer guard installed by `apply_style()`: before any figure is saved, a footer wider than the figure is re-flowed to fit, so notes never stick out past the panels. `_paper_common.py` holds the loaders, the path smoother and the Exhibit 1 helpers they share; `_paper_moments.py` the identification panel (one row per person-age, at least four observed ages) and the pooled-moment, case-fit and row-fit machinery ported from the companion pipeline.
 
 The measure and cost-index notes (`measuring_health/`):
 
