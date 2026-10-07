@@ -1,6 +1,6 @@
 # Status
 
-Last updated 7 October 2026. The draft is `paper/paper_skeleton.tex` (84 pages,
+Last updated 7 October 2026. The draft is `paper/paper_skeleton.tex` (85 pages,
 builds clean); red `\todo` marks in the PDF are open decisions, grey `\note`
 marks are drafting notes.
 
@@ -12,8 +12,9 @@ the output directory named.
 
 | Queue | Fits, in order | Log | Hook that reads them |
 |---|---|---|---|
-| `clustering/runs/frailty_firstheld_launch.sh` | frailty base/ssm, logfrailty base/ssm (all done 5-6 Oct, clean), h base first row (done); running: h ssm first row; then theta and h base/ssm with the first two rows held out | `artifacts/health-frailty/queue.log` | `32_paper_bayes_fits.py combined --frailty` / `--logfrailty` (done, in the draft as `fig:bayes_frailty`, `fig:bayes_logfrailty`); `43_paper_type_from_initial.py --h`, `--first2`, `--first2 --h` |
-| `clustering/runs/cohort_first2_launch.sh` | theta and h ssm-cohort with the first two rows held out: both done 6 Oct, clean | `artifacts/health-firstheld/queue_cohort_first2.log` | `43 --first2` (the cohort typology is drawn; the base and ssm rows wait for the first queue) |
+| `clustering/runs/frailty_firstheld_launch.sh` | frailty base/ssm, logfrailty base/ssm, h base/ssm first row, theta and h base/ssm with the first two rows held out: all done by 6 Oct 22:41, clean (ROUND2 QUEUE COMPLETE) | `artifacts/health-frailty/queue.log` | `32_paper_bayes_fits.py combined --frailty` / `--logfrailty` (in the draft); `43_paper_type_from_initial.py --first2`, `--first2 --h` and `46_paper_targeting.py --first2`, `--first2 --h` (in the draft, 7 Oct) |
+| `clustering/runs/cohort_first2_launch.sh` | theta and h ssm-cohort with the first two rows held out: both done 6 Oct, clean | `artifacts/health-firstheld/queue_cohort_first2.log` | `43 --first2` (the cohort typology is a row of `fig:typeinit`) |
+| `clustering/runs/multidim_first2_launch.sh` (launched 7 Oct 14:08; sleeps until the windows queue logs WINDOWS QUEUE COMPLETE, then runs alongside K = 4/5) | theta multidimensional ssm + mortality with the first two rows held out, people with at least five rows | `artifacts/multidim-health/queue_first2.log` | `43 --first2` picks it up automatically (`theta-ssm-mort-first2ho`) and drops the first-row placeholder row; then rerun `43 --first2`, rewrite the multidimensional bullet under `fig:typeinit` and remove its todo |
 | `clustering/runs/multidim_health_k45_launch.sh` (after the first queue) | theta multidimensional ssm at K = 4, then K = 5 | `artifacts/multidim-health/queue_k45.log` | `39_paper_multidim.py --k` (`fig_multidim_trajectories_by_K.png`) |
 | `clustering/runs/windows_launch.sh` (alongside, launched 6 Oct 16:17) | theta ssm refitted on the ten age windows of the K-means windows figure (window contracts `health_window_{lo}_{hi}_v1`) | `artifacts/health-windows/queue.log` | a Bayesian version of `fig:windows` (script to write: `26` logic on `bayes_fit` with the window contracts); replaces the K-means figure in the main text, K-means version to the appendix (todo at the windows bullet) |
 
@@ -23,10 +24,17 @@ K-means twins for the first-rows exercises (`22_paper_kmeans.py --first-held 1 -
 `theta_first2held`, `h_first2held`.
 
 **When each lands:** run the hook, look at the figure, then write the bullets.
-The draft places are: the first-two-rows and h versions of the
-type-from-initial exercise next to `fig:typeinit`; the K = 4/5
+The draft places are: the two-row multidimensional typology as the
+multidimensional row of `fig:typeinit` (placeholder now); the K = 4/5
 multidimensional rows as a figure in Section 4 next to `fig:multidim`, with the
 same vertical axis across panels (a feedback item).
+
+**The held-out convention (7 Oct):** the draft uses the first-TWO-rows fits
+throughout the type-from-initial and targeting exercises (`43 --first2`,
+`46 --first2`, panel (d) of `fig:prevention`), so that one reading and two
+readings (t-1 and t-2) can be compared. The first-row fits remain on disk
+(`*-firstho`); their figures are no longer in the draft and have been removed
+from `paper/figures` (regenerable with `43` / `46` without `--first2`).
 
 ## Not yet set off (7 October)
 
@@ -43,7 +51,7 @@ Fits that have been discussed but not queued, so they are not forgotten:
 
 | Item | Status |
 |---|---|
-| Predict the type from an initial, held-out health value, baseline and full clustering | Done: `fig:typeinit`, reframed (5 Oct) as observables versus one health reading: education, income rank and sex add 0.08-0.10 of AUC over age, one reading of theta takes it to 0.81, and on top of the reading the observables add 0.01. K-means / independent / AR(1)+"spike" / multidimensional; the first-two-rows and h versions follow the running fits |
+| Predict the type from an initial, held-out health value, baseline and full clustering | Done: `fig:typeinit`, reframed (5 Oct) as observables versus a health reading and (7 Oct) moved to the first-two-rows fits: education, income rank and sex add 0.08-0.10 of AUC over age, one reading of theta takes it to 0.80-0.81, two readings to 0.85 (four to five points of accuracy), and on top of a reading the observables add 0.01; the mixture's own posterior from one or two rows matches the regression. K-means / independent / AR(1)+"spike" / + cohort shifts / multidimensional (first-row placeholder until the two-row fit lands); the h version is `fig:typeinit_h` in the measures appendix |
 | Relabel "spike" as "episodic" | Open (a global rename in the draft and the figure footers; `descriptives/` prints "spike" in about 30 places) |
 | Is the C_Hd reversal driven by the small very-ill group? | Open; the bottom-decile and worst-class composition figures exist (`fig:decomp`, `fig:multidim`) but the statement has not been made |
 | Result 2: focus on the by-type form and why the evolution of the mean matters | Open (Section 2 rewrite; see the framework todos below) |
@@ -53,7 +61,7 @@ Fits that have been discussed but not queued, so they are not forgotten:
 | Express type differences as LE / HLE | Done (6 Oct): `fig:le` / `tab:le` at the end of subsection (B), from `44_paper_life_expectancy.py`: class hazards of the multidimensional K = 3 AR(1)+"spike" fit, one common age-varying factor calibrated so population LE at 65 and 90 matches ONS 2020-22 (attrition correction); HLE with healthy = self-rated good or better. Open todo: whether to calibrate the healthy share to ONS health state life expectancies too |
 | Univariate mental-health clusters versus the multidimensional classes | Done: Appendix `app:mental`, and (6 Oct) `fig:multidim_vs_uni` in Section 4 after the multidimensional figure: the multidimensional classes are the physical classes (73% same class) with a mental path attached; the univariate mental classes partition by persistence, ARI 0.20 with the multidimensional ones. The main-text multidimensional figure is now the cohort fit (the no-cohort fit moved to Appendix `app:cohort`) |
 | Windows (`fig:windows`): class composition by age as the window moves | Done (6 Oct): lower row of `fig:windows`, the worst type's share by age per window and per window's people. Within shared ages the by-age shares coincide with the lifecycle typology's; the worst type's share of people rises as the window moves later because the window's people are older, and only windows confined to 60+ relabel late decliners (21-25% at 65-75 against 18-19%) |
-| Returns with targeting on observables or on theta(t-1) (6 Oct: Section 5's main figure is now `fig:prevention`, a 2 x 2 of the class returns and the bill beside the targeting panels, AR(1)+"spike" theta only; the detailed figures moved to Appendix `app:returns_detail`, and `app:returns_models` shows the return by class under six typologies and on the four measures) | Done (6 Oct): `fig:targeting` / `tab:targeting` after the returns table, from `46_paper_targeting.py`: rules on what is known at the first observation (age; + observables; + one theta reading; both; the model's posterior; the oracle), treating the top q by predicted return and scored by the realised return. One theta reading closes 43% of the age-to-oracle gap at 10% coverage, observables a fifth, the two together 45%; `--first2` (two readings) and `--h` versions written, not yet in the draft. Open todo: net of a screening cost; targeting on the predicted class rather than the predicted return |
+| Returns with targeting on observables or on theta(t-1) (6 Oct: Section 5's main figure is now `fig:prevention`, a 2 x 2 of the class returns and the bill beside the targeting panels, AR(1)+"spike" theta only; the detailed figures moved to Appendix `app:returns_detail`, and `app:returns_models` shows the return by class under six typologies and on the four measures) | Done (6 Oct): `fig:targeting` / `tab:targeting` after the returns table, from `46_paper_targeting.py`: rules on what is known at the first observation (age; + observables; + one theta reading; both; the model's posterior; the oracle), treating the top q by predicted return and scored by the realised return. On the first-two-rows fits (7 Oct): one theta reading closes 40% of the age-to-oracle gap at 10% coverage, observables a fifth, two readings 53%; the model's posterior from one or two rows matches the regressions; the h version is `fig:targeting_h` in the measures appendix. Open todo: net of a screening cost; targeting on the predicted class rather than the predicted return |
 | Treatment as the cost prevented; when the savings come (done 7 Oct: panel (c) of `fig:prevention` and `fig:timing` in the appendix, with the half-way ages and the present values at 3.5%); LE and inequality effects of prevention | Treatment as the cost prevented: done (6 Oct). The tau instrument and T(r) are gone; the framework and Section 5 now price the treatment bill still to come C(r), split into the cost at the mean path, type differences and realised deviations (the unpreventable part, 16% from 30), and prevention as the share of the bill it avoids (P/C 0.91, 0.67, 0.39 from 30, 50, 70). The note's T(r) is 2C(r) under the quadratic. Timing of the savings and the LE / inequality effects of prevention: open |
 
 ## Open decisions in the draft (the red todos)

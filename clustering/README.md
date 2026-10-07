@@ -35,7 +35,11 @@ which waits for the mental queue) the theta independent-residuals and AR(1) plus
 type-from-an-initial-value exercise (`descriptives/43_paper_type_from_initial.py`);
 `runs/multidim_firstheld_launch.sh` the multidimensional twin, `run_multidim.py
 --variant ssm-firstho` (theta + mental GRM + mortality, first row held out, people
-with at least four rows) into `artifacts/multidim-health/theta-ssm-mort-firstho/`.
+with at least four rows) into `artifacts/multidim-health/theta-ssm-mort-firstho/`,
+and `runs/multidim_first2_launch.sh` the two-row twin (`--holdout-last-k 2
+--min-obs 5`, people with at least five rows) into
+`artifacts/multidim-health/theta-ssm-mort-first2ho/`, which waits for the
+windows queue to finish before starting (log `queue_first2.log`).
 `runs/frailty_firstheld_queue.py` (launcher `runs/frailty_firstheld_launch.sh`)
 runs the K=3 fits on the 31-deficit frailty index and log(frailty + 1/31),
 independent residuals and AR(1) plus "spike", into `artifacts/health-frailty/`,

@@ -79,14 +79,18 @@ def compute() -> dict | None:
     if KHELD == 2:
         SETS[f"+ {V}(0), {V}(1)"] = ["y0", "y0a", "y1", "y1a"]
     MODEL, ORACLE = "model posterior from the first row", "oracle: the fitted-window class"
+    MODEL2 = f"model posterior from {V}(0), {V}(1)"
     probs = {name: predicted_probs(df, cols, test) for name, cols in SETS.items()}
     probs[MODEL] = df[[f"model_p{k}" for k in range(K)]].to_numpy()
+    if "model2_p0" in df:
+        probs[MODEL2] = df[[f"model2_p{k}" for k in range(K)]].to_numpy()
     probs[ORACLE] = W
     expected = {name: (p * Pj).sum(axis=1) for name, p in probs.items()}
     # treat the top share q of the test people by predicted return; score with the realised return
     rows = []
     uniform = float(realised[test].mean())
-    for name in list(SETS) + [MODEL, ORACLE]:
+    rules = list(SETS) + [MODEL] + ([MODEL2] if MODEL2 in probs else []) + [ORACLE]
+    for name in rules:
         e = expected[name][test]; val = realised[test]
         order = np.argsort(-e)
         for q in Q_GRID:
@@ -98,9 +102,8 @@ def compute() -> dict | None:
     print(f"{len(df):,} people ({test.sum():,} scored); uniform return per person £{uniform:,.0f}")
     piv = t.pivot(index="q", columns="rule", values="return_per_treated")
     print(piv.loc[list(Q_TABLE)].round(0).to_string())
-    rules = list(SETS) + [MODEL, ORACLE]
     cols = {"age(0)": INK2, "+ education, income, sex": ORANGE, f"+ {V}(0)": CLUSTER[1], f"+ {V}(0), education, income, sex": CLUSTER[0],
-            f"+ {V}(0), {V}(1)": PURPLE, MODEL: VERM, ORACLE: GREEN}
+            f"+ {V}(0), {V}(1)": PURPLE, MODEL: VERM, MODEL2: "#9e3d8c", ORACLE: GREEN}
     return {"t": t, "piv": piv, "uniform": uniform, "rules": rules, "cols": cols, "n": len(df), "MODEL": MODEL, "ORACLE": ORACLE}
 
 
@@ -110,11 +113,12 @@ def draw_targeting(ax_a, ax_b, res: dict, letters: str = "ab") -> None:
     MODEL, ORACLE = res["MODEL"], res["ORACLE"]
     for name in rules:
         q = piv.index.to_numpy()
-        ax_a.plot(q, piv[name] / 1000, color=cols[name], lw=2.2 if name in (ORACLE, MODEL) else 1.6, ls="--" if name == ORACLE else "-",
+        model_like = name in (ORACLE, MODEL) or name.startswith("model posterior")
+        ax_a.plot(q, piv[name] / 1000, color=cols[name], lw=2.2 if model_like else 1.6, ls="--" if name == ORACLE else "-",
                   label=name.replace(V + "(", VL + "("))
         if ax_b is not None:
             sh = t[t["rule"] == name].set_index("q")["share_of_total"].reindex(q)
-            ax_b.plot(q, sh, color=cols[name], lw=2.2 if name in (ORACLE, MODEL) else 1.6, ls="--" if name == ORACLE else "-")
+            ax_b.plot(q, sh, color=cols[name], lw=2.2 if model_like else 1.6, ls="--" if name == ORACLE else "-")
     ax_a.axhline(uniform / 1000, color=INK2, lw=1.0, ls=":", label="uniform: everyone treated")
     ax_a.set_xlabel("share of people treated $q$ (the top $q$ by predicted return)"); ax_a.set_ylabel("realised return per treated person, £000")
     ax_a.set_title(f"({letters[0]}) targeting: return per treated person against coverage", loc="left", fontsize=9.5); ax_a.grid(True, axis="y"); ax_a.legend(fontsize=7, loc="upper right")

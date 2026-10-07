@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex paper_skeleton"] 1791365536.9615 "paper_skeleton.aux" "paper_skeleton.bbl" "paper_skeleton" 1791365580.02578 0
+["bibtex paper_skeleton"] 1791375393.70262 "paper_skeleton.aux" "paper_skeleton.bbl" "paper_skeleton" 1791375616.34864 0
   "./references.bib" 1790071007.10948 12223 860db25ed6da8373c53c9f6903866ced ""
   "/usr/local/texlive/2026/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "paper_skeleton.aux" 1791365578.36803 69550 907fa6cf5ec8a15e164be8a22182d36f "pdflatex"
+  "paper_skeleton.aux" 1791375615.53903 71555 25e1d3d85e9043d5940e818a959f3260 "pdflatex"
   (generated)
   "paper_skeleton.bbl"
   "paper_skeleton.blg"
   (rewritten before read)
-["pdflatex"] 1791365537.41725 "paper_skeleton.tex" "paper_skeleton.pdf" "paper_skeleton" 1791365580.02729 0
+["pdflatex"] 1791375585.19908 "paper_skeleton.tex" "paper_skeleton.pdf" "paper_skeleton" 1791375616.34932 0
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/tfm/jknappen/ec/tcrm0900.tfm" 1136768653 1536 c4f439db76ef96a9c53bc437f35ffe20 ""
@@ -190,7 +190,7 @@
   "figures/fig_prediction_h.png" 1791281979.60988 198800 4f6a4ceffc48c23ee65a1e9da0e9a294 ""
   "figures/fig_prediction_mortality.png" 1791282074.04438 233230 5a753b59001406039c04ed08e7f182ff ""
   "figures/fig_prediction_mortality_h.png" 1791282074.95621 229228 f2d252562e8cc28a042fe6dda37fc6bb ""
-  "figures/fig_prevention.png" 1791365462.88562 520532 983b168752013f754aba7595e09111e7 ""
+  "figures/fig_prevention.png" 1791375003.56457 545703 de1230fc647143e1b3f3dd2998c03a03 ""
   "figures/fig_prevention_timing.png" 1791362217.36483 365780 8c0529fde6a713f4d38287a87daa10fb ""
   "figures/fig_returns_bayes.png" 1791300994.05298 341024 e479aac8ec67f38288f93735d86e89ef ""
   "figures/fig_returns_bayes_capped.png" 1791281525.91999 353565 b4098bc7c35270aa7b58f1526d0dd0b1 ""
@@ -198,14 +198,16 @@
   "figures/fig_returns_bayes_kmeans.png" 1791281513.16236 257782 b0d706368eb44be21cf27a38b4b05802 ""
   "figures/fig_returns_by_measure.png" 1791357797.82095 526374 842b90d14594aa7e162c4a8d5f60aa77 ""
   "figures/fig_returns_by_model.png" 1791301365.38471 381340 e6122fd2cc6537c7569bf62f071b136c ""
-  "figures/fig_targeting.png" 1791296864.22007 279385 905dca41f8f981d21c5d879d0c65fd90 ""
-  "figures/fig_type_from_initial.png" 1791281577.57723 196955 6f9550e6ad1399e2725b1a9817d900c3 ""
+  "figures/fig_targeting_first2.png" 1791374991.29794 301378 5e678294867298828e166dcd9b0123bd ""
+  "figures/fig_targeting_first2_h.png" 1791374993.6962 327829 d70cddb5dad7d8f4219c4d9f85ff9eec ""
+  "figures/fig_type_from_initial_first2.png" 1791375577.71482 229669 8bd4c24851dfca34105e66d5af803dc0 ""
+  "figures/fig_type_from_initial_first2_h.png" 1791375584.24972 188966 d86b587e8982cb8d91312b64f40b5175 ""
   "figures/fig_windows.png" 1791295325.49671 410095 67e13b5d2ece0d05c7a1fa544e16d269 ""
   "figures/fig_windows_h.png" 1791295335.25152 397435 f1b7717e6bc812a563361ddb57c4f402 ""
-  "paper_skeleton.aux" 1791365578.36803 69550 907fa6cf5ec8a15e164be8a22182d36f "pdflatex"
-  "paper_skeleton.bbl" 1791365537.40638 10283 5484db39dabe2ef64cae296835ba688c "bibtex paper_skeleton"
-  "paper_skeleton.out" 1791365578.38319 7994 2341f3a6368a1ee532f18d825911aa17 "pdflatex"
-  "paper_skeleton.tex" 1791365498.1324 141933 02cabae87ce14f61c7ac24eb31aca06d ""
+  "paper_skeleton.aux" 1791375615.53903 71555 25e1d3d85e9043d5940e818a959f3260 "pdflatex"
+  "paper_skeleton.bbl" 1791375394.00445 10283 5484db39dabe2ef64cae296835ba688c "bibtex paper_skeleton"
+  "paper_skeleton.out" 1791375615.54646 7994 2341f3a6368a1ee532f18d825911aa17 "pdflatex"
+  "paper_skeleton.tex" 1791375443.66873 143905 a1e0cd1b5900f76b802b080e3c222623 ""
   "tables/tab_life_expectancy.tex" 1791281778.29308 615 61e8546382b91fa68d8268520bb52fdb ""
   "tables/tab_measure_correlations.tex" 1791191364.09621 344 25019853a70554d01540a764f92f06fb ""
   "tables/tab_prediction.tex" 1791281974.75289 1438 d02bf1b0c2f0679d57cb684464ad2aad ""
@@ -213,8 +215,8 @@
   "tables/tab_returns_bayes.tex" 1791300977.58633 812 48bfbff256df892ed8fc12437a108fb2 ""
   "tables/tab_returns_bayes_capped.tex" 1791281523.90022 806 5fe288b0588d047478b01225f7b52b3b ""
   "tables/tab_returns_bayes_kmeans.tex" 1791281511.77947 446 e2915d8fdcb2d3baa6fc802fc1b075ee ""
-  "tables/tab_targeting.tex" 1791296858.2042 943 cbc4421483f89076fac2ace6ea1700ac ""
-  "tables/tab_type_from_initial.tex" 1791281576.36111 1137 4f27f9f8a2054e92d74706d96b8166fc ""
+  "tables/tab_targeting_first2.tex" 1791374989.06769 1160 d864212233206fa530647c501ef01137 ""
+  "tables/tab_type_from_initial_first2.tex" 1791375575.79338 1549 3716156d0a295b450d3931797d255633 ""
   (generated)
   "paper_skeleton.aux"
   "paper_skeleton.log"

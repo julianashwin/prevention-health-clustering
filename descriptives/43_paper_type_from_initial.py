@@ -23,8 +23,14 @@ type, people split 70/30 by a hash of pidp, fitted on the 70, scored on the
 30: accuracy (against the majority-type rate) and the macro one-vs-rest AUC. For the mixtures there is also the model's own
 answer, the class posterior implied by the single first observation under the
 fitted parameters (stationary variance plus "spike" under AR(1) + "spike"), which
-needs no regression. A second panel splits the "+ theta(0) x age" accuracy by the
-age at the first observation.
+needs no regression, and with --first2 the posterior from both held rows (the
+Kalman likelihood of the two rows, the counterpart of the two-reading regression).
+The by-age split of the one-reading accuracy goes to a csv.
+
+The multidimensional typology comes from theta-ssm-mort-first2ho when that fit
+exists; until it does, --first2 falls back to the first-row fit
+(theta-ssm-mort-firstho, people with at least four rows, one held reading) as a
+placeholder, labelled as such in the figure and the table.
 
 Modes: the default is theta with the first row held out (the main-text figure);
 --h the same on h; --first2 the fits with the first TWO rows held out (people
@@ -71,20 +77,26 @@ HO = "first2ho" if KHELD == 2 else "firstho"
 SFX = ("_first2" if KHELD == 2 else "") + ("_h" if V == "h" else "")
 VL = {"theta": r"$\theta$", "h": "$h$"}[V]
 FH = ARTIFACTS_DIR / "health-firstheld"
-MD = ARTIFACTS_DIR / "multidim-health" / "theta-ssm-mort-firstho"      # theta, first row only
+MD_DIR = ARTIFACTS_DIR / "multidim-health"
+MD = MD_DIR / f"theta-ssm-mort-{HO}"
+MD_KHELD = KHELD
+if KHELD == 2 and not (MD / "run_summary.json").exists():      # placeholder until the two-row fit lands
+    MD, MD_KHELD = MD_DIR / "theta-ssm-mort-firstho", 1
+MD_LABEL = "multidimensional" + (" (first row only)" if MD_KHELD != KHELD else "")
 EDUC = ["GCSE", "A-level", "degree or higher"]
 AGE_BANDS = [(20, 34), (35, 49), (50, 64), (65, 90)]
 TYPOLOGIES = [("kmeans", "K-means"), ("base", "independent residuals"), ("ssm", 'AR(1) + "spike"'),
-              ("ssm-cohort", 'AR(1) + "spike", cohort shifts'), ("md", "multidimensional")]
+              ("ssm-cohort", 'AR(1) + "spike", cohort shifts'), ("md", MD_LABEL)]
 
 
-def first_rows(contract=CONTRACT, extra: tuple[str, ...] = ()) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """The retained people's rows (sorted) and their first row with the observables."""
+def first_rows(contract=CONTRACT, extra: tuple[str, ...] = (), kheld: int = KHELD) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """The retained people's rows (sorted) and their first row with the observables;
+    people with at least kheld + 3 rows, the sample of the fit with kheld rows held out."""
     long = pd.read_csv(contract / "long.csv").sort_values(["pidp", "age"]).reset_index(drop=True)
     n = long.groupby("pidp")["age"].transform("size")
-    sub = long[n >= MIN_ROWS].reset_index(drop=True)
+    sub = long[n >= kheld + 3].reset_index(drop=True)
     first = sub.groupby("pidp", as_index=False).first()[["pidp", "age", V, *extra]].rename(columns={"age": "age0", V: "y0"})
-    if KHELD == 2:   # the second held row, for the "+ v(0), v(1)" comparison
+    if kheld == 2:   # the second held row, for the "+ v(0), v(1)" comparison
         second = sub.groupby("pidp", as_index=False).nth(1)[["pidp", "age", V]].rename(columns={"age": "age1", V: "y1"})
         first = first.merge(second, on="pidp")
     panel = pd.read_csv(PROCESSED_DATA_DIR / "ukhls_indresp_processed.csv", usecols=["pidp", "sex"])
@@ -135,6 +147,16 @@ def bayes_types(tag: str, sub: pd.DataFrame, first: pd.DataFrame):
     for k in range(K):
         out[f"model_p{k}"] = w0[:, k]
         out[f"post_p{k}"] = w[:, k]          # the fitted-window posterior, the "truth" the targeting exercise scores against
+    if KHELD == 2:   # the model's answer from both held rows: the window likelihood of rows hs..he, from the stationary state
+        X = np.asarray(d["X"])
+        if ar == 2:
+            ll2, _ = M33.kalman_window(Y, X, coef, sigma, sm[0], rho[:, 0], np.asarray(d["age_gap"], float), hs, he)
+        else:
+            ll2, _ = M33.iid_window(Y, X, coef, sigma, hs, he)
+        lp2 = np.log(theta)[None, :] + ll2
+        w2 = np.exp(lp2 - lp2.max(axis=1, keepdims=True)); w2 /= w2.sum(axis=1, keepdims=True)
+        for k in range(K):
+            out[f"model2_p{k}"] = w2[:, k]
     return first.merge(out, on="pidp")
 
 
@@ -157,8 +179,8 @@ def multidim_types(sub: pd.DataFrame, first: pd.DataFrame):
     mort = (np.array([p[f"log_b[{k}]"]["mean"] for k in range(1, K + 1)]),
             np.array([p[f"gomp_slope[{k}]"]["mean"] for k in range(1, K + 1)]), p["makeham[1]"]["mean"])
     w, _ = M33.posterior_and_forecast(d, Ys, coefs, sigmas, sm, rhos, theta, mort=mort)
-    fs, hs = np.asarray(d["fit_start"]), np.asarray(d["hold_start"])
-    assert (hs + 1 == fs).all(), "the held row is not the row before the fitted window"
+    fs, hs, he = (np.asarray(d[k]) for k in ("fit_start", "hold_start", "hold_end"))
+    assert (he + 1 == fs).all() and (he - hs + 1 == MD_KHELD).all(), "the held rows are not the rows before the fitted window"
     pids = sub.groupby("pidp", sort=False)["pidp"].first().to_numpy()
     X0 = np.asarray(d["X"])[hs - 1]
     lp = np.log(theta)[None, :]
@@ -196,12 +218,14 @@ def main() -> int:
             print(f"{tag}: first-rows-held-out fit not finished, skipped")
         else:
             frames[tag] = f
-    if V == "theta" and KHELD == 1:
-        sub_md, first_md = first_rows(MULTIDIM_CONTRACT, extra=(MENTAL_COL,))
+    if V == "theta":
+        sub_md, first_md = first_rows(MULTIDIM_CONTRACT, extra=(MENTAL_COL,), kheld=MD_KHELD)
         f = multidim_types(sub_md, first_md.rename(columns={MENTAL_COL: "m0"}))
         if f is None:
-            print("md: first-row-held-out multidimensional fit not finished, skipped")
+            print("md: first-rows-held-out multidimensional fit not finished, skipped")
         else:
+            if MD_KHELD != KHELD:
+                print(f"md: {MD.name} used as a placeholder for the {HO} fit (one held reading, people with at least {MD_KHELD + 3} rows)")
             frames["md"] = f
     obs = ["income_rank_mean", "female"] + [f"educ_{g}" for g in EDUC]
     educ = [f"educ_{g}" for g in EDUC]
@@ -213,6 +237,7 @@ def main() -> int:
     SETS[f"+ {V}(0), education, income, sex"] = ["y0", "y0a"] + obs
     MD_SETS = {f"+ {V}(0), mental(0)": ["y0", "y0a", "m0", "m0a"]}      # multidimensional types only
     MODEL = "model posterior from the first row"
+    MODEL2 = f"model posterior from {V}(0), {V}(1)"       # both held rows, the counterpart of the two-reading set
     rows, by_age = [], []
     for tag, lab in TYPOLOGIES:
         if tag not in frames:
@@ -229,6 +254,8 @@ def main() -> int:
         print(f"{lab}: {len(df):,} people, type shares {np.round(shares.to_numpy(), 3)}, majority rate on the test 30% {majority:.3f}")
         probs_by_set = {}
         for name, cols in {**SETS, **(MD_SETS if tag == "md" else {})}.items():
+            if any(c not in df for c in cols):      # the placeholder multidimensional fit has one held reading only
+                continue
             r = score(df, cols, test); probs_by_set[name] = r.pop("probs")
             rows.append({"typology": tag, "label": lab, "predictors": name, "n": len(df), "n_test": int(test.sum()), "majority": majority, **r})
             print(f"  {name:36s} accuracy {r['accuracy']:.3f}  macro AUC {r['auc']:.3f}")
@@ -236,6 +263,10 @@ def main() -> int:
             r = score(df, [], test, probs=df[[f"model_p{k}" for k in range(K)]].to_numpy()); probs_by_set[MODEL] = r.pop("probs")
             rows.append({"typology": tag, "label": lab, "predictors": MODEL, "n": len(df), "n_test": int(test.sum()), "majority": majority, **r})
             print(f"  {MODEL:36s} accuracy {r['accuracy']:.3f}  macro AUC {r['auc']:.3f}")
+        if "model2_p0" in df:
+            r = score(df, [], test, probs=df[[f"model2_p{k}" for k in range(K)]].to_numpy()); r.pop("probs")
+            rows.append({"typology": tag, "label": lab, "predictors": MODEL2, "n": len(df), "n_test": int(test.sum()), "majority": majority, **r})
+            print(f"  {MODEL2:36s} accuracy {r['accuracy']:.3f}  macro AUC {r['auc']:.3f}")
         pred = probs_by_set[HEALTH].argmax(axis=1)
         for lo, hi in AGE_BANDS:
             sel = test & df["age0"].between(lo, hi).to_numpy()
@@ -247,10 +278,12 @@ def main() -> int:
     have = [(tag, lab) for tag, lab in TYPOLOGIES if tag in frames]
 
     # ---- table
-    sets = list(SETS) + (list(MD_SETS) if "md" in frames else []) + [MODEL]
+    sets = list(SETS) + (list(MD_SETS) if "md" in frames else []) + [MODEL] + ([MODEL2] if KHELD == 2 else [])
     with open(TAB / f"tab_type_from_initial{SFX}.tex", "w") as f:
         f.write("\\begin{tabular}{l" + "rr" * len(have) + "}\n\\toprule\n")
-        f.write("predictors at the first row & " + " & ".join(f"\\multicolumn{{2}}{{c}}{{{lab}}}" for _, lab in have) + " \\\\\n")
+        SHORT = {"kmeans": "K-means", "base": "indep. residuals", "ssm": 'AR(1) + "spike"', "ssm-cohort": "+ cohort shifts",
+                 "md": "multidim" + (" (1 row)" if MD_KHELD != KHELD else "")}       # short headers so five typologies fit
+        f.write("predictors at the first rows & " + " & ".join(f"\\multicolumn{{2}}{{c}}{{{SHORT[tag]}}}" for tag, _ in have) + " \\\\\n")
         f.write(" ".join(f"\\cmidrule(lr){{{2 + 2 * i}-{3 + 2 * i}}}" for i in range(len(have))) + "\n & " + " & ".join(["accuracy & AUC"] * len(have)) + " \\\\\n\\midrule\n")
         f.write("majority type & " + " & ".join(f"{t[t['typology'] == tag]['majority'].iloc[0]:.3f} & " for tag, _ in have) + " \\\\\n")
         for name in sets:
@@ -284,11 +317,14 @@ def main() -> int:
     held = "first row" if KHELD == 1 else "first two rows"
     footer = (f"Health contract people with at least {MIN_ROWS} rows ({n:,}), on {V}; every typology is fitted without each person's {held} (K-means on the remaining rows; the mixtures with the {held} held out, "
              "type = modal class of the posterior from the fitted window)."
-             + (f" The multidimensional fit (theta + mental GRM + mortality) is on the multidim contract's people with at least four rows ({n_md:,}), its posterior from both channels and survival through the fitted window." if n_md else "")
+             + (f" The multidimensional fit (theta + mental GRM + mortality) is on the multidim contract's people with at least {MD_KHELD + 3} rows ({n_md:,}), "
+                + ("its first row held out (a placeholder until the two-row fit lands), " if MD_KHELD != KHELD else "")
+                + "its posterior from both channels and survival through the fitted window." if n_md else "")
              + f"\nEvery predictor set is on top of a quadratic in age at the first row: education (three groups), income rank, the three observables together, {V} at the first row "
              "(with its age interaction), and the reading plus the observables; multinomial logit, people split 70/30 by a hash of pidp, fitted on the 70, scored on the 30.\n\"Model posterior\": the class posterior the fitted mixture itself implies "
              "from the single first observation (class prior times the marginal density at that age; stationary variance plus \"spike\" under AR(1) + \"spike\"), no regression. "
-             "AUC is the macro one-vs-rest AUC over the three types." + (" The multidimensional model's posterior uses both first-row scores." if n_md else ""))
+             "AUC is the macro one-vs-rest AUC over the three types." + (" The multidimensional model's posterior uses both first-row scores." if n_md else "")
+             + (" The posterior from both held rows is the Kalman likelihood of the two rows from the stationary state." if KHELD == 2 else ""))
     fig.text(0.01, -0.09, "\n".join(textwrap.wrap(footer.replace("\n", " "), 200)), fontsize=7.2, color=INK2, va="top")
     fig.savefig(FIG / f"fig_type_from_initial{SFX}.png", bbox_inches="tight")
     print(f"wrote fig_type_from_initial{SFX}.png and tab_type_from_initial{SFX}.tex ({', '.join(lab for _, lab in have)})")
