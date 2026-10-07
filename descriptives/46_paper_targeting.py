@@ -112,14 +112,16 @@ def draw_targeting(ax_a, ax_b, res: dict, letters: str = "ab") -> None:
         q = piv.index.to_numpy()
         ax_a.plot(q, piv[name] / 1000, color=cols[name], lw=2.2 if name in (ORACLE, MODEL) else 1.6, ls="--" if name == ORACLE else "-",
                   label=name.replace(V + "(", VL + "("))
-        sh = t[t["rule"] == name].set_index("q")["share_of_total"].reindex(q)
-        ax_b.plot(q, sh, color=cols[name], lw=2.2 if name in (ORACLE, MODEL) else 1.6, ls="--" if name == ORACLE else "-")
+        if ax_b is not None:
+            sh = t[t["rule"] == name].set_index("q")["share_of_total"].reindex(q)
+            ax_b.plot(q, sh, color=cols[name], lw=2.2 if name in (ORACLE, MODEL) else 1.6, ls="--" if name == ORACLE else "-")
     ax_a.axhline(uniform / 1000, color=INK2, lw=1.0, ls=":", label="uniform: everyone treated")
     ax_a.set_xlabel("share of people treated $q$ (the top $q$ by predicted return)"); ax_a.set_ylabel("realised return per treated person, £000")
     ax_a.set_title(f"({letters[0]}) targeting: return per treated person against coverage", loc="left", fontsize=9.5); ax_a.grid(True, axis="y"); ax_a.legend(fontsize=7, loc="upper right")
-    ax_b.plot([0, 1], [0, 1], color=INK2, lw=1.0, ls=":")
-    ax_b.set_xlabel("share of people treated $q$"); ax_b.set_ylabel("share of the total return collected")
-    ax_b.set_title(f"({letters[1]}) targeting: share of the total return collected", loc="left", fontsize=9.5); ax_b.grid(True, axis="y")
+    if ax_b is not None:
+        ax_b.plot([0, 1], [0, 1], color=INK2, lw=1.0, ls=":")
+        ax_b.set_xlabel("share of people treated $q$"); ax_b.set_ylabel("share of the total return collected")
+        ax_b.set_title(f"({letters[1]}) targeting: share of the total return collected", loc="left", fontsize=9.5); ax_b.grid(True, axis="y")
 
 
 def main() -> int:

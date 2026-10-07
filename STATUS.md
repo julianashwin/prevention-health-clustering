@@ -1,6 +1,6 @@
 # Status
 
-Last updated 6 October 2026. The draft is `paper/paper_skeleton.tex` (68 pages,
+Last updated 7 October 2026. The draft is `paper/paper_skeleton.tex` (84 pages,
 builds clean); red `\todo` marks in the PDF are open decisions, grey `\note`
 marks are drafting notes.
 
@@ -38,7 +38,6 @@ Fits that have been discussed but not queued, so they are not forgotten:
 | cohort-shift versions of the first-*one*-row held-out fits (theta, h) | would complete the type-from-initial typologies | 2 fits, 7-13 h | on ice (5 Oct) |
 | h in the multidimensional model at K = 4 and 5 | the h rows of a multidimensional K comparison | 2 fits, 40-60 h, mode risk | on ice (5 Oct) |
 | the single-channel returns on the first-row-held-out fit's own classes (`42 --firstho`) | would make the targeting figure self-contained on one fit | no fit needed, a script flag | open; expected to move the targeting numbers by a few hundred pounds at most |
-| the timing-of-savings row in the main prevention figure (`47 --with-timing`, `42 --timing`) | the costs-now, benefits-later point | no fit needed; figures drawn 7 Oct, not in the draft | awaiting the user's choice between the separate figure and the combined one |
 
 ## Feedback of 29 September (`paper/feedback_29sept.txt`)
 
@@ -55,7 +54,7 @@ Fits that have been discussed but not queued, so they are not forgotten:
 | Univariate mental-health clusters versus the multidimensional classes | Done: Appendix `app:mental`, and (6 Oct) `fig:multidim_vs_uni` in Section 4 after the multidimensional figure: the multidimensional classes are the physical classes (73% same class) with a mental path attached; the univariate mental classes partition by persistence, ARI 0.20 with the multidimensional ones. The main-text multidimensional figure is now the cohort fit (the no-cohort fit moved to Appendix `app:cohort`) |
 | Windows (`fig:windows`): class composition by age as the window moves | Done (6 Oct): lower row of `fig:windows`, the worst type's share by age per window and per window's people. Within shared ages the by-age shares coincide with the lifecycle typology's; the worst type's share of people rises as the window moves later because the window's people are older, and only windows confined to 60+ relabel late decliners (21-25% at 65-75 against 18-19%) |
 | Returns with targeting on observables or on theta(t-1) (6 Oct: Section 5's main figure is now `fig:prevention`, a 2 x 2 of the class returns and the bill beside the targeting panels, AR(1)+"spike" theta only; the detailed figures moved to Appendix `app:returns_detail`, and `app:returns_models` shows the return by class under six typologies and on the four measures) | Done (6 Oct): `fig:targeting` / `tab:targeting` after the returns table, from `46_paper_targeting.py`: rules on what is known at the first observation (age; + observables; + one theta reading; both; the model's posterior; the oracle), treating the top q by predicted return and scored by the realised return. One theta reading closes 43% of the age-to-oracle gap at 10% coverage, observables a fifth, the two together 45%; `--first2` (two readings) and `--h` versions written, not yet in the draft. Open todo: net of a screening cost; targeting on the predicted class rather than the predicted return |
-| Treatment as the cost prevented; when the savings come; LE and inequality effects of prevention | Treatment as the cost prevented: done (6 Oct). The tau instrument and T(r) are gone; the framework and Section 5 now price the treatment bill still to come C(r), split into the cost at the mean path, type differences and realised deviations (the unpreventable part, 16% from 30), and prevention as the share of the bill it avoids (P/C 0.91, 0.67, 0.39 from 30, 50, 70). The note's T(r) is 2C(r) under the quadratic. Timing of the savings and the LE / inequality effects of prevention: open |
+| Treatment as the cost prevented; when the savings come (done 7 Oct: panel (c) of `fig:prevention` and `fig:timing` in the appendix, with the half-way ages and the present values at 3.5%); LE and inequality effects of prevention | Treatment as the cost prevented: done (6 Oct). The tau instrument and T(r) are gone; the framework and Section 5 now price the treatment bill still to come C(r), split into the cost at the mean path, type differences and realised deviations (the unpreventable part, 16% from 30), and prevention as the share of the bill it avoids (P/C 0.91, 0.67, 0.39 from 30, 50, 70). The note's T(r) is 2C(r) under the quadratic. Timing of the savings and the LE / inequality effects of prevention: open |
 
 ## Open decisions in the draft (the red todos)
 
