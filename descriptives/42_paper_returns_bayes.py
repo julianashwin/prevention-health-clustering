@@ -135,6 +135,74 @@ def returns(rows: pd.DataFrame, v: str, W: np.ndarray, paths: np.ndarray, pi: np
     return pd.DataFrame(recs).set_index("r")
 
 
+def savings(rows: pd.DataFrame, v: str, W: np.ndarray, paths: np.ndarray, pi: np.ndarray, cprime) -> dict:
+    """When the saving arrives: the per-age contributions to P_j(r), s_j(a | r) = E[-c'(h_a) | j] (hbar_{j,r-1} - hbar_{j,a}),
+    for every start age r on R_GRID and age a >= r, by class and for the uniform policy (pi-weighted).
+    Returns arrays [K, len(R_GRID), len(AGES)] and [len(R_GRID), len(AGES)], zero before r."""
+    sign = 1.0 if HEALTHIER_HIGH.get(v, True) else -1.0
+    x = rows[v].to_numpy(float); cp = -sign * cprime(x); age = rows["age"].to_numpy()
+    kc = W.shape[1]
+    G = []
+    for k in range(kc):
+        wk = W[:, k]; den = pd.Series(wk).groupby(age).sum()
+        G.append(smooth(pd.Series(wk * cp).groupby(age).sum() / den, den, min_n=25))
+    G = np.vstack(G)
+    S = np.zeros((kc, len(R_GRID), len(AGES)))
+    for i, r in enumerate(R_GRID):
+        idx = slice(r - MIN_AGE, MAX_AGE - MIN_AGE + 1)
+        S[:, i, idx] = G[:, idx] * sign * (paths[:, r - 1 - MIN_AGE][:, None] - paths[:, idx])
+    U = np.einsum("k,kra->ra", pi, S)
+    return {"S": S, "U": U}
+
+
+def timing_stats(S: np.ndarray, r: int, rate: float = 0.035) -> dict:
+    """For a savings profile s(a | r) on AGES: the age by which half and 90% of the return has arrived,
+    the share arriving within ten years, and the present value at ``rate`` as a share of the undiscounted sum."""
+    prof = S[r - MIN_AGE:]; total = prof.sum()
+    if total <= 0:
+        return {"half_age": np.nan, "p90_age": np.nan, "within10": np.nan, "pv_share": np.nan}
+    cum = np.cumsum(prof) / total
+    ages = AGES[r - MIN_AGE:]
+    disc = (1 + rate) ** -(ages - r)
+    return {"half_age": float(ages[np.searchsorted(cum, 0.5)]), "p90_age": float(ages[np.searchsorted(cum, 0.9)]),
+            "within10": float(cum[min(10, len(cum) - 1)]), "pv_share": float((prof * disc).sum() / total)}
+
+
+def draw_timing_profiles(ax, sv: dict, cs: dict, r_list=(30, 50, 70), letter: str = "e") -> None:
+    """Panel: the yearly saving by age for the uniform policy (thick) and each class (thin), for a few start ages."""
+    kc = len(cs["shares"]); pal = PALETTE[kc]
+    styles = ["-", "--", ":"]
+    for r, ls in zip(r_list, styles):
+        i = int(np.where(R_GRID == r)[0][0])
+        ax.plot(AGES[r - MIN_AGE:], sv["U"][i, r - MIN_AGE:], color=INK2, lw=2.2, ls=ls, label=f"uniform, start {r}")
+        for k in range(kc):
+            ax.plot(AGES[r - MIN_AGE:], sv["S"][k, i, r - MIN_AGE:], color=pal[k], lw=0.9 + 2.0 * cs["shares"][k], ls=ls, alpha=0.9,
+                    label=f"{cs['kind']} {k + 1}" if r == r_list[0] else None)
+    ax.axhline(0, color=INK2, lw=0.6)
+    ax.set_title(f"({letter}) when the saving arrives: £ per year of age, by start age", loc="left", fontsize=9.5)
+    ax.set_xlabel("age $a$"); ax.set_ylabel("saving in year $a$ per unit of $\\mu$, £"); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE + 5, MAX_AGE)
+    ax.legend(fontsize=6.8, ncols=2)
+
+
+def draw_timing_cumulative(ax, sv: dict, cs: dict, r_list=(30, 50, 70), letter: str = "f", rate: float = 0.035) -> None:
+    """Panel: the share of the return collected by age, uniform (thick) and by class (thin), with the half-way ages."""
+    kc = len(cs["shares"]); pal = PALETTE[kc]
+    styles = ["-", "--", ":"]
+    for r, ls in zip(r_list, styles):
+        i = int(np.where(R_GRID == r)[0][0]); ages = AGES[r - MIN_AGE:]
+        u = sv["U"][i, r - MIN_AGE:]; cum = np.cumsum(u) / u.sum()
+        st = timing_stats(sv["U"][i], r, rate)
+        ax.plot(ages, cum, color=INK2, lw=2.2, ls=ls, label=f"uniform, start {r}: half by {st['half_age']:.0f}, PV {st['pv_share']:.0%}")
+        for k in range(kc):
+            sk = sv["S"][k, i, r - MIN_AGE:]
+            if sk.sum() > 0:
+                ax.plot(ages, np.cumsum(sk) / sk.sum(), color=pal[k], lw=0.9 + 2.0 * cs["shares"][k], ls=ls, alpha=0.9)
+    ax.axhline(0.5, color=INK2, lw=0.6, ls=":")
+    ax.set_title(f"({letter}) share of the return collected by age (PV at {100 * rate:.1f}% as a share of the sum)", loc="left", fontsize=9.5)
+    ax.set_xlabel("age $a$"); ax.set_ylim(0, 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE + 5, MAX_AGE)
+    ax.legend(fontsize=6.8, loc="lower right")
+
+
 def class_set(fs: str, v: str, kc: int = K) -> dict | None:
     """Rows, per-row class weights, class paths and shares for typology ``fs`` on measure ``v``
     with ``kc`` classes; None when that fit does not exist (the K = 4, 5 fits are theta and h only)."""
@@ -291,6 +359,45 @@ def main() -> int:
             "one vertical scale for all panels.", 210)), fontsize=7.2, color=INK2, va="top")
         fig.savefig(FIG / "fig_returns_by_model.png", bbox_inches="tight")
         print(f"wrote fig_returns_by_model.png to {FIG}")
+        return 0
+
+    if "--timing" in sys.argv:      # when the savings arrive, by class and start age (the ssm classes on theta)
+        cfun, cprime, deg, _, _ = cost_curve("theta", True)
+        cs = class_set("ssm", "theta")
+        sv = savings(cs["rows"], "theta", cs["W"], cs["paths"], cs["shares"], cprime)
+        r_list = (30, 50, 70)
+        fig, axes = plt.subplots(2, K, figsize=(15, 8), gridspec_kw={"hspace": 0.4, "wspace": 0.25})
+        recs = []
+        for k in range(K):
+            ax = axes[0, k]
+            for r, ls in zip(r_list, ["-", "--", ":"]):
+                i = int(np.where(R_GRID == r)[0][0])
+                ax.plot(AGES[r - MIN_AGE:], sv["S"][k, i, r - MIN_AGE:], color=CLUSTER[k], lw=1.8, ls=ls, label=f"start at {r}")
+                st = timing_stats(sv["S"][k, i], r); recs.append({"class": k + 1, "r": r, "P_j": float(sv["S"][k, i].sum()), **st})
+            ax.axhline(0, color=INK2, lw=0.6)
+            ax.set_title(f"({'abc'[k]}) class {k + 1} ({cs['shares'][k]:.0%}): saving per year of age, £", loc="left", fontsize=9.5)
+            ax.legend(fontsize=7.5); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE + 5, MAX_AGE)
+            ax = axes[1, k]
+            for r, ls in zip(r_list, ["-", "--", ":"]):
+                i = int(np.where(R_GRID == r)[0][0]); sk = sv["S"][k, i, r - MIN_AGE:]
+                st = timing_stats(sv["S"][k, i], r)
+                ax.plot(AGES[r - MIN_AGE:], np.cumsum(sk) / sk.sum(), color=CLUSTER[k], lw=1.8, ls=ls,
+                        label=f"start {r}: half by {st['half_age']:.0f}, 90% by {st['p90_age']:.0f}; PV {st['pv_share']:.0%}")
+            ax.axhline(0.5, color=INK2, lw=0.6, ls=":")
+            ax.set_title(f"({'def'[k]}) class {k + 1}: share of the return collected by age", loc="left", fontsize=9.5)
+            ax.set_xlabel("age $a$"); ax.set_ylim(0, 1); ax.legend(fontsize=7, loc="lower right"); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE + 5, MAX_AGE)
+        for r in r_list:
+            i = int(np.where(R_GRID == r)[0][0]); st = timing_stats(sv["U"][i], r)
+            recs.append({"class": 0, "r": r, "P_j": float(sv["U"][i].sum()), **st})
+        share_ylim(list(axes[0]))
+        t = pd.DataFrame(recs); t.to_csv(DESC / "paper_returns_timing.csv", index=False)
+        print(t.round(3).to_string(index=False))
+        fig.text(0.01, -0.02, "\n".join(textwrap.wrap(
+            "The K = 3 AR(1) + \"spike\" classes on theta with the cost curve in pounds. Top: the saving in each year of age a from prevention started at r, s_j(a | r) = E[-c'(h_a) | j] (hbar_{j,r-1} - hbar_{j,a}), "
+            "the per-age terms whose sum over a >= r is the class return P_j(r); for starts at 30, 50 and 70. Bottom: the cumulative share of P_j(r) collected by age a, with the ages by which half and 90% has arrived "
+            "and the present value at 3.5% a year (the Green Book rate) as a share of the undiscounted return. Pounds per unit of mu; no survival weighting.", 210)), fontsize=7.2, color=INK2, va="top")
+        fig.savefig(FIG / "fig_prevention_timing.png", bbox_inches="tight")
+        print(f"wrote fig_prevention_timing.png to {FIG}")
         return 0
 
     if "--measures" in sys.argv:    # appendix: panel (a) under AR(1) + "spike" on the four measures, rows K = 3, 4, 5

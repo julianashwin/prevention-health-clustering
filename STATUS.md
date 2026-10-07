@@ -28,8 +28,17 @@ type-from-initial exercise next to `fig:typeinit`; the K = 4/5
 multidimensional rows as a figure in Section 4 next to `fig:multidim`, with the
 same vertical axis across panels (a feedback item).
 
-On ice by decision (5 October): cohort-shift versions of the first-*one*-row
-fits; h at K = 4/5 in the multidimensional model.
+## Not yet set off (7 October)
+
+Fits that have been discussed but not queued, so they are not forgotten:
+
+| Fit | Why | Cost | Decision |
+|---|---|---|---|
+| frailty and log-frailty AR(1)+"spike" at K = 4 and 5 (`health-frailty-ssm-k4/5`, `health-logfrailty-ssm-k4/5`) | the two "not fitted" cells per row of `fig:returnsmeasures` | 4 fits, 10-30 h each (K = 3 frailty ssm took 9.5 h) | open; suggested after the windows queue, so as not to run three jobs at once |
+| cohort-shift versions of the first-*one*-row held-out fits (theta, h) | would complete the type-from-initial typologies | 2 fits, 7-13 h | on ice (5 Oct) |
+| h in the multidimensional model at K = 4 and 5 | the h rows of a multidimensional K comparison | 2 fits, 40-60 h, mode risk | on ice (5 Oct) |
+| the single-channel returns on the first-row-held-out fit's own classes (`42 --firstho`) | would make the targeting figure self-contained on one fit | no fit needed, a script flag | open; expected to move the targeting numbers by a few hundred pounds at most |
+| the timing-of-savings row in the main prevention figure (`47 --with-timing`, `42 --timing`) | the costs-now, benefits-later point | no fit needed; figures drawn 7 Oct, not in the draft | awaiting the user's choice between the separate figure and the combined one |
 
 ## Feedback of 29 September (`paper/feedback_29sept.txt`)
 
