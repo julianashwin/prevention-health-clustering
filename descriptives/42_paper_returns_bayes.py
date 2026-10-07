@@ -68,6 +68,9 @@ SET_NAMES = {"kmeans": "K-means types", "base": "independent-residuals classes",
              "multidim-cohort": "multidimensional classes, cohort shifts"}
 MD_TAGS = {("multidim", "theta"): ("theta-ssm-mort", None), ("multidim", "h"): ("h-ssm-mort", [1, 2, 3]),
            ("multidim-cohort", "theta"): ("theta-ssm-mort-cohort", None)}
+PALETTE = {3: CLUSTER, 4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
+           5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}     # worst -> best, as 36_paper_trajectories.py
+CHAINS = {"health-h-ssm-k5": [1, 2, 4]}                                     # fits read over the chains that share a mode
 
 
 def smooth(x: pd.Series, n: pd.Series, min_n: int = 100) -> np.ndarray:
@@ -103,8 +106,9 @@ def returns(rows: pd.DataFrame, v: str, W: np.ndarray, paths: np.ndarray, pi: np
     g = pd.DataFrame({"age": age, "c": cost, "cp": cp, "m": x}).groupby("age")
     n = g.size()
     c_a, g_a, hbar = smooth(g["c"].mean(), n), smooth(g["cp"].mean(), n), smooth(g["m"].mean(), n)
+    kc = W.shape[1]
     G, M, S = [], [], []
-    for k in range(K):
+    for k in range(kc):
         wk = W[:, k]
         den = pd.Series(wk).groupby(age).sum()
         G.append(smooth(pd.Series(wk * cp).groupby(age).sum() / den, den, min_n=25))
@@ -127,12 +131,13 @@ def returns(rows: pd.DataFrame, v: str, W: np.ndarray, paths: np.ndarray, pi: np
                      "within_share": C_within / C, "between_share_C": C_between / C,
                      "P": P, "P_over_C": P / C, "mean_channel": mean_ch, "cov_channel": P - mean_ch,
                      "cov_share": (P - mean_ch) / P, "P_max_class": Pj.max(), "best_class": int(Pj.argmax()) + 1,
-                     "type_gain": (Pj.max() - P) / P, **{f"P_{c + 1}": Pj[c] for c in range(K)}})
+                     "type_gain": (Pj.max() - P) / P, **{f"P_{c + 1}": Pj[c] for c in range(kc)}})
     return pd.DataFrame(recs).set_index("r")
 
 
-def class_set(fs: str, v: str) -> dict:
-    """Rows, per-row class weights, class paths and shares for typology ``fs`` on measure ``v``."""
+def class_set(fs: str, v: str, kc: int = K) -> dict | None:
+    """Rows, per-row class weights, class paths and shares for typology ``fs`` on measure ``v``
+    with ``kc`` classes; None when that fit does not exist (the K = 4, 5 fits are theta and h only)."""
     A = (AGES - 55) / 10
     if fs.startswith("multidim"):
         M39 = importlib.import_module("39_paper_multidim")
@@ -150,18 +155,27 @@ def class_set(fs: str, v: str) -> dict:
         paths = np.vstack([smooth_path(q["age"].to_numpy(), q["mean"].to_numpy(), q["count"].to_numpy(), min_count=25).to_numpy()
                            for c in range(K) for q in [traj[traj["cluster"] == c]]])
         return {"rows": long, "W": W, "paths": paths, "shares": np.array([(L == c).mean() for c in range(K)]), "name": SET_NAMES[fs], "kind": "type"}
-    folder = "health-frailty" if v in ("frailty", "logfrailty") else {"base": "health-base", "ssm": "health-ssm", "ssm-cohort": "health-ssm-cohort"}[fs]
-    f = bayes_fit(ARTIFACTS_DIR / folder / f"health-{v}-{fs}", v, K)
+    if kc != K:
+        fit_dir = ARTIFACTS_DIR / "health-k45" / f"health-{v}-{fs}-k{kc}"
+    else:
+        folder = "health-frailty" if v in ("frailty", "logfrailty") else {"base": "health-base", "ssm": "health-ssm", "ssm-cohort": "health-ssm-cohort"}[fs]
+        fit_dir = ARTIFACTS_DIR / folder / f"health-{v}-{fs}"
+    if not (fit_dir / "run_summary.json").exists():
+        return None
+    f = bayes_fit(fit_dir, v, kc, chains=CHAINS.get(fit_dir.name))
     post = f["post"].set_index("pidp")
-    W = post.loc[long["pidp"], [f"class{k + 1}" for k in range(K)]].to_numpy()
+    W = post.loc[long["pidp"], [f"class{k + 1}" for k in range(kc)]].to_numpy()
     paths = np.vstack([f["mom"]["mean"] + f["mom"]["sd"] * (c[0] + c[1] * A + c[2] * A ** 2) for c in f["coef"]])
     return {"rows": long, "W": W, "paths": paths, "shares": f["theta"], "name": SET_NAMES[fs], "kind": "class"}
 
 
-def compute(v: str, fs: str, uncapped: bool = True, curve=None) -> tuple[pd.DataFrame, dict]:
-    """The returns table for typology ``fs`` on measure ``v``; ``curve`` reuses a cost curve."""
+def compute(v: str, fs: str, uncapped: bool = True, curve=None, kc: int = K):
+    """The returns table for typology ``fs`` on measure ``v``; ``curve`` reuses a cost curve.
+    (None, None) when the fit does not exist."""
     cfun, cprime, deg, _, _ = curve or cost_curve(v, uncapped)
-    cs = class_set(fs, v)
+    cs = class_set(fs, v, kc)
+    if cs is None:
+        return None, None
     R = returns(cs["rows"], v, cs["W"], cs["paths"], cs["shares"], cfun, cprime)
     cs["deg"] = deg
     return R, cs
@@ -170,12 +184,13 @@ def compute(v: str, fs: str, uncapped: bool = True, curve=None) -> tuple[pd.Data
 # ---- panels, shared with 47_paper_prevention_main.py --------------------------------------------
 def draw_pj(ax, R: pd.DataFrame, cs: dict, v: str, letter: str, title: str | None = None) -> None:
     """Panel (a): the return by class and the uniform return, by start age."""
-    for c in range(K):
-        ax.plot(R.index, R[f"P_{c + 1}"], color=CLUSTER[c], lw=1.0 + 3.5 * cs["shares"][c], label=f"{cs['kind']} {c + 1} ({cs['shares'][c]:.0%})")
+    kc = len(cs["shares"]); pal = PALETTE[kc]
+    for c in range(kc):
+        ax.plot(R.index, R[f"P_{c + 1}"], color=pal[c], lw=1.0 + 3.5 * cs["shares"][c], label=f"{cs['kind']} {c + 1} ({cs['shares'][c]:.0%})")
     ax.plot(R.index, R["P"], color=INK2, lw=1.4, ls="--", label="uniform $P(r)$")
     ax.axhline(0, color=INK2, lw=0.6)
     ax.set_title(title or f"({letter}) {MEASURE_LABEL[v]}, {cs['name']}: $P_j(r)$, £", loc="left", fontsize=9.5)
-    ax.legend(fontsize=7.5); ax.grid(True, axis="y"); ax.set_xlim(R_GRID[0], R_GRID[-1])
+    ax.legend(fontsize=7.5, ncols=2 if kc > 3 else 1); ax.grid(True, axis="y"); ax.set_xlim(R_GRID[0], R_GRID[-1])
 
 
 def draw_bill(ax, R: pd.DataFrame, cs: dict, letter: str) -> None:
@@ -278,22 +293,37 @@ def main() -> int:
         print(f"wrote fig_returns_by_model.png to {FIG}")
         return 0
 
-    if "--measures" in sys.argv:    # appendix: panel (a) under AR(1) + "spike" on the four measures
+    if "--measures" in sys.argv:    # appendix: panel (a) under AR(1) + "spike" on the four measures, rows K = 3, 4, 5
         measures = ["theta", "h", "frailty", "logfrailty"]
-        fig, axes = plt.subplots(1, 4, figsize=(18, 4.4), gridspec_kw={"wspace": 0.25})
-        recs = []
-        for ax, m, letter in zip(axes, measures, "abcd"):
-            R, cs = compute(m, "ssm", True)
-            draw_pj(ax, R, cs, m, letter, title=f"({letter}) {MEASURE_LABEL[m]}")
-            ax.set_xlabel("start age $r$")
-            recs.append(R.assign(measure=m).reset_index())
-            print(f"{m}: shares {np.round(cs['shares'], 3)}; P(30) {R.loc[30, 'P']:,.0f}, P_j(30) " + " / ".join(f"{R.loc[30, f'P_{c + 1}']:,.0f}" for c in range(K)))
-        share_ylim(list(axes))
+        KS = [3, 4, 5]
+        fig, axes = plt.subplots(len(KS), 4, figsize=(18, 4.2 * len(KS)), gridspec_kw={"wspace": 0.25, "hspace": 0.36})
+        recs, curves, drawn, missing = [], {m: cost_curve(m, True) for m in measures}, [], []
+        letters = iter("abcdefghijkl")
+        for i, kc in enumerate(KS):
+            for j, m in enumerate(measures):
+                ax, letter = axes[i, j], next(letters)
+                R, cs = compute(m, "ssm", True, curves[m], kc)
+                if R is None:
+                    missing.append(f"{m} K = {kc}")
+                    ax.text(0.5, 0.5, "not fitted", ha="center", va="center", transform=ax.transAxes, color=INK2, fontsize=10)
+                    ax.set_title(f"({letter}) {MEASURE_LABEL[m]}, $K = {kc}$", loc="left", fontsize=9.5)
+                    ax.set_xticks([]); ax.set_yticks([])
+                    for sp in ax.spines.values():
+                        sp.set_visible(False)
+                    continue
+                draw_pj(ax, R, cs, m, letter, title=f"({letter}) {MEASURE_LABEL[m]}, $K = {kc}$")
+                drawn.append(ax)
+                if i == len(KS) - 1:
+                    ax.set_xlabel("start age $r$")
+                recs.append(R.assign(measure=m, K=kc).reset_index())
+                print(f"{m} K={kc}: shares {np.round(cs['shares'], 3)}; P(30) {R.loc[30, 'P']:,.0f}, P_j(30) " + " / ".join(f"{R.loc[30, f'P_{c + 1}']:,.0f}" for c in range(kc)))
+        share_ylim(drawn)
         pd.concat(recs).to_csv(DESC / "paper_returns_by_measure.csv", index=False)
-        fig.text(0.01, -0.03, "\n".join(textwrap.wrap(
-            "The return to prevention by class, P_j(r), under the K = 3 AR(1) + \"spike\" mixture on each measure, each with its own cost curve in pounds (a cubic in the measure on the cost index, uncapped). "
+        fig.text(0.01, -0.02, "\n".join(textwrap.wrap(
+            "The return to prevention by class, P_j(r), under the AR(1) + \"spike\" mixture on each measure (columns) at K = 3, 4 and 5 (rows), each measure with its own cost curve in pounds (a cubic in the measure on the cost index, uncapped). "
             "On the frailty indices higher is frailer, so the preventable decline is the class's rise in frailty and the classes are relabelled with class 1 the frailest. Line width is proportional to the class share; "
-            "dashed, the uniform return. One vertical scale for all panels.", 230)), fontsize=7.2, color=INK2, va="top")
+            "dashed, the uniform return. One vertical scale for all panels." + (f" Not fitted: {', '.join(missing)}." if missing else "")
+            + " The h fit at K = 5 is read over the three chains that share a mode.", 230)), fontsize=7.2, color=INK2, va="top")
         fig.savefig(FIG / "fig_returns_by_measure.png", bbox_inches="tight")
         print(f"wrote fig_returns_by_measure.png to {FIG}")
         return 0
