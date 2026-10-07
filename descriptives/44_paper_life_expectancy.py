@@ -77,9 +77,10 @@ def remaining(hz: np.ndarray, p: np.ndarray | None = None) -> np.ndarray:
     return out
 
 
-def main() -> int:
-    apply_style()
-    f = M39.load_fit(TAG, "theta", None)
+def baseline(f) -> dict:
+    """The calibrated class hazards, the composition by age, the ONS targets, LE and HLE by class
+    and the healthy share by class and age: everything the life-expectancy figure draws, exposed
+    so that 48_paper_prevention_le.py can shift the same objects under prevention."""
     hz0 = class_hazards(f)
     comp = f["comp"].reindex(columns=[f"class{k + 1}" for k in range(K)])
     comp = comp.reindex(range(20, AGE_MAX + 1)).ffill()                    # hold the 89 composition beyond
@@ -120,6 +121,15 @@ def main() -> int:
     HE = np.vstack([remaining(hz0[k] * m, P[k]) for k in range(K)])
     he_pop = (W * HE.T).sum(axis=1)
     p_pop = (W * P.T).sum(axis=1)
+    return {"hz": hz0 * m, "hz0": hz0, "m": m, "alpha": alpha, "beta": beta, "W": W, "E": E, "HE": HE, "P": P,
+            "e_pop": e_pop, "he_pop": he_pop, "p_pop": p_pop, "target": target, "fem": fem, "rows": rows}
+
+
+def main() -> int:
+    apply_style()
+    f = M39.load_fit(TAG, "theta", None)
+    B = baseline(f)
+    W, E, HE, P, e_pop, he_pop, p_pop, m, target, fem = (B[k] for k in ("W", "E", "HE", "P", "e_pop", "he_pop", "p_pop", "m", "target", "fem"))
 
     # ---- table and csv
     recs = []

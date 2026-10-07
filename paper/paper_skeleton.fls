@@ -310,6 +310,15 @@ INPUT ./tables/tab_targeting_first2.tex
 INPUT ./tables/tab_targeting_first2.tex
 INPUT ./tables/tab_targeting_first2.tex
 INPUT tables/tab_targeting_first2.tex
+INPUT ./figures/fig_prevention_le.png
+INPUT ./figures/fig_prevention_le.png
+INPUT ./figures/fig_prevention_le.png
+INPUT ./figures/fig_prevention_le.png
+INPUT ./tables/tab_prevention_le.tex
+INPUT ./tables/tab_prevention_le.tex
+INPUT ./tables/tab_prevention_le.tex
+INPUT ./tables/tab_prevention_le.tex
+INPUT tables/tab_prevention_le.tex
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
 INPUT /usr/local/texlive/2026/texmf-dist/fonts/tfm/public/cm/cmbx7.tfm
