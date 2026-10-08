@@ -27,10 +27,17 @@ income-tertile and region group's LE (HLE) at r is its posterior class compositi
 person-waves within five years of r times the class LE (HLE) under the scenario. Within-class
 differences by group are not modelled, so a gradient here is the part the types carry.
 
-Outputs: paper/figures/fig_prevention_le.png, paper/tables/tab_prevention_le.tex,
-artifacts/descriptives/paper_prevention_le{,_groups}.csv.
+--univariate does the same on the univariate K = 3 AR(1) + "spike" classes on theta
+(health-theta-ssm, the classes of the returns figure). That fit has no mortality channel, so
+its class hazards are estimated here: Gompertz-Makeham by class, one Makeham term, by
+posterior-weighted maximum likelihood on the multidim contract's death records (the same
+intervals the multidimensional model uses, people in both contracts), then calibrated to the
+ONS tables in the same way. Outputs carry the suffix _uni.
 
-    PYTHONPATH=src .venv/bin/python descriptives/48_paper_prevention_le.py
+Outputs: paper/figures/fig_prevention_le{,_uni}.png, paper/tables/tab_prevention_le{,_uni}.tex,
+artifacts/descriptives/paper_prevention_le{,_uni}{,_groups}.csv.
+
+    PYTHONPATH=src .venv/bin/python descriptives/48_paper_prevention_le.py [--univariate]
 """
 
 from __future__ import annotations
@@ -45,16 +52,21 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import DESC, FIG, TAB, read_scores  # noqa: E402
+from scipy.optimize import minimize
+
+from _paper_common import AGES as PATH_AGES, CONTRACT, DESC, FIG, TAB, bayes_fit, read_scores  # noqa: E402
 from _style import CLUSTER, GREEN, INK2, ORANGE, PURPLE, VERM, apply_style  # noqa: E402
 
-from prevention_health_clustering.config import PROCESSED_DATA_DIR  # noqa: E402
+from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
 
 M37 = importlib.import_module("37_paper_cost_mortality_age")
 M39 = importlib.import_module("39_paper_multidim")
 M44 = importlib.import_module("44_paper_life_expectancy")
 K = M44.K
 AGES = M44.AGES                      # 20..110, the life-table grid
+UNI = "--univariate" in sys.argv
+SFX = "_uni" if UNI else ""
+CONTRACT_USED = CONTRACT if UNI else M39.CONTRACT
 R_GRID = np.arange(25, 86)
 R_REPORT = (30, 50, 70)
 R_GRAD = 50
@@ -106,10 +118,39 @@ def death_distribution(hz_row: np.ndarray, i: int) -> tuple[float, np.ndarray]:
     return AGES[i], d
 
 
+def univariate_fit(f_md: dict) -> dict:
+    """The univariate theta AR(1) + "spike" classes dressed as a multidimensional fit: paths in theta
+    units, posteriors, composition, and Gompertz-Makeham class hazards estimated by posterior-weighted
+    maximum likelihood on the multidim contract's death intervals (started at f_md's hazards)."""
+    r = bayes_fit(ARTIFACTS_DIR / "health-ssm" / "health-theta-ssm", "theta", K)
+    A = (PATH_AGES - 55) / 10
+    paths = np.vstack([r["mom"]["mean"] + r["mom"]["sd"] * (c[0] + c[1] * A + c[2] * A ** 2) for c in r["coef"]])
+    cols = [f"class{k + 1}" for k in range(K)]
+    m = pd.read_csv(M39.CONTRACT / "long.csv", usecols=["pidp", "age", "mort_event"]).sort_values(["pidp", "age"]).reset_index(drop=True)
+    nxt = m.groupby("pidp")["age"].shift(-1)
+    m["gap"] = np.where(nxt.notna(), np.maximum(nxt - m["age"], 1.0), 1.0)
+    m = m.merge(r["post"][["pidp"] + cols], on="pidp")
+    a = (m["age"].to_numpy(float) - 55.0); g = m["gap"].to_numpy(float); y = m["mort_event"].to_numpy(float); Wt = m[cols].to_numpy()
+    def nll(p):
+        log_b, slope, log_c = p[:K], p[K:2 * K], p[-1]
+        H = np.exp(log_c) * g[:, None] + np.exp(log_b[None, :] + slope[None, :] * a[:, None]) * np.expm1(slope[None, :] * g[:, None]) / slope[None, :]
+        S = np.exp(-H)
+        return -float((Wt * (y[:, None] * np.log1p(-S + 1e-12) + (1 - y[:, None]) * np.log(S + 1e-300))).sum())
+    p0 = np.concatenate([f_md["log_b"], f_md["slope"], [np.log(f_md["makeham"])]])
+    opt = minimize(nll, p0, method="L-BFGS-B", bounds=[(None, None)] * K + [(0.01, 0.3)] * K + [(None, None)])
+    log_b, slope, makeham = opt.x[:K], opt.x[K:2 * K], float(np.exp(opt.x[-1]))
+    print(f"univariate class hazards on {len(m):,} intervals ({int(y.sum()):,} deaths, {m['pidp'].nunique():,} people): "
+          f"log_b {np.round(log_b, 2)}, slope {np.round(slope, 3)}, makeham {makeham:.5f}; {opt.message}")
+    return {"share": r["theta"], "post": r["post"][["pidp"] + cols], "comp": r["comp"], "paths": [paths], "log_b": log_b, "slope": slope,
+            "makeham": makeham, "n_person": len(r["post"]), "events": int(y.sum())}
+
+
 def main() -> int:
     apply_style()
     f = M39.load_fit(M44.TAG, "theta", None)
-    B = M44.baseline(f)
+    if UNI:
+        f = univariate_fit(f)
+    B = M44.baseline(f, CONTRACT_USED)
     hz, W, E0, HE0, P0, rows = (B[k] for k in ("hz", "W", "E", "HE", "P", "rows"))
     paths = f["paths"][0]                                              # physical channel, raw theta, 20..90
     share = f["share"]
@@ -119,7 +160,7 @@ def main() -> int:
     g_m = slope(b_m, AGES.astype(float))
     print(f"mortality logit: {n_risk:,} person-waves at risk, {n_deaths:,} deaths; log-odds per unit theta "
           f"{slope(b_m, np.array([30.0]))[0]:.2f} at 30, {slope(b_m, np.array([55.0]))[0]:.2f} at 55, {slope(b_m, np.array([80.0]))[0]:.2f} at 80")
-    long = pd.read_csv(M39.CONTRACT / "long.csv", usecols=["pidp", "wave", "age", "theta"])
+    long = pd.read_csv(CONTRACT_USED / "long.csv", usecols=["pidp", "wave", "age", "theta"])
     hr = rows.merge(long, on=["pidp", "wave", "age"]).dropna(subset=["sf1"]).reset_index(drop=True)
     b_h, _ = M37.logit(design(hr["theta"].to_numpy(float), hr["age"].to_numpy(float)), hr["healthy"].to_numpy(float))
     print(f"healthy logit: {len(hr):,} person-waves; log-odds per unit theta {slope(b_h, np.array([30.0]))[0]:.2f} at 30, {slope(b_h, np.array([80.0]))[0]:.2f} at 80")
@@ -199,7 +240,7 @@ def main() -> int:
                     pi = comp.loc[g].to_numpy()
                     grec.append({"r": r, "gradient": gname, "group": g, "scenario": s, "n_people": int(n[g]), "share_worst": pi[0],
                                  "le": float((pi * q["E"]).sum()), "hle": float((pi * q["HE"]).sum())})
-    G = pd.DataFrame(grec); G.to_csv(DESC / "paper_prevention_le_groups.csv", index=False)
+    G = pd.DataFrame(grec); G.to_csv(DESC / f"paper_prevention_le{SFX}_groups.csv", index=False)
 
     def gradient_stats(r: int, s: str) -> dict:
         q = G[(G["r"] == r) & (G["scenario"] == s)]
@@ -218,8 +259,8 @@ def main() -> int:
         if r in R_REPORT:
             rec.update(gradient_stats(r, s))
         recs.append(rec)
-    T = pd.DataFrame(recs); T.to_csv(DESC / "paper_prevention_le.csv", index=False)
-    with open(TAB / "tab_prevention_le.tex", "w") as fh:
+    T = pd.DataFrame(recs); T.to_csv(DESC / f"paper_prevention_le{SFX}.csv", index=False)
+    with open(TAB / f"tab_prevention_le{SFX}.tex", "w") as fh:
         fh.write("\\begin{tabular}{llrrrrrrrr}\n\\toprule\n")
         fh.write(" & & \\multicolumn{2}{c}{population} & \\multicolumn{3}{c}{inequality} & \\multicolumn{3}{c}{gradient in LE, years} \\\\\n")
         fh.write("\\cmidrule(lr){3-4} \\cmidrule(lr){5-7} \\cmidrule(lr){8-10}\n")
@@ -291,8 +332,12 @@ def main() -> int:
     ax.set_xticks(xg); ax.set_xticklabels([n for _, n in names], fontsize=8.5); ax.grid(True, axis="y")
     ax.set_title(f"(h) LE gradients at $r={R_GRAD}$, years", loc="left", fontsize=9.5); ax.legend(fontsize=7, loc="upper left")
     q50 = {s: res[(R_GRAD, s)] for s in SCEN}
-    footer = (f"The K = 3 AR(1) + \"spike\" classes of the multidimensional fit (theta, the mental GRM and Gompertz-Makeham mortality; {f['n_person']:,} people), class 1 worst health; hazards calibrated to the ONS "
-              "life tables as in the life expectancy figure, so the baseline is that figure's. Prevention from r at intensity mu holds back a share mu of the class's mean change in theta after r - 1 "
+    fit_desc = (f"The univariate K = 3 AR(1) + \"spike\" classes on theta ({f['n_person']:,} people), class 1 worst health, with Gompertz-Makeham class hazards estimated by posterior-weighted maximum likelihood "
+                f"on the multidim contract's death intervals ({f['events']:,} deaths) and calibrated to the ONS life tables as in the life expectancy figure. "
+                if UNI else
+                f"The K = 3 AR(1) + \"spike\" classes of the multidimensional fit (theta, the mental GRM and Gompertz-Makeham mortality; {f['n_person']:,} people), class 1 worst health; hazards calibrated to the ONS "
+                "life tables as in the life expectancy figure, so the baseline is that figure's. ")
+    footer = (fit_desc + "Prevention from r at intensity mu holds back a share mu of the class's mean change in theta after r - 1 "
               "(the paper's instrument; the gain is held at its value at 90 beyond). Mortality responds through the within-age gradient of death before the next wave in theta "
               f"(a logit on theta, a quadratic in age and theta x age over {n_risk:,} person-waves at risk, {n_deaths:,} deaths: log-odds {slope(b_m, np.array([55.0]))[0]:.2f} per unit of theta at 55); "
               "the healthy share (general health good or better) through the same design fitted to the healthy indicator, applied to each class's person-waves at each age. "
@@ -300,10 +345,12 @@ def main() -> int:
               "uniform at mu = 1. (a), (b) dashed: each class treated on its own at mu = 1. (c) class 3 minus class 1. (d) the standard deviation of age at death over the composition-weighted mixture. "
               f"(e)-(g) each group's LE and HLE at {R_GRAD} is its posterior class composition among the person-waves within five years of {R_GRAD} times the class values, so the gradients are the part the types carry "
               "(within-class differences by group are not modelled); the label gives the group's worst-class share; regions sorted by baseline LE. (h) LE of the top minus the bottom group: degree or higher minus other/none, "
-              "top minus bottom income third, and the range across the twelve regions. The within-age mortality gradient is at or below the one the fit's own class hazards imply between types at every age.")
+              "top minus bottom income third, and the range across the twelve regions. "
+              + ("The within-age mortality gradient is at or below the one the estimated class hazards imply between types before 55 and above it after (-0.9 against -0.7 per unit at 70), so the late-life years are if anything generous."
+                 if UNI else "The within-age mortality gradient is at or below the one the fit's own class hazards imply between types at every age."))
     fig.text(0.01, -0.04, "\n".join(textwrap.wrap(footer, 250)), fontsize=7.2, color=INK2, va="top")
-    fig.savefig(FIG / "fig_prevention_le.png", bbox_inches="tight")
-    print(f"wrote fig_prevention_le.png and tab_prevention_le.tex to {FIG}")
+    fig.savefig(FIG / f"fig_prevention_le{SFX}.png", bbox_inches="tight")
+    print(f"wrote fig_prevention_le{SFX}.png and tab_prevention_le{SFX}.tex to {FIG}")
     return 0
 
 

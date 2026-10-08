@@ -77,17 +77,20 @@ def remaining(hz: np.ndarray, p: np.ndarray | None = None) -> np.ndarray:
     return out
 
 
-def baseline(f) -> dict:
+def baseline(f, contract=None) -> dict:
     """The calibrated class hazards, the composition by age, the ONS targets, LE and HLE by class
     and the healthy share by class and age: everything the life-expectancy figure draws, exposed
-    so that 48_paper_prevention_le.py can shift the same objects under prevention."""
+    so that 48_paper_prevention_le.py can shift the same objects under prevention. ``f`` needs
+    share, post, comp, log_b, slope and makeham; ``contract`` is the rows the posteriors belong
+    to (the multidim contract by default)."""
+    contract = M39.CONTRACT if contract is None else contract
     hz0 = class_hazards(f)
     comp = f["comp"].reindex(columns=[f"class{k + 1}" for k in range(K)])
     comp = comp.reindex(range(20, AGE_MAX + 1)).ffill()                    # hold the 89 composition beyond
     W = comp.to_numpy()                                                     # rows: AGES, cols: classes
 
     # the population's sex mix sets the ONS targets
-    long = pd.read_csv(M39.CONTRACT / "long.csv", usecols=["pidp", "wave", "age"])
+    long = pd.read_csv(contract / "long.csv", usecols=["pidp", "wave", "age"])
     sex = pd.read_csv(PROCESSED_DATA_DIR / "ukhls_indresp_processed.csv", usecols=["pidp", "sex"]).groupby("pidp")["sex"].first()
     fem = float((sex.reindex(long["pidp"].unique()) == 2).mean())
     target = {k: (1 - fem) * m + fem * w for k, (m, w) in ONS.items()}
