@@ -45,6 +45,7 @@ Fits that have been discussed but not queued, so they are not forgotten:
 | frailty and log-frailty AR(1)+"spike" at K = 4 and 5 (`health-frailty-ssm-k4/5`, `health-logfrailty-ssm-k4/5`) | the two "not fitted" cells per row of `fig:returnsmeasures` | 4 fits, 10-30 h each (K = 3 frailty ssm took 9.5 h) | open; suggested after the windows queue, so as not to run three jobs at once |
 | cohort-shift versions of the first-*one*-row held-out fits (theta, h) | would complete the type-from-initial typologies | 2 fits, 7-13 h | on ice (5 Oct) |
 | h in the multidimensional model at K = 4 and 5 | the h rows of a multidimensional K comparison | 2 fits, 40-60 h, mode risk | on ice (5 Oct) |
+| theta multidimensional ssm + mortality with birth-decade shifts at K = 4 and 5 (`theta-ssm-mort-cohort-k4/5`) | cohort rows for the multidimensional K comparison, to match the main-text K = 3 cohort figure | 2 fits, 30-40 h each (K = 4 without shifts took 29 h; mode risk, read the agreeing chains) | open (8 Oct); would start after K = 5, alongside the two-row multidimensional fit |
 | the single-channel returns on the first-row-held-out fit's own classes (`42 --firstho`) | would make the targeting figure self-contained on one fit | no fit needed, a script flag | open; expected to move the targeting numbers by a few hundred pounds at most |
 
 ## Feedback of 29 September (`paper/feedback_29sept.txt`)
