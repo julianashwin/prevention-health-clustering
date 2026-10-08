@@ -51,7 +51,10 @@ birth-decade-shift twins of the first-two-rows fits; and
 `runs/multidim_health_k45_queue.py` (launcher `runs/multidim_health_k45_launch.sh`,
 which waits for the frailty/first-held queue) the multidimensional theta
 AR(1) plus "spike" + mortality fit at K = 4 and K = 5
-(`artifacts/multidim-health/theta-ssm-mort-k{4,5}/`).
+(`artifacts/multidim-health/theta-ssm-mort-k{4,5}/`); the same queue with
+`--cohort` (launcher `runs/multidim_health_k45_cohort_launch.sh`, which waits
+for the K = 5 fit) runs the pair with birth-decade shifts
+(`theta-ssm-mort-cohort-k{4,5}/`).
 `runs/windows_queue.py` (launcher `runs/windows_launch.sh`) cuts a contract per age
 window from the health contract (`data/processed/contracts/health_window_{lo}_{hi}_v1`,
 rows inside the window, people with at least three) and fits `health-theta-ssm` on

@@ -1,4 +1,4 @@
-"""Multidimensional theta AR(1) plus "spike" + mortality fits at K = 4 and K = 5.
+"""Multidimensional theta AR(1) plus "spike" + mortality fits at K = 4 and K = 5 (--cohort: with birth-decade shifts).
 
 As theta-ssm-mort (full sample, the multidim health contract) with four and
 five classes, into artifacts/multidim-health/theta-ssm-mort-k{4,5}. Launched
@@ -22,6 +22,12 @@ OUT = ROOT / "artifacts" / "multidim-health"
 JOBS = [
     ("theta-ssm-mort-k4", "ssm", "theta", ["--classes", "4"]),
     ("theta-ssm-mort-k5", "ssm", "theta", ["--classes", "5"]),
+]
+# --cohort: the same pair with one level shift per birth decade common to the classes
+# (as theta-ssm-mort-cohort), queued by multidim_health_k45_cohort_launch.sh after K = 5
+JOBS_COHORT = [
+    ("theta-ssm-mort-cohort-k4", "ssm", "theta", ["--classes", "4", "--cohort", "decade"]),
+    ("theta-ssm-mort-cohort-k5", "ssm", "theta", ["--classes", "5", "--cohort", "decade"]),
 ]
 
 
@@ -52,17 +58,20 @@ def main(argv=None) -> int:
     ap.add_argument("--sampling", type=int, default=1000)
     ap.add_argument("--threads-per-chain", type=int, default=3)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--cohort", action="store_true", help="run the birth-decade-shift pair instead")
     a = ap.parse_args(argv)
+    jobs = JOBS_COHORT if a.cohort else JOBS
+    digest_name = "digest_k45_cohort.json" if a.cohort else "digest_k45.json"
     settings = ["--chains", str(a.chains), "--parallel-chains", str(a.parallel_chains),
                 "--warmup", str(a.warmup), "--sampling", str(a.sampling),
                 "--threads-per-chain", str(a.threads_per_chain)]
     if a.dry_run:
-        for tag, variant, physical, extra in JOBS:
+        for tag, variant, physical, extra in jobs:
             print(f"{tag:26s} variant={variant:12s} physical={physical} {' '.join(extra)}")
         return 0
     OUT.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
-    results = [run_job(j, settings) for j in JOBS]
+    results = [run_job(j, settings) for j in jobs]
     digest = {"total_hours": (time.time() - t0) / 3600,
               "jobs": [{"tag": t, "rc": rc, "hours": h} for t, rc, h in results]}
     for t, _, _ in results:
@@ -71,7 +80,7 @@ def main(argv=None) -> int:
             j = json.loads(f.read_text())
             digest[t] = {k: j.get(k) for k in ("max_structural_rhat", "worst_param", "wall_hours", "n_person", "held_rows",
                                                "heldout_ar_conditional_mean", "heldout_class_only_mean")}
-    (OUT / "digest_k45.json").write_text(json.dumps(digest, indent=1))
+    (OUT / digest_name).write_text(json.dumps(digest, indent=1))
     ok = all(rc == 0 for _, rc, _ in results)
     print(f"\nK45 QUEUE COMPLETE in {digest['total_hours']:.1f} h; {'all ok' if ok else 'FAILURES'}", flush=True)
     return 0 if ok else 1
