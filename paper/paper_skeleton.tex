@@ -1175,14 +1175,33 @@ Small robustness exercise:
 		\label{fig:prevle_uni}
 	\end{figure}
 
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_prevention_le_h.png}
+		\caption{As Figure~\ref{fig:prevle_uni}, on the univariate AR(1) plus ``spike'' classes on $h$: class hazards estimated for those classes, and the gradients of mortality and of the healthy share re-estimated in $h$.}
+		\label{fig:prevle_h}
+	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_prevention_le_frailty.png}
+		\caption{As Figure~\ref{fig:prevle_uni}, on the univariate AR(1) plus ``spike'' classes on the frailty index (class 1 the frailest; the held-back change is a rise in frailty, and the gradients are re-estimated in the index).}
+		\label{fig:prevle_frailty}
+	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_prevention_le_logfrailty.png}
+		\caption{As Figure~\ref{fig:prevle_frailty}, on log frailty.}
+		\label{fig:prevle_logfrailty}
+	\end{figure}
+
 	\begin{table}[H]\centering\scriptsize\setlength{\tabcolsep}{3pt}
-		\input{tables/tab_prevention_le_uni}
-		\caption{As Table~\ref{tab:prevle}, on the univariate AR(1) plus ``spike'' classes on $\theta$ with the estimated class hazards of Figure~\ref{fig:prevle_uni}.}
-		\label{tab:prevle_uni}
+		\input{tables/tab_prevention_le_measures}
+		\caption{The rows of Table~\ref{tab:prevle} from age 50 under each typology and measure: the multidimensional classes of Figure~\ref{fig:prevle}, and the univariate AR(1) plus ``spike'' classes on $\theta$, $h$, the frailty index and log frailty with class hazards estimated for them (Figures~\ref{fig:prevle_uni}--\ref{fig:prevle_logfrailty}).}
+		\label{tab:prevle_measures}
 	\end{table}
 
 	\begin{itemize}
 		\item \textbf{On the univariate classes the gaps are smaller and the targeted policy closes more of them.} The univariate worst class is larger (25\% against 19\%) and less sharply drawn, since the multidimensional fit's mortality channel pulls the people who go on to die into its worst class; its estimated hazards sit closer to the middle class's, and the LE gap between the best and the worst class from 50 is $9.5$ years against $12.8$ (from 30, $10.5$ against $14.3$). The composition gradients the types carry are correspondingly smaller ($1.6$ years by education, $2.2$ by income, $0.8$ across regions from 50). Treating the worst class at $\mu=1$ from 50 takes the type gap to $4.6$ years and roughly halves every gradient ($0.7$, $0.9$, $0.4$), the same budget spread evenly again leaves them unchanged, and the standard deviation of age at death moves by a tenth of a year either way. From 30 the targeted policy overshoots on these classes: the worst class held flat ends up with a higher LE than the best class ($58.8$ against $57.0$), a reminder that $\mu=1$ over sixty years is the upper bound and not a policy. Population LE moves as on the multidimensional classes ($+1.1$ targeted, $+1.4$ even spread, from 50). One caveat runs the other way here: the pooled mortality gradient is steeper than the between-type gradient these estimated hazards imply after 55 ($-0.9$ against $-0.7$ per unit of $\theta$ at 70), so the late-life years on the univariate classes are if anything generous, where on the multidimensional classes they were conservative.
+		\item \textbf{On the other measures the type gaps are smaller still, and targeting closes them almost entirely} (Figures~\ref{fig:prevle_h}--\ref{fig:prevle_logfrailty}, Table~\ref{tab:prevle_measures}). The LE gap between the best and the worst class from 50 is $8.5$ years on $h$, $8.3$ on the frailty index and $7.3$ on log frailty, against $9.5$ on univariate $\theta$ and $12.8$ on the multidimensional classes; the gradients the types carry shrink in step ($1.8$, $1.5$ and $1.2$ years by education, $2.3$, $1.9$ and $1.6$ by income). Treating the worst class at $\mu=1$ from 50 takes the type gap to $2.2$, $0.9$ and $0.5$ years and the gradients to within half a year of zero, because on the bounded measures the worst class holds nearly all the preventable decline: the best class sits at the ceiling of $h$ or the floor of frailty with almost nothing to prevent, which is why under uniform prevention at $\mu=1$ on log frailty the middle class ends up ahead of the best ($44.1$ against $38.3$ years). The even spread again leaves the gradients where they are and the standard deviation of age at death moves by at most half a year under any policy. The ranking of policies is therefore the same on every measure; what the measure changes is how much of the decline the worst type owns, as in Figure~\ref{fig:returnsmeasures}. The gradients of mortality and of the healthy share in $h$ and in the frailty index are steep per unit because the scales are bounded, so these versions lean more on the logit links at the ends of the scales.
 	\end{itemize}
 
 	\subsection{K-means types under the estimated cost curve}

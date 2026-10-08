@@ -1,0 +1,32 @@
+\begin{tabular}{llrrrrrrrr}
+\toprule
+ & & \multicolumn{2}{c}{population} & \multicolumn{3}{c}{inequality} & \multicolumn{3}{c}{gradient in LE, years} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
+classes & policy & LE & HLE & sd(death age) & LE gap & HLE gap & education & income & region \\
+\midrule
+$\theta$, multidimensional classes & none & 32.8 & 23.2 & 10.4 & 12.8 & 30.1 & 2.0 & 3.0 & 0.9 \\
+ & worst class, $\mu=1$ & 33.6 & 24.3 & 10.3 & 8.0 & 23.5 & 1.1 & 1.8 & 0.6 \\
+ & everyone, $\mu=0.17$ & 33.8 & 24.8 & 10.8 & 12.9 & 30.6 & 2.0 & 3.0 & 0.9 \\
+ & everyone, $\mu=1$ & 39.5 & 34.2 & 12.6 & 13.3 & 30.8 & 2.3 & 3.2 & 0.9 \\
+\addlinespace
+$\theta$, univariate classes & none & 33.0 & 23.2 & 10.2 & 9.5 & 26.2 & 1.6 & 2.2 & 0.8 \\
+ & worst class, $\mu=1$ & 34.1 & 25.1 & 10.3 & 4.6 & 18.1 & 0.7 & 0.9 & 0.4 \\
+ & everyone, $\mu=0.23$ & 34.4 & 25.5 & 10.7 & 9.5 & 26.4 & 1.6 & 2.2 & 0.8 \\
+ & everyone, $\mu=1$ & 39.6 & 34.1 & 12.3 & 9.7 & 25.0 & 1.8 & 2.4 & 0.8 \\
+\addlinespace
+$h$ & none & 33.4 & 25.5 & 10.5 & 8.5 & 25.4 & 1.8 & 2.3 & 0.8 \\
+ & worst class, $\mu=1$ & 35.1 & 28.1 & 10.7 & 2.2 & 15.1 & 0.4 & 0.6 & 0.3 \\
+ & everyone, $\mu=0.26$ & 34.2 & 26.7 & 10.6 & 7.4 & 23.8 & 1.6 & 2.0 & 0.7 \\
+ & everyone, $\mu=1$ & 36.8 & 31.1 & 11.3 & 3.4 & 16.7 & 0.7 & 0.9 & 0.3 \\
+\addlinespace
+frailty index & none & 33.6 & 25.5 & 10.3 & 8.3 & 24.5 & 1.5 & 1.9 & 0.6 \\
+ & worst class, $\mu=1$ & 35.5 & 28.9 & 10.7 & 0.9 & 11.2 & 0.1 & 0.1 & 0.2 \\
+ & everyone, $\mu=0.26$ & 34.4 & 27.0 & 10.5 & 6.8 & 22.2 & 1.2 & 1.6 & 0.5 \\
+ & everyone, $\mu=1$ & 37.1 & 31.8 & 11.0 & 1.9 & 12.8 & 0.4 & 0.5 & 0.1 \\
+\addlinespace
+log frailty & none & 33.2 & 23.9 & 10.2 & 7.3 & 23.5 & 1.2 & 1.6 & 0.5 \\
+ & worst class, $\mu=1$ & 35.7 & 28.3 & 10.7 & 0.5 & 11.3 & -0.1 & -0.1 & 0.0 \\
+ & everyone, $\mu=0.36$ & 35.6 & 27.8 & 11.0 & 5.7 & 20.5 & 1.1 & 1.6 & 0.4 \\
+ & everyone, $\mu=1$ & 40.6 & 35.6 & 12.5 & 2.2 & 13.1 & 1.1 & 1.5 & 0.4 \\
+\bottomrule
+\end{tabular}
