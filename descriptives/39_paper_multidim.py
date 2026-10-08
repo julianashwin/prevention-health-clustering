@@ -59,7 +59,7 @@ FITS_COHORT = [("theta-ssm-mort-cohort", "theta", 'AR(1) + "spike", cohort shift
 COHORT_REF = 1950
 # --k: the theta AR(1) + "spike" fit at K = 3, 4 and 5 (clustering/runs/multidim_health_k45_queue.py), one row each
 FITS_K = [("theta-ssm-mort", "theta", 'AR(1) + "spike", K = 3', None, 3),
-          ("theta-ssm-mort-k4", "theta", 'AR(1) + "spike", K = 4', None, 4),
+          ("theta-ssm-mort-k4", "theta", 'AR(1) + "spike", K = 4', [1, 3, 4], 4),   # chain 2 sits at a worse mode (lp 300 lower); 1, 3, 4 agree
           ("theta-ssm-mort-k5", "theta", 'AR(1) + "spike", K = 5', None, 5)]
 PALETTE = {3: CLUSTER, 4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
            5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}     # worst -> best, as 36_paper_trajectories.py
