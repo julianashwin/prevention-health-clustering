@@ -1,4 +1,4 @@
-"""K = 4 and K = 5 on the paper's health measure, one fit at a time.
+"""K = 4 and K = 5 on the paper's health measure, one fit at a time (--frailty: the frailty pair).
 
 theta and h, each under independent residuals (ar_mode 0) and under AR(1)
 plus measurement error (ar_mode 2). Every spec is its K = 3 counterpart with
@@ -31,6 +31,9 @@ CONTRACT = ROOT / "data" / "processed" / "contracts" / "health_lifecycle_20_89_m
 OUT = ROOT / "artifacts" / "health-k45"
 
 JOBS = [f"health-{v}-{s}-k{k}" for k in (4, 5) for s in ("base", "ssm") for v in ("theta", "h")]
+# --frailty: the AR(1) plus "spike" pair on the frailty index and log frailty at K = 4 and 5
+# (models/registry.py FRAILTY_K45), launched by health_k45_frailty_launch.sh
+JOBS_FRAILTY = [f"health-{v}-ssm-k{k}" for k in (4, 5) for v in ("frailty", "logfrailty")]
 
 
 def run_job(model, settings):
@@ -72,23 +75,26 @@ def main(argv=None) -> int:
     ap.add_argument("--warmup", type=int, default=1500)
     ap.add_argument("--sampling", type=int, default=1000)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--frailty", action="store_true", help="run the frailty / log-frailty AR(1)+spike pair instead")
     a = ap.parse_args(argv)
+    jobs = JOBS_FRAILTY if a.frailty else JOBS
+    digest_name = "digest_frailty.json" if a.frailty else "digest.json"
     settings = ["--chains", str(a.chains), "--parallel-chains", str(a.parallel_chains),
                 "--threads-per-chain", str(a.threads_per_chain),
                 "--warmup", str(a.warmup), "--sampling", str(a.sampling)]
     if a.dry_run:
-        for m in JOBS:
+        for m in jobs:
             print(m, CONTRACT.name, "skip" if (OUT / m / "run_summary.json").exists() else "run")
         return 0
     OUT.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     results = []
-    for m in JOBS:
+    for m in jobs:
         results.append(run_job(m, settings))
         digest = {"total_hours": (time.time() - t0) / 3600,
                   "jobs": [{"model": t, "rc": rc, "hours": h} for t, rc, h in results],
                   "summaries": {t: summarise(t) for t, _, _ in results}}
-        (OUT / "digest.json").write_text(json.dumps(digest, indent=1))   # updated after every fit
+        (OUT / digest_name).write_text(json.dumps(digest, indent=1))   # updated after every fit
     failed = [t for t, rc, _ in results if rc != 0]
     print(f"QUEUE COMPLETE in {(time.time() - t0) / 3600:.1f} h; "
           f"{'all ok' if not failed else 'FAILED: ' + ', '.join(failed)}", flush=True)

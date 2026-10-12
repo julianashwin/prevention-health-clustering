@@ -257,6 +257,14 @@ HEALTH_LOGFRAILTY_SSM = ModelSpec(
     description="log(frailty + 1/31), K=3, AR(1) state plus measurement error.",
     channels=("logfrailty",), anchor_channel="logfrailty", ar_mode=2)
 
+# K = 4 and 5 on the two frailty measures, AR(1) plus "spike" only: the "not fitted" cells of the
+# by-measure returns figure (descriptives/42_paper_returns_bayes.py --measures)
+FRAILTY_K45 = tuple(
+    _with_k(spec, k, "class-count comparison")
+    for k in (4, 5)
+    for spec in (HEALTH_FRAILTY_SSM, HEALTH_LOGFRAILTY_SSM)
+)
+
 
 REGISTRY: dict[str, ModelSpec] = {
     spec.name: spec
@@ -277,6 +285,7 @@ REGISTRY: dict[str, ModelSpec] = {
         HEALTH_FRAILTY_SSM,
         HEALTH_LOGFRAILTY_BASE,
         HEALTH_LOGFRAILTY_SSM,
+        *FRAILTY_K45,
     )
 }
 
