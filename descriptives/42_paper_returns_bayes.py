@@ -50,7 +50,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import (  # noqa: E402
-    AGES, DESC, FIG, HEALTHIER_HIGH, K, MAX_AGE, MIN_AGE, TAB, bayes_fit, load_labels, load_measure, load_trajectories,
+    AGES, DESC, FIG, HEALTHIER_HIGH, K, MAX_AGE, MIN_AGE, MODE_CHAINS, TAB, bayes_fit, load_labels, load_measure, load_trajectories,
     smooth_path, write_table)
 from _style import BLUE, CLUSTER, INK2, ORANGE, VERM, apply_style, share_ylim  # noqa: E402
 
@@ -70,7 +70,7 @@ MD_TAGS = {("multidim", "theta"): ("theta-ssm-mort", None), ("multidim", "h"): (
            ("multidim-cohort", "theta"): ("theta-ssm-mort-cohort", None)}
 PALETTE = {3: CLUSTER, 4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
            5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}     # worst -> best, as 36_paper_trajectories.py
-CHAINS = {"health-h-ssm-k5": [1, 2, 4], "health-frailty-ssm-k4": [1, 2, 3]}   # chains that share the better mode                                     # fits read over the chains that share a mode
+CHAINS = MODE_CHAINS                                     # fits read over the chains that share a mode (_paper_common)
 
 
 def smooth(x: pd.Series, n: pd.Series, min_n: int = 100) -> np.ndarray:

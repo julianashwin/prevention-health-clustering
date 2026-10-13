@@ -110,6 +110,13 @@ def load_labels(variant: str, lo: int = MIN_AGE, hi: int = MAX_AGE) -> pd.Series
     return lab.set_index("pidp")["cluster"].astype(int)
 
 
+# Fits read over the chains that share the better mode when the others sat elsewhere (the
+# posterior mean and R-hat are then over that subset): health-h-ssm-k5, chains 1, 2, 4 agree to
+# three decimals and chain 3 sits about 310 log-posterior units lower; health-frailty-ssm-k4,
+# chains 1-3 agree and chain 4 sits about 950 lower.
+MODE_CHAINS = {"health-h-ssm-k5": [1, 2, 4], "health-frailty-ssm-k4": [1, 2, 3]}
+
+
 def coassignment_corr(post_a: pd.DataFrame, post_b: pd.DataFrame, n: int = 3000, seed: int = 0) -> float:
     """Agreement of two typologies without label correspondence: over pairs of people (a random
     ``n`` of those in both), the correlation between the probability that typology A puts the pair

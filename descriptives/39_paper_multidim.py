@@ -61,6 +61,12 @@ COHORT_REF = 1950
 FITS_K = [("theta-ssm-mort", "theta", 'AR(1) + "spike", K = 3', None, 3),
           ("theta-ssm-mort-k4", "theta", 'AR(1) + "spike", K = 4', [1, 3, 4], 4),   # chain 2 sits at a worse mode (lp 300 lower); 1, 3, 4 agree
           ("theta-ssm-mort-k5", "theta", 'AR(1) + "spike", K = 5', [1], 5)]   # four chains, four modes; chain 1 has the highest lp (by 150+), drawn alone
+# --kcohort: K = 4 and 5 without and with birth-decade shifts, side by side (the shifted fits from
+# clustering/runs/multidim_health_k45_queue.py --cohort); a row is drawn when its fit exists
+FITS_K_COHORT = [("theta-ssm-mort-k4", "theta", 'K = 4, no shifts', [1, 3, 4], 4),
+                 ("theta-ssm-mort-cohort-k4", "theta", 'K = 4, birth-decade shifts', [2, 3], 4),   # two modes of identical lp; 2, 3 reproduce the no-shift classes
+                 ("theta-ssm-mort-k5", "theta", 'K = 5, no shifts', [1], 5),
+                 ("theta-ssm-mort-cohort-k5", "theta", 'K = 5, birth-decade shifts', None, 5)]
 PALETTE = {3: CLUSTER, 4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
            5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}     # worst -> best, as 36_paper_trajectories.py
 # h-ssm-mort: chains 1-3 agree to three decimals; chain 4 sits in the mode with the
@@ -195,10 +201,12 @@ def main() -> int:
     # the paper's figure is theta alone (AR(1) + "spike", then independent residuals); --h the appendix version
     V_ONLY = "h" if "--h" in sys.argv else "theta"
     COHORT = "--cohort" in sys.argv
-    KMODE = "--k" in sys.argv
+    KCOHORT = "--kcohort" in sys.argv
+    KMODE = "--k" in sys.argv or KCOHORT
     if KMODE:
-        FITS_V = [f[:4] for f in FITS_K if (MD / f[0] / "run_summary.json").exists()]
-        fits = [load_fit(tag, v, ch, kc) for tag, v, _, ch, kc in FITS_K if (MD / tag / "run_summary.json").exists()]
+        FK = FITS_K_COHORT if KCOHORT else FITS_K
+        FITS_V = [f[:4] for f in FK if (MD / f[0] / "run_summary.json").exists()]
+        fits = [load_fit(tag, v, ch, kc) for tag, v, _, ch, kc in FK if (MD / tag / "run_summary.json").exists()]
     else:
         FITS_V = FITS_COHORT if COHORT else [f for f in FITS if f[1] == V_ONLY]
         fits = [load_fit(tag, v, ch) for tag, v, _, ch in FITS_V]
@@ -272,12 +280,14 @@ def main() -> int:
              "Under AR(1) + \"spike\" the legend gives each class's persistence on that channel; the innovation and \"spike\" scales are common to the classes. "
              "The Makeham constant is below 0.0001 in every fit. Each column has one vertical scale across its rows."
              + (" Class paths and observed class means are at the 1950s birth decade, every score net of its estimated decade shift." if COHORT else "")
-             + (" Rows: the class count K = 3, 4 and 5 under AR(1) + \"spike\"; classes ordered worst to best." if KMODE else "")
+             + (" Rows: K = 4 and 5 under AR(1) + \"spike\" without and with one level shift per birth decade common to the classes (paths at the 1950s, scores net of the shift); "
+                "classes ordered worst to best; each fit read over the chains that share its better mode (K = 4: chains 1, 3, 4 without shifts, 2, 3 with; K = 5: chain 1 without shifts)." if KCOHORT
+                else " Rows: the class count K = 3, 4 and 5 under AR(1) + \"spike\"; classes ordered worst to best." if KMODE else "")
              + (" h + AR(1) + \"spike\" is read over the three chains that share a mode; the fourth sat in the mode "
              "with the class 2 and 3 intercepts pressed together on the ordering constraint, about 2,950 log-posterior units lower." if V_ONLY == "h" else ""),
              fontsize=7.2, color=INK2, va="top")
     fig.subplots_adjust(top=0.93, bottom=0.17 if len(FITS_V) > 1 else 0.30, left=0.05, right=0.99)
-    sfx = "_by_K" if KMODE else "_cohort" if COHORT else ("" if V_ONLY == "theta" else "_h")
+    sfx = "_by_K_cohort" if KCOHORT else "_by_K" if KMODE else "_cohort" if COHORT else ("" if V_ONLY == "theta" else "_h")
     fig.savefig(FIG / f"fig_multidim_trajectories{sfx}.png")
     tab = pd.DataFrame(rows); tab.to_csv(DESC / f"paper_multidim{sfx}.csv", index=False)
     print(tab[["fit", "class", "share", "rho_phys", "rho_ment", "signal_phys", "signal_ment", "gomp_slope", "hazard_55", "hazard_85"]].round(3).to_string(index=False))

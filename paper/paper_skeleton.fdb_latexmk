@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex paper_skeleton"] 1791887393.13008 "paper_skeleton.aux" "paper_skeleton.bbl" "paper_skeleton" 1791887435.29312 0
+["bibtex paper_skeleton"] 1791897416.22832 "paper_skeleton.aux" "paper_skeleton.bbl" "paper_skeleton" 1791897461.89581 0
   "./references.bib" 1790071007.10948 12223 860db25ed6da8373c53c9f6903866ced ""
   "/usr/local/texlive/2026/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "paper_skeleton.aux" 1791887434.40215 80964 5ad7a911c98aa4b897d7084edbf52db9 "pdflatex"
+  "paper_skeleton.aux" 1791897461.01954 84106 3791ce52df25fd8828b6d1d8af1d38b4 "pdflatex"
   (generated)
   "paper_skeleton.bbl"
   "paper_skeleton.blg"
   (rewritten before read)
-["pdflatex"] 1791887393.5015 "paper_skeleton.tex" "paper_skeleton.pdf" "paper_skeleton" 1791887435.29475 0
+["pdflatex"] 1791897416.63599 "paper_skeleton.tex" "paper_skeleton.pdf" "paper_skeleton" 1791897461.89647 0
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/tfm/jknappen/ec/tcrm0900.tfm" 1136768653 1536 c4f439db76ef96a9c53bc437f35ffe20 ""
@@ -177,10 +177,12 @@
   "figures/fig_exhibit2_main.png" 1791281824.49643 145441 9ae408b59d8ad6c7e0960a21e084fff3 ""
   "figures/fig_exhibit2_main_mental.png" 1791281839.97311 240632 156f841841a6e2b60df9701bba214b2d ""
   "figures/fig_exhibit2_measures.png" 1791281829.57732 332776 4dd709ad1df719b071e63e52385e9ac6 ""
+  "figures/fig_frailty_by_K.png" 1791897364.79305 296641 95f128bca8e5b131902b0a3bc9bbbab1 ""
   "figures/fig_health_scale.png" 1791280967.70505 82589 c016ca9d2c280faef42d93ba7936ec1c ""
   "figures/fig_kmeans_cohort.png" 1791281329.98007 387165 02881636ed67e462e42412c8b64ad3c6 ""
   "figures/fig_life_expectancy.png" 1791380969.53901 295168 fb3a7524f94d27d2dade7d6e6639d71e ""
   "figures/fig_multidim_trajectories.png" 1791281444.87381 494370 8c3bf76f03e5896943fa9b05e294c589 ""
+  "figures/fig_multidim_trajectories_by_K_cohort.png" 1791897295.34493 874090 d7d15d8f295b5f6ba226136570c36286 ""
   "figures/fig_multidim_trajectories_cohort.png" 1791280944.15596 305019 8e70406943ec5c9484e48d9330af4ccb ""
   "figures/fig_multidim_trajectories_h.png" 1791281465.35686 498762 cdc983216bf165447ab4231ad8e4af2b ""
   "figures/fig_multidim_vs_univariate.png" 1791281816.00507 322889 aeed6e08fd66bc2de2894be0c76736cc ""
@@ -210,10 +212,10 @@
   "figures/fig_windows.png" 1791883513.28834 418504 dbe7924c0cc1b28ac3b03131b46c0ef7 ""
   "figures/fig_windows_bayes.png" 1791887240.57545 485628 eb558fabb4258b958dfe6420497b8f10 ""
   "figures/fig_windows_h.png" 1791883513.44285 402548 15415967ff4655643fe67fde0783b0ec ""
-  "paper_skeleton.aux" 1791887434.40215 80964 5ad7a911c98aa4b897d7084edbf52db9 "pdflatex"
-  "paper_skeleton.bbl" 1791887393.49298 10283 5484db39dabe2ef64cae296835ba688c "bibtex paper_skeleton"
-  "paper_skeleton.out" 1791887434.41384 8172 9ff54ee89405f32be9ad6416ad658c74 "pdflatex"
-  "paper_skeleton.tex" 1791887337.5531 159526 d6e2bd4998333bdcbf7cdccfc9196749 ""
+  "paper_skeleton.aux" 1791897461.01954 84106 3791ce52df25fd8828b6d1d8af1d38b4 "pdflatex"
+  "paper_skeleton.bbl" 1791897416.62955 10283 5484db39dabe2ef64cae296835ba688c "bibtex paper_skeleton"
+  "paper_skeleton.out" 1791897461.03252 8172 9ff54ee89405f32be9ad6416ad658c74 "pdflatex"
+  "paper_skeleton.tex" 1791897172.12943 161236 2870a2f3d1ea6a07713a2d7cd53723ac ""
   "tables/tab_life_expectancy.tex" 1791380968.04855 615 61e8546382b91fa68d8268520bb52fdb ""
   "tables/tab_measure_correlations.tex" 1791191364.09621 344 25019853a70554d01540a764f92f06fb ""
   "tables/tab_prediction.tex" 1791281974.75289 1438 d02bf1b0c2f0679d57cb684464ad2aad ""

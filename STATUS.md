@@ -1,6 +1,6 @@
 # Status
 
-Last updated 13 October 2026. The draft is `paper/paper_skeleton.tex` (95 pages,
+Last updated 13 October 2026. The draft is `paper/paper_skeleton.tex` (97 pages,
 builds clean); red `\todo` marks in the PDF are open decisions, grey `\note`
 marks are drafting notes.
 
@@ -29,7 +29,7 @@ K-means twins for the first-rows exercises (`22_paper_kmeans.py --first-held 1 -
 **Hooks still pending (13 Oct):**
 
 - `42 --measures` once the frailty / log-frailty K = 4 pair is in (frailty K = 4 landed 13 Oct, log-frailty K = 4 due this evening), and again after the deferred K = 5 pair; refresh the bullet under `fig:returnsmeasures`.
-- Cohort K = 4 landed 13 Oct (chains 2, 3): a side-by-side with the no-shift K = 4 was drawn for the chat only (same classes, 11/26/41/23; decade shifts +0.49 for the 1920s falling to -0.45 for the 2000s on the physical channel); goes into the K comparison figure's cohort block when K = 5 lands.
+- Cohort K = 4 landed 13 Oct (chains 2, 3): now `fig:multidim_k4_cohort` in `app:cohort` (`39 --kcohort`, side by side with the no-shift K = 4; same classes 11/26/41/23; decade shifts +0.49 for the 1920s to -0.45 for the 2000s on the physical channel). The K = 5 pair joins that figure when cohort K = 5 lands. Frailty K = 4 is `fig:frailty_by_K` in `app:measures` (`51`), which gains log-frailty K = 4 and the K = 5 pair as they land (rerun `51`).
 - `50 --k 4` once the K = 4 windows land.
 - The K comparison figure (`39 --k`, drawn with K = 3, 4, 5 on 11 Oct; `fig_multidim_trajectories_by_K.png`, not in the draft) waits on a decision about K = 5: show chain 1 alone with the chain-by-chain figure (`49`, `fig_multidim_k5_chains.png`) in the appendix as the caveat, rerun K = 5 with more chains, or drop the K = 5 row. Then place it in Section 4 next to `fig:multidim` with bullets (the K = 4 reading: the worst class shrinks to an 11% chronically ill core, the middle splits along the mental dimension). Also fix the legend overlapping the lines in the K = 4 mental panel.
 - A cohort block for `39 --k` once cohort K = 5 lands (code to write).

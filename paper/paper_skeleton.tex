@@ -958,6 +958,12 @@ Small robustness exercise:
 		\caption{As Figure~\ref{fig:bayes}, the $K=3$ mixtures on $\log(\text{frailty}+1/31)$, classes relabelled so that class 1 is the frailest: (a) independent residuals, (b) AR(1) plus ``spike''. The shifted log lifts the floor only partly: under (b) a small healthiest class ($10\%$) keeps a persistence of $0.44$.}
 		\label{fig:bayes_logfrailty}
 	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_frailty_by_K.png}
+		\caption{The frailty index and log frailty under AR(1) plus ``spike'' by number of classes: class paths and the posterior class composition by age at $K=3$ and $K=4$ ($K=5$ when fitted), class 1 the frailest. On the frailty index $K=4$ splits the $K=3$ middle class into a steeper riser (30\%, persistence $0.87$) and a flatter one (28\%, $0.57$); the frailest class keeps its path and shrinks from 27\% to 20\%, and the healthiest stays at the floor with a persistence of $0.22$. The frailest class's share of the person-waves peaks around 60 and falls after, the mortality selection the index sees. The $K=4$ fit is read over the three chains that share its mode.}
+		\label{fig:frailty_by_K}
+	\end{figure}
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_class_trajectories_by_K_h.png}
@@ -1118,6 +1124,12 @@ Small robustness exercise:
 		\includegraphics[width=\linewidth]{fig_multidim_trajectories.png}
 		\caption{As Figure~\ref{fig:multidim}, the multidimensional $K=3$ mixtures on $\theta$ without the birth-decade shifts: rows are AR(1) plus ``spike'' and independent residuals. Without the shifts the mental class paths rise with age, which the decade shifts of the main-text figure attribute to the older cohorts' higher level.}
 		\label{fig:multidim_nocohort}
+	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_multidim_trajectories_by_K_cohort.png}
+		\caption{The multidimensional $K=4$ fit without and with the birth-decade shifts ($K=5$ added when its shifted fit lands), columns as in Figure~\ref{fig:multidim}. With the shifts the four classes are the same as without (11, 26, 41 and 23\% against 11, 26, 42 and 21\%), with the same shapes on both channels and the same hazard ordering; the shifts on the physical channel run from $+0.49$ for the 1920s cohort to $-0.45$ for the 2000s relative to the 1950s, so the paths drawn at the 1950s sit higher at young ages. The shifted fit has two modes of identical log posterior; the one drawn reproduces the no-shift classes, the other puts 36\% in the steep decliner and 14\% in the healthy class. Each fit is read over the chains that share its mode.}
+		\label{fig:multidim_k4_cohort}
 	\end{figure}
 	
 	

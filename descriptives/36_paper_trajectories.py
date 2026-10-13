@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import AGES, CONTRACT, DESC, FIG, K, MAX_AGE, MIN_AGE, bayes_fit, observed_class_means  # noqa: E402
+from _paper_common import AGES, CONTRACT, DESC, FIG, K, MAX_AGE, MIN_AGE, bayes_fit, observed_class_means, MODE_CHAINS  # noqa: E402
 from _style import CLUSTER, INK2, apply_style, share_ylim  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR  # noqa: E402
@@ -62,10 +62,8 @@ def k3_panel(tag: str, v: str):
             "observed": observed_means(post, v, K)}
 
 
-# Chains read for a fit when the others sat in a separate mode. health-h-ssm-k5: chains
-# 1, 2 and 4 agree to three decimals (split R-hat 1.002 over the three); chain 3 sits in a
-# mode about 310 log-posterior units lower and is dropped.
-CHAINS = {"health-h-ssm-k5": [1, 2, 4]}
+# Chains read for a fit when the others sat in a separate mode: _paper_common.MODE_CHAINS
+CHAINS = MODE_CHAINS
 
 
 def kn_panel(tag: str, v: str, Kc: int):

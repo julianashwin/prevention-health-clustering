@@ -375,6 +375,10 @@ INPUT ./figures/fig_bayes_mixtures_logfrailty.png
 INPUT ./figures/fig_bayes_mixtures_logfrailty.png
 INPUT ./figures/fig_bayes_mixtures_logfrailty.png
 INPUT ./figures/fig_bayes_mixtures_logfrailty.png
+INPUT ./figures/fig_frailty_by_K.png
+INPUT ./figures/fig_frailty_by_K.png
+INPUT ./figures/fig_frailty_by_K.png
+INPUT ./figures/fig_frailty_by_K.png
 INPUT ./figures/fig_class_trajectories_by_K_h.png
 INPUT ./figures/fig_class_trajectories_by_K_h.png
 INPUT ./figures/fig_class_trajectories_by_K_h.png
@@ -456,6 +460,10 @@ INPUT ./figures/fig_multidim_trajectories.png
 INPUT ./figures/fig_multidim_trajectories.png
 INPUT ./figures/fig_multidim_trajectories.png
 INPUT ./figures/fig_multidim_trajectories.png
+INPUT ./figures/fig_multidim_trajectories_by_K_cohort.png
+INPUT ./figures/fig_multidim_trajectories_by_K_cohort.png
+INPUT ./figures/fig_multidim_trajectories_by_K_cohort.png
+INPUT ./figures/fig_multidim_trajectories_by_K_cohort.png
 INPUT ./figures/fig_cost_curve.png
 INPUT ./figures/fig_cost_curve.png
 INPUT ./figures/fig_cost_curve.png
