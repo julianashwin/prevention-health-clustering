@@ -110,6 +110,26 @@ def load_labels(variant: str, lo: int = MIN_AGE, hi: int = MAX_AGE) -> pd.Series
     return lab.set_index("pidp")["cluster"].astype(int)
 
 
+def coassignment_corr(post_a: pd.DataFrame, post_b: pd.DataFrame, n: int = 3000, seed: int = 0) -> float:
+    """Agreement of two typologies without label correspondence: over pairs of people (a random
+    ``n`` of those in both), the correlation between the probability that typology A puts the pair
+    in the same class and the probability that B does, sum_k p_ik p_jk under each. ``post_a`` and
+    ``post_b`` are indexed by pidp with one column per class: posteriors for a mixture, one-hot
+    labels for K-means (then it is the phi coefficient of the two same-cluster indicators). It is 1
+    whenever the two assignments coincide, however diffuse the posteriors."""
+    both = post_a.index.intersection(post_b.index)
+    rng = np.random.default_rng(seed)
+    pick = rng.choice(both, size=min(n, len(both)), replace=False)
+    A = post_a.loc[pick].to_numpy(float); B = post_b.loc[pick].to_numpy(float)
+    iu = np.triu_indices(len(pick), k=1)
+    return float(np.corrcoef((A @ A.T)[iu], (B @ B.T)[iu])[0, 1])
+
+
+def onehot(labels: pd.Series, k: int = K) -> pd.DataFrame:
+    """Hard labels (pidp -> cluster) as a one-hot frame for coassignment_corr."""
+    return pd.DataFrame(np.eye(k)[labels.to_numpy(int)], index=labels.index, columns=[f"class{j + 1}" for j in range(k)])
+
+
 def load_trajectories(variant: str, lo: int = MIN_AGE, hi: int = MAX_AGE) -> pd.DataFrame:
     t = pd.read_csv(DESC / "paper_kmeans_trajectories.csv")
     return t[(t["variant"] == variant) & (t["lo"] == lo) & (t["hi"] == hi)].copy()

@@ -37,7 +37,7 @@ import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import CONTRACT, DESC, FIG, K, MAX_AGE, MIN_AGE, bayes_fit  # noqa: E402
+from _paper_common import CONTRACT, DESC, FIG, K, MAX_AGE, MIN_AGE, bayes_fit, coassignment_corr  # noqa: E402
 from _style import CLUSTER, INK2, INK3, apply_style, share_ylim  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
@@ -46,17 +46,6 @@ SLIDING = [(20, 40), (30, 50), (40, 60), (50, 70), (60, 80), (70, 90)]
 BACKWARD = [(70, 90), (60, 90), (50, 90), (40, 90), (30, 90), (20, 90)]
 WIN = ARTIFACTS_DIR / "health-windows"
 V = "theta"
-N_PAIR_SAMPLE = 3000
-
-
-def coassignment_corr(post_a: pd.DataFrame, post_b: pd.DataFrame, n: int = N_PAIR_SAMPLE, seed: int = 0) -> float:
-    """Correlation over pairs of the same-class probabilities under two posteriors (people in both)."""
-    both = post_a.index.intersection(post_b.index)
-    rng = np.random.default_rng(seed)
-    pick = rng.choice(both, size=min(n, len(both)), replace=False)
-    A = post_a.loc[pick].to_numpy(); B = post_b.loc[pick].to_numpy()
-    iu = np.triu_indices(len(pick), k=1)
-    return float(np.corrcoef((A @ A.T)[iu], (B @ B.T)[iu])[0, 1])
 
 
 def window_fit(lo: int, hi: int) -> dict:
