@@ -6,7 +6,8 @@ contract -- the rows with age inside the window, people with at least three such
 rows -- and health-theta-ssm is fitted on it. Each window contract is written to
 data/processed/contracts/health_window_{lo}_{hi}_v1/ (long.csv plus a manifest whose
 metric moments are the window's own, so descriptives/_paper_common.bayes_fit reads it
-like any contract); fits go to artifacts/health-windows/theta-ssm-{lo}-{hi}/.
+like any contract); fits go to artifacts/health-windows/theta-ssm-{lo}-{hi}/
+(--k 4: the K = 4 spec, tags theta-ssm-k4-{lo}-{hi}, log queue_k4.log).
 Finished fits are skipped.
 
     python clustering/runs/windows_queue.py [--dry-run]
@@ -53,15 +54,16 @@ def window_contract(lo: int, hi: int) -> Path:
     return out
 
 
-def run_job(lo: int, hi: int, settings: list[str]) -> tuple[str, int, float]:
-    tag = f"theta-ssm-{lo}-{hi}"
+def run_job(lo: int, hi: int, settings: list[str], k: int = 3) -> tuple[str, int, float]:
+    tag = f"theta-ssm-{lo}-{hi}" if k == 3 else f"theta-ssm-k{k}-{lo}-{hi}"
     out_dir = OUT / tag
     if (out_dir / "run_summary.json").exists():
         print(f"[{time.strftime('%H:%M:%S')}] SKIP {tag} (already finished)", flush=True)
         return tag, 0, 0.0
     contract = window_contract(lo, hi)
     out_dir.mkdir(parents=True, exist_ok=True)
-    cmd = [sys.executable, str(ROOT / "clustering" / "run_fit.py"), "--model", "health-theta-ssm",
+    model = "health-theta-ssm" if k == 3 else f"health-theta-ssm-k{k}"       # models/registry.py HEALTH_K45
+    cmd = [sys.executable, str(ROOT / "clustering" / "run_fit.py"), "--model", model,
            "--contract", str(contract), "--output", str(out_dir)] + settings
     t0 = time.time()
     print(f"[{time.strftime('%H:%M:%S')}] START {tag}", flush=True)
@@ -80,20 +82,22 @@ def main(argv=None) -> int:
     ap.add_argument("--warmup", type=int, default=1000)
     ap.add_argument("--sampling", type=int, default=1000)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--k", type=int, default=3, help="class count: 3 (health-theta-ssm) or 4 / 5 (health-theta-ssm-k4/5), tags theta-ssm-k{K}-{lo}-{hi}")
     a = ap.parse_args(argv)
     settings = ["--chains", str(a.chains), "--parallel-chains", str(a.parallel_chains),
                 "--threads-per-chain", str(a.threads_per_chain), "--warmup", str(a.warmup), "--sampling", str(a.sampling)]
+    ksfx = "" if a.k == 3 else f"-k{a.k}"
     if a.dry_run:
         for lo, hi in WINDOWS:
-            print(f"theta-ssm-{lo}-{hi}  contract health_window_{lo}_{hi}_v1")
+            print(f"theta-ssm{ksfx}-{lo}-{hi}  contract health_window_{lo}_{hi}_v1")
         return 0
     OUT.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
-    results = [run_job(lo, hi, settings) for lo, hi in WINDOWS]
+    results = [run_job(lo, hi, settings, a.k) for lo, hi in WINDOWS]
     digest = {"total_hours": (time.time() - t0) / 3600, "jobs": [{"tag": t, "rc": rc, "hours": h} for t, rc, h in results]}
-    (OUT / "digest.json").write_text(json.dumps(digest, indent=1))
+    (OUT / f"digest{ksfx}.json").write_text(json.dumps(digest, indent=1))
     failed = [t for t, rc, _ in results if rc != 0]
-    print(f"WINDOWS QUEUE COMPLETE in {digest['total_hours']:.1f} h; {'all ok' if not failed else 'FAILED: ' + ', '.join(failed)}", flush=True)
+    print(f"WINDOWS{ksfx.upper()} QUEUE COMPLETE in {digest['total_hours']:.1f} h; {'all ok' if not failed else 'FAILED: ' + ', '.join(failed)}", flush=True)
     return 1 if failed else 0
 
 

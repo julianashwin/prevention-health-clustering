@@ -62,7 +62,10 @@ index and log frailty at K = 4 and 5 (`models/registry.py` `FRAILTY_K45`) into
 window from the health contract (`data/processed/contracts/health_window_{lo}_{hi}_v1`,
 rows inside the window, people with at least three) and fits `health-theta-ssm` on
 each, into `artifacts/health-windows/theta-ssm-{lo}-{hi}/`: the Bayesian version of
-the K-means windows figure.
+the K-means windows figure. `runs/windows_queue.py --k 4` (launcher
+`runs/windows_k4_launch.sh`, which waits for the log-frailty K = 4 fit) refits the
+same windows at K = 4 (`health-theta-ssm-k4`, tags `theta-ssm-k4-{lo}-{hi}`, log
+`queue_k4.log`).
 `run_multidim.py` fits the multidimensional mixture: a physical channel
 (`--physical theta` or `h`) and the mental GRM, Gaussian with optional AR(1)
 or AR(1) plus "spike" and persistence by class and channel, and a Gompertz-Makeham mortality hazard (`--with-mortality`, class-specific
