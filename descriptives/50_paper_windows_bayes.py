@@ -12,7 +12,12 @@ Panels as in the K-means figure: (a) sliding and (b) backward windows' class pat
 their own age range, the lifecycle classes in grey behind; (c) agreement of each window's
 modal class with the lifecycle modal class on the people both contain (adjusted Rand index);
 (d), (e) the worst class's posterior share of the person-waves observed at each age, window
-by window; (f) the worst class's share of each window's people.
+by window; (f) the worst class's share of each window's people. Panel (c) also carries a
+posterior-based agreement: over pairs of people (a random 3,000 of those in both fits), the
+correlation between the probability that the window fit puts the pair in the same class and
+the probability that the lifecycle fit does, sum_k p_ik p_jk under each. It needs no label
+correspondence and is 1 whenever the two posteriors coincide, however diffuse, so it
+separates a different grouping from a blurred one.
 
 Outputs: paper/figures/fig_windows_bayes.png, artifacts/descriptives/paper_windows_bayes.csv.
 
@@ -41,6 +46,17 @@ SLIDING = [(20, 40), (30, 50), (40, 60), (50, 70), (60, 80), (70, 90)]
 BACKWARD = [(70, 90), (60, 90), (50, 90), (40, 90), (30, 90), (20, 90)]
 WIN = ARTIFACTS_DIR / "health-windows"
 V = "theta"
+N_PAIR_SAMPLE = 3000
+
+
+def coassignment_corr(post_a: pd.DataFrame, post_b: pd.DataFrame, n: int = N_PAIR_SAMPLE, seed: int = 0) -> float:
+    """Correlation over pairs of the same-class probabilities under two posteriors (people in both)."""
+    both = post_a.index.intersection(post_b.index)
+    rng = np.random.default_rng(seed)
+    pick = rng.choice(both, size=min(n, len(both)), replace=False)
+    A = post_a.loc[pick].to_numpy(); B = post_b.loc[pick].to_numpy()
+    iu = np.triu_indices(len(pick), k=1)
+    return float(np.corrcoef((A @ A.T)[iu], (B @ B.T)[iu])[0, 1])
 
 
 def window_fit(lo: int, hi: int) -> dict:
@@ -89,6 +105,7 @@ def main() -> int:
             both = modal.index.intersection(full_modal.index)
             rows.append({"kind": "sliding" if col == 0 else "backward", "lo": lo, "hi": hi, "people": f["n"], "shared": len(both),
                          "ari_vs_full": adjusted_rand_score(modal.loc[both], full_modal.loc[both]),
+                         "coassign_corr": coassignment_corr(f["post"], full["post"]),
                          "same_vs_full": float((modal.loc[both] == full_modal.loc[both]).mean()),
                          "worst_share": float(f["share"][0]), "worst_modal_share": float((modal == 0).mean()), "rhat": f["rhat"],
                          "rho_worst": f["rho"][0], "rho_mid": f["rho"][1], "rho_best": f["rho"][2]})
@@ -99,9 +116,10 @@ def main() -> int:
     for kind, mk, c in [("sliding", "o", CLUSTER[1]), ("backward", "s", CLUSTER[0])]:
         q = r[r["kind"] == kind]
         x = q["lo"] + (q["hi"] - q["lo"]) / 2 if kind == "sliding" else q["lo"]
-        ax.plot(x, q["ari_vs_full"], marker=mk, color=c, lw=1.4, label=f"{kind}: ARI vs lifecycle classes" + (" (x = window midpoint)" if kind == "sliding" else " (x = start age)"))
+        ax.plot(x, q["ari_vs_full"], marker=mk, color=c, lw=1.4, label=f"{kind}: ARI of the modal classes" + (" (x = midpoint)" if kind == "sliding" else " (x = start age)"))
+        ax.plot(x, q["coassign_corr"], marker=mk, color=c, lw=1.4, ls="--", mfc="white", label=f"{kind}: posterior co-assignment correlation")
     ax.set_ylim(0, 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-    ax.set_title("(c) agreement with the lifecycle classes", loc="left", fontsize=9.5); ax.legend(loc="lower left", fontsize=7.5); ax.set_xlabel("age")
+    ax.set_title("(c) agreement with the lifecycle classes", loc="left", fontsize=9.5); ax.legend(loc="lower left", fontsize=6.8); ax.set_xlabel("age")
     full_c = full["comp"]["class1"].rolling(5, center=True, min_periods=1).mean()
     for col, wins in enumerate([SLIDING, BACKWARD]):
         ax = axes[1, col]
@@ -122,8 +140,9 @@ def main() -> int:
     ax.set_title("(f) worst class's share per window", loc="left", fontsize=9.5); ax.legend(loc="upper left", fontsize=7.5); ax.set_xlabel("age")
     share_ylim([axes[0, 0], axes[0, 1]])
     footer = ("Each window refits the K = 3 AR(1) + \"spike\" mixture on theta on the people observed at least three times inside it (its own contract and fit). Coloured lines: the window's class paths at the posterior "
-              "mean over its own age range (tick at the start; line width proportional to the class share); grey: the lifecycle 20-90 fit. Panel (c): adjusted Rand index between a window's modal class and the "
-              "lifecycle modal class, on the people both contain. Panels (d), (e): the worst class's posterior share of the person-waves observed at each age (five-year rolling mean), one line per window, "
+              "mean over its own age range (tick at the start; line width proportional to the class share); grey: the lifecycle 20-90 fit. Panel (c), solid: adjusted Rand index between a window's modal class and the "
+              "lifecycle modal class, on the people both contain; dashed: over pairs of people (a random 3,000), the correlation between the probability that the window fit puts the pair in the same class "
+              "and the probability that the lifecycle fit does, which is 1 whenever the two posteriors coincide. Panels (d), (e): the worst class's posterior share of the person-waves observed at each age (five-year rolling mean), one line per window, "
               "against the lifecycle fit in grey; (f) the worst class's share of each window's people. Classes ordered worst to best by the class path's mean over the window.")
     fig.text(0.01, -0.01, "\n".join(textwrap.wrap(footer, 200)), fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / "fig_windows_bayes.png", bbox_inches="tight")
