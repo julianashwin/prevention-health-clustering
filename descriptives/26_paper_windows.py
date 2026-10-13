@@ -78,7 +78,7 @@ def main() -> int:
             ax.plot(x, q["coassign_corr"], marker=mk, color=c, lw=1.4,
                     label=f"{kind} windows" + (" (x = window midpoint)" if kind == "sliding" else " (x = start age)"))
         ax.set_ylim(0, 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-        ax.set_title(f"(c) {LABEL[v]}: co-assignment correlation with the lifecycle typology", loc="left", fontsize=9.5)
+        ax.set_title(f"(c) {LABEL[v]}: correlation with lifecycle types", loc="left", fontsize=9.5)
         ax.legend(loc="lower left", fontsize=7.5)
         ax.set_xlabel("age")
         # ---- lower row: the worst type's share of the person-waves observed at each age, window by window

@@ -107,7 +107,7 @@ def main() -> int:
         x = q["lo"] + (q["hi"] - q["lo"]) / 2 if kind == "sliding" else q["lo"]
         ax.plot(x, q["coassign_corr"], marker=mk, color=c, lw=1.4, label=f"{kind} windows" + (" (x = window midpoint)" if kind == "sliding" else " (x = start age)"))
     ax.set_ylim(0, 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-    ax.set_title("(c) co-assignment correlation with the lifecycle classes", loc="left", fontsize=9.5); ax.legend(loc="lower left", fontsize=7.5); ax.set_xlabel("age")
+    ax.set_title("(c) correlation with lifecycle classes", loc="left", fontsize=9.5); ax.legend(loc="lower left", fontsize=7.5); ax.set_xlabel("age")
     full_c = full["comp"]["class1"].rolling(5, center=True, min_periods=1).mean()
     for col, wins in enumerate([SLIDING, BACKWARD]):
         ax = axes[1, col]
@@ -132,7 +132,7 @@ def main() -> int:
               "and the probability that the lifecycle fit does, sum_k p_ik p_jk under each; it needs no correspondence between the two sets of labels and is 1 whenever the two posteriors coincide "
               "(the adjusted Rand index of the modal classes is in the csv). Panels (d), (e): the worst class's posterior share of the person-waves observed at each age (five-year rolling mean), one line per window, "
               "against the lifecycle fit in grey; (f) the worst class's share of each window's people. Classes ordered worst to best by the class path's mean over the window.")
-    fig.text(0.01, -0.01, "\n".join(textwrap.wrap(footer, 200)), fontsize=7.4, color=INK2, va="top")
+    fig.text(0.01, -0.01, "\n".join(textwrap.wrap(footer, 185)), fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / "fig_windows_bayes.png", bbox_inches="tight")
     r.to_csv(DESC / "paper_windows_bayes.csv", index=False)
     print(r.round(3).to_string(index=False))
