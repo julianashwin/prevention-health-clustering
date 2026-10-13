@@ -33,3 +33,6 @@ paper/*.toc
 paper/*.bbl
 paper/*.blg
 paper/paper_overleaf.zip
+
+# editor build artefacts in paper/
+paper/*.synctex*

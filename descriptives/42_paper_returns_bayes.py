@@ -70,7 +70,7 @@ MD_TAGS = {("multidim", "theta"): ("theta-ssm-mort", None), ("multidim", "h"): (
            ("multidim-cohort", "theta"): ("theta-ssm-mort-cohort", None)}
 PALETTE = {3: CLUSTER, 4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
            5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}     # worst -> best, as 36_paper_trajectories.py
-CHAINS = {"health-h-ssm-k5": [1, 2, 4]}                                     # fits read over the chains that share a mode
+CHAINS = {"health-h-ssm-k5": [1, 2, 4], "health-frailty-ssm-k4": [1, 2, 3]}   # chains that share the better mode                                     # fits read over the chains that share a mode
 
 
 def smooth(x: pd.Series, n: pd.Series, min_n: int = 100) -> np.ndarray:
