@@ -19,7 +19,8 @@ the probability that the lifecycle fit does, sum_k p_ik p_jk under each. It need
 correspondence and is 1 whenever the two posteriors coincide, however diffuse, so it
 separates a different grouping from a blurred one.
 
-Outputs: paper/figures/fig_windows_bayes.png, artifacts/descriptives/paper_windows_bayes.csv.
+Outputs: paper/figures/fig_windows_bayes.png, artifacts/descriptives/paper_windows_bayes.csv
+(per window) and paper_windows_bayes_composition.csv (the worst class's share by age per window).
 
     PYTHONPATH=src .venv/bin/python descriptives/50_paper_windows_bayes.py
 """
@@ -135,6 +136,8 @@ def main() -> int:
     fig.text(0.01, -0.01, "\n".join(textwrap.wrap(footer, 185)), fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / "fig_windows_bayes.png", bbox_inches="tight")
     r.to_csv(DESC / "paper_windows_bayes.csv", index=False)
+    comp_rows = [{"lo": w[0], "hi": w[1], "age": int(a), "worst_share": float(v)} for w, f in fits.items() for a, v in f["comp"]["class1"].items()]
+    pd.DataFrame(comp_rows).to_csv(DESC / "paper_windows_bayes_composition.csv", index=False)
     print(r.round(3).to_string(index=False))
     print(f"wrote fig_windows_bayes.png to {FIG}")
     return 0
