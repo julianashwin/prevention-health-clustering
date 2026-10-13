@@ -33,7 +33,6 @@ K-means twins for the first-rows exercises (`22_paper_kmeans.py --first-held 1 -
 - `50 --k 4` once the K = 4 windows land.
 - The K comparison figure (`39 --k`, drawn with K = 3, 4, 5 on 11 Oct; `fig_multidim_trajectories_by_K.png`, not in the draft) waits on a decision about K = 5: show chain 1 alone with the chain-by-chain figure (`49`, `fig_multidim_k5_chains.png`) in the appendix as the caveat, rerun K = 5 with more chains, or drop the K = 5 row. Then place it in Section 4 next to `fig:multidim` with bullets (the K = 4 reading: the worst class shrinks to an 11% chronically ill core, the middle splits along the mental dimension). Also fix the legend overlapping the lines in the K = 4 mental panel.
 - A cohort block for `39 --k` once cohort K = 5 lands (code to write).
-- Result 2 reformulation in Section 2: proposal made 8 Oct (by-type result first, uniform decomposition as a corollary, additive-prevention remark, moments table to the identification subsection), awaiting the go.
 
 **The held-out convention (7 Oct):** the draft uses the first-TWO-rows fits
 throughout the type-from-initial and targeting exercises (`43 --first2`,
@@ -64,7 +63,7 @@ Fits that have been discussed but not queued, so they are not forgotten:
 | Predict the type from an initial, held-out health value, baseline and full clustering | Done: `fig:typeinit`, reframed (5 Oct) as observables versus a health reading and (7 Oct) moved to the first-two-rows fits: education, income rank and sex add 0.08-0.10 of AUC over age, one reading of theta takes it to 0.80-0.81, two readings to 0.85 (four to five points of accuracy), and on top of a reading the observables add 0.01; the mixture's own posterior from one or two rows matches the regression. K-means / independent / AR(1)+"spike" / + cohort shifts / multidimensional (first-row placeholder until the two-row fit lands); the h version is `fig:typeinit_h` in the measures appendix |
 | Relabel "spike" as "episodic" | Open (a global rename in the draft and the figure footers; `descriptives/` prints "spike" in about 30 places) |
 | Is the C_Hd reversal driven by the small very-ill group? | Open; the bottom-decile and worst-class composition figures exist (`fig:decomp`, `fig:multidim`) but the statement has not been made |
-| Result 2: focus on the by-type form and why the evolution of the mean matters | Open (Section 2 rewrite; see the framework todos below) |
+| Result 2: focus on the by-type form and why the evolution of the mean matters | Done (13 Oct): Result 2 is now the by-type return, gap times preventable decline, with the uniform decomposition as Corollary `cor:uniform` and a remark on additive prevention ("why the evolution of the mean by type"); the linear-case formula and the moments table moved to the identification subsection as "what the covariance surface prices without types"; the instrument is stated by type; Section 5 gains a bullet tying Figure 16(a), (c) to the two factors |
 | Same vertical axis across K panels | Done (5 Oct; and 6 Oct a footer guard in `_style.py` re-flows any figure note wider than its panels, every paper figure regenerated): `_style.share_ylim` gives one vertical scale to the six K panels (`fig_class_trajectories_by_K`, theta and h), to each channel across rows in the multidimensional figures (specifications, and K = 3/4/5 when those land), to the sliding and expanding windows, to the raw and net decade profiles, and to the two specifications in the returns figure. Panels on different measures or quantities keep their own scales |
 | More discrimination in the unhealthy type as K rises and as the stochastic structure is added? | Partly: the K = 4/5 single-channel rows are in; the multidimensional K = 4/5 fits are queued |
 | Is there always a bad group, and does K-means understate it because the process is noisy? | Open; the ingredients are `fig:bayes` (dashed K-means lines) and the composition strips |
@@ -76,7 +75,7 @@ Fits that have been discussed but not queued, so they are not forgotten:
 
 ## Open decisions in the draft (the red todos)
 
-- Section 2: Result 2 around the by-type return (line 126; proposal of 8 Oct awaiting the go); which noise class to lead with, whether a permanent shock is a type level, selection (lines 223-225).
+- Section 2: which noise class to lead with, whether a permanent shock is a type level, selection (the three todos at the end of the identification subsection).
 - Section 3: the PSID replication (line 246); which Exhibit 2 cases to present, pairwise versus balanced moments (line 376).
 - Section 4: a bounded observation model for h and frailty (line 529); whether to calibrate the healthy share to the ONS health state life expectancies (line 577).
 - Section 5: the cost of a unit of mu and survival weighting in the timing arithmetic (line 694); pricing the targeting rules net of a screening cost and targeting on the predicted class (line 698); within-class gradients in the prevention-in-years exercise, and the cost of a unit of mu by class (line 717).

@@ -9,6 +9,7 @@
 \setlist[itemize]{itemsep=2pt,topsep=3pt,parsep=0pt,leftmargin=1.4em}
 \newtheorem{proposition}{Proposition}
 \newtheorem{result}{Result}
+\newtheorem{corollary}{Corollary}
 \newcommand{\E}{\mathbb{E}}
 \newcommand{\Var}{\mathrm{Var}}
 \newcommand{\Cov}{\mathrm{Cov}}
@@ -63,7 +64,7 @@
 		Prevention targets the third; the first two are what is paid for, as treatment, once realised.
 		\item Only what is carried from one wave to the next produces covariance between waves: the three components leave different traces on the covariance matrix, which is the basis for our identification.
 		\item Two-by-two matrix of possibilities: dispersion is deterministic (across types) or stochastic (within type), and actionable or not. Deterministic and actionable is \emph{targetable} prevention; stochastic and actionable is untargeted prevention, or treatment once the shock has arrived. Predictability of levels $\neq$ predictability of changes.
-		\item Health types are thus the object of interest: they are the support of $(H, d)$, and clustering estimates it. Between/within variance maps to type/individual. 
+		\item Health types are thus the object of interest: they are the support of $(H, d)$, and clustering estimates it. Between/within variance maps to type/individual. Result~\ref{res:prev} below is the reason: the return to prevention for a type is a function of that type's mean path alone, so a policy needs the type shares and each type's path, which is what Section~\ref{sec:types} estimates.
 		\item Link to other life course: With the base age at birth, the life-course accounts are second moments: critical period $=\Var(H)$, accumulation $=\Var(d)$, pathway $=\Cov(H,d)$; at a later base age the triple's evolution with the base age separates them.
 		\item Throughout this section, we will use a linear illustration (constant type slopes, $d_{j,a}=d_j$): a random-coefficients growth model with $V_H, V_d, C_{Hd}$ and noise variances $v_a$,
 		\begin{equation}
@@ -97,11 +98,11 @@
 			\label{eq:C}
 		\end{equation}
 		which for the quadratic is \eqref{eq:popcost} summed over ages: the mean gap, the between-type variance and the within-type variance. The third part is paid as treatment but is not preventable: it is the in-the-moment variation, including the ``spike''.
-		\item One instrument. \textbf{Prevention} is ex ante and scales every future type change by $(1-\mu)$ from age $r$, so health gained is $\mu$ times the type's preventable decline
+		\item One instrument. \textbf{Prevention} is ex ante and acts on change: from age $r$ at intensity $\mu$ it scales every future mean change of a type by $(1-\mu)$, moving type $j$'s path to
 		$$
-		\bar h_{j,r-1}-\bar h_{j,a},
+		\bar h^{\mu}_{j,a}=\bar h_{j,a}+\mu\,(\bar h_{j,r-1}-\bar h_{j,a})\quad\text{for } a\ge r,
 		$$
-		and its return is the treatment cost that avoids.
+		and leaving $u_{i,a}$ untouched, so health gained is $\mu$ times the type's preventable decline $\bar h_{j,r-1}-\bar h_{j,a}$, and its return is the treatment cost that avoids.
 	\end{itemize}
 	
 	\begin{result}[The treatment bill; note Result 1]\label{res:treat}
@@ -111,22 +112,28 @@
 		under the quadratic. Cross-sectional moments only; no identification problem. (The note's ``return to treatment'' $T(r)$ is $2C(r)$: restoring a share $\tau$ of every realised gap is worth $\tau$ times twice the bill.)
 	\end{result}
 	
-	\begin{result}[Return to prevention; note Results 2 and 3]\label{res:prev}
-		For a uniform policy,
+	\begin{result}[Return to prevention by type; note Results 2 and 3]\label{res:prev}
+		Under the quadratic, the return to prevention from age $r$ for type $j$, per unit of $\mu$, is
 		\begin{equation}
-			P(r)=\textstyle\sum_j\pi_jP_j(r)
-			=2\sum_{a\ge r}\Bigl[\underbrace{(1-\bar h_a)(\bar h_{r-1}-\bar h_a)}_{\text{mean channel}}
+			P_j(r)=2\sum_{a\ge r}\underbrace{(1-\bar h_{j,a})}_{\text{gap at }a}\;\underbrace{(\bar h_{j,r-1}-\bar h_{j,a})}_{\text{preventable decline by }a}\;\equiv\;\sum_{a\ge r}s_j(a\mid r),
+			\label{eq:Pj}
+		\end{equation}
+		and for a general increasing convex cost $P_j(r)=\sum_{a\ge r}\E[-c'(h_{i,a})\mid j]\,(\bar h_{j,r-1}-\bar h_{j,a})$ to first order in $\mu$. Both factors are functions of the type's mean path alone: nothing within type enters. A type pays back only where it is \emph{both} in poor health and still declining. A sick but flat type is a treatment case; a declining but healthy type pays back only once its decline has opened a gap, which is why the per-age saving $s_j(a\mid r)$ rises with age.
+	\end{result}
+
+	\begin{corollary}[The uniform policy]\label{cor:uniform}
+		Giving every type the same $\mu$ returns $P(r)=\sum_j\pi_jP_j(r)$, and the law of total covariance applied to the product in \eqref{eq:Pj} splits it as
+		\begin{equation}
+			P(r)=2\sum_{a\ge r}\Bigl[\underbrace{(1-\bar h_a)(\bar h_{r-1}-\bar h_a)}_{\text{mean channel}}
 			+\underbrace{\Cov_j\bigl(1-\bar h_{j,a},\,\bar h_{j,r-1}-\bar h_{j,a}\bigr)}_{\text{between-type channel}}\Bigr],
 			\label{eq:P}
 		\end{equation}
-		The between-type channel splits as $\Cov_j(1-H_j,\,\bar h_{j,r-1}-\bar h_{j,a})+\Cov_j(H_j-\bar h_{j,r-1},\,\bar h_{j,r-1}-\bar h_{j,a}) +\Var_j(\bar h_{j,r-1}-\bar h_{j,a})$: the pathway, persistence and accumulation margins.
-		\\~\\
-		By type, $P_j(r)=2\sum_{a\ge r}(1-\bar h_{j,a})(\bar h_{j,r-1}-\bar h_{j,a})$: gap times preventable decline. 
-	\end{result}
-	\todo{Reformulate this result around the returns by type - gap times preventable decline. Explains why we want the evolution of the mean by type.}
-	
+		the between-type channel splitting further as $\Cov_j(1-H_j,\,\bar h_{j,r-1}-\bar h_{j,a})+\Cov_j(H_j-\bar h_{j,r-1},\,\bar h_{j,r-1}-\bar h_{j,a})+\Var_j(\bar h_{j,r-1}-\bar h_{j,a})$, the pathway, persistence and accumulation margins. In the data the mean channel is most of the uniform return (two-thirds from 30, nine-tenths from 70; Section~\ref{sec:policy}), so the cross-section prices uniform prevention nearly on its own; what the types add is the dispersion of $P_j(r)$ across them, which is what targeting buys (Result~\ref{res:target}).
+	\end{corollary}
+
 	\begin{itemize}
-		\item For a general increasing convex cost $c(\cdot)$ the bill is \eqref{eq:C} as written and the prevention return keeps its form with the derivative as the weight: $P_j(r)=\sum_{a\ge r}\E[-c'(h_{i,a})\mid j]\,(\bar h_{j,r-1}-\bar h_{j,a})$, to first order in the policy intensity; the quadratic case reproduces Results~\ref{res:treat} and~\ref{res:prev}. $P(r)/C(r)$ is the share of the remaining bill a unit of prevention avoids.
+		\item \textbf{Why the evolution of the mean by type.} Had prevention instead lifted the path by a constant $\delta$ from $r$, the return would be $2\delta\sum_{a\ge r}(1-\bar h_{j,a})$: gap only, priced by levels, and a cross-section would do. The product form of \eqref{eq:Pj} is specific to prevention that acts on the \emph{change}, and under it the object a policy needs is $(\pi_j,\bar h_{j,\cdot})$, the support of the types and each type's path, not the covariance structure. The covariance structure matters for two other things: separating the deterministic path from the noise (Section~\ref{sec:ident_fw}), and recovering a person's type when it is not observed (the posterior, Section~\ref{sec:policy}).
+		\item For a general increasing convex cost $c(\cdot)$ the bill is \eqref{eq:C} as written and the return keeps the form in Result~\ref{res:prev} with the derivative as the weight; the quadratic reproduces Result~\ref{res:treat} and \eqref{eq:Pj}. $P(r)/C(r)$ is the share of the remaining bill a unit of prevention avoids.
 		\item Prevention averts future gaps but must be assigned ex ante; the uniform policy pays the population-average preventable decline and its between-type channel is bounded by deterministic heterogeneity. What it can reach at most is the first two parts of \eqref{eq:C}: the realised deviations are treated, not prevented.
 		\item Measurement error sits in the third part of the bill and in no prevention return; Case~4 below removes it from the type dynamics.
 	\end{itemize}
@@ -140,37 +147,6 @@
 			\item Targeting on type $\max_jP_j(r)-\sum_j\pi_jP_j(r)$.
 		\end{itemize} 
 	\end{result}
-	
-	%\paragraph{What each policy object needs (note Result C.1 and Table 2).} 
-	In the linear case of Equation \ref{eq:linear}, $\bar h_{j,a}=H_j+a\,d_j$ the between-type channel is $(a-r+1)(C_{Hd}+aV_d)$, so
-	\begin{equation}
-		P(r)=2\sum_{a\ge r}\bigl[(1-\bar h_a)(\bar h_{r-1}-\bar h_a)+ (a-r+1)\,C_{Hd} + a(a-r+1)\,V_d\bigr]
-		\label{eq:Pr}
-	\end{equation}
-	We can (loosely?) think of the policy objects in terms of the moments that they require. \note{In Leuven, we labelled these P(i)-P(iii), but I think I maybe misremembered things a bit here as I couldn't quite make things match up. There's a lot more on this in the conceptual framework document, so I need to properly revisit that.}
-	
-	\begin{center}\small
-		\begin{tabular}{@{}lp{5.6cm}p{5.6cm}@{}}
-			\toprule
-			& Policy object & Moments it needs \\
-			\midrule
-			P(i) & $C(r)$, and the mean channel of $P(r)$ & the mean path $\bar h_a$ and the cross-sectional
-			variance $\Var(h_a)$: Figure \ref{fig:exhibit1} panels (a) and (b) 
-			\\~\\
-			P(ii) & the accumulation margin of $P(r)$; the timing profile $r\mapsto P(r)$ & $V_d$ (with
-			$C_{Hd}$): the curvature of the surface
-			\\~\\
-			P(iii) & the pathway margin; targeting on a level or type & $C_{Hd}$, locally $C_{Hd}(a)\equiv
-			\Cov_j(\bar h_{j,a},d_j)$, whose sign says diverging or converging: Figure~\ref{fig:exhibit1} panel (c). For type targetting also need $P_j(r)$ across types, i.e.\ the
-			clusters of Section~\ref{sec:types} \\
-			\bottomrule
-		\end{tabular}
-	\end{center}
-	
-	\begin{itemize}
-		\item If we've already shown/foreshadowed Figure \ref{fig:exhibit1}, we could explain that through \eqref{eq:Pr}: an accelerating mean raises the mean channel for later starts; a $V_d$ that falls with age puts the accumulation margin early; a $C_{Hd}(a)$ that changes over time works through the pathway margin, and the sign of $C_{Hd}$ is crucial for targetting on initial health.
-		\item \note{In the data the mean channel dominates $P(r)$ and the between-type channel is small . The between-type moments matter for \emph{targeting} far more than for the uniform return, so we could organise this section more around that: the bill and uniform prevention priced by the cross-section, targeting priced by the types.}
-	\end{itemize}
 	
 	\subsection{Identification}
 	\label{sec:ident_fw}
@@ -218,6 +194,36 @@
 		\item The between-type channel of $P(r)$ is the exposure-weighted sum $\sum_{a\ge r}(a-r+1)C_{Hd}(a)$ and so depends crucially on $C_{Hd}$.
 		\item Everything can be represented as person-level OLS of $h$ on $(1,a)$, except for the noise correction which is case-specific (note Appendix E).
 	\end{itemize}
+
+	\paragraph{What the covariance surface prices without types.}
+	In the linear case of Equation~\ref{eq:linear}, $\bar h_{j,a}=H_j+a\,d_j$, the between-type channel of the uniform return (Corollary~\ref{cor:uniform}) is $(a-r+1)(C_{Hd}+aV_d)$, so
+	\begin{equation}
+		P(r)=2\sum_{a\ge r}\bigl[(1-\bar h_a)(\bar h_{r-1}-\bar h_a)+ (a-r+1)\,C_{Hd} + a(a-r+1)\,V_d\bigr].
+		\label{eq:Pr}
+	\end{equation}
+	The uniform return is therefore priced by the surface's moments alone, without recovering the types, and each object reads off one region of the surface:
+
+	\begin{center}\small
+		\begin{tabular}{@{}p{5.6cm}p{6.4cm}@{}}
+			\toprule
+			Policy object & Moments it needs \\
+			\midrule
+			$C(r)$, and the mean channel of $P(r)$ & the mean path $\bar h_a$ and the cross-sectional
+			variance $\Var(h_a)$: Figure \ref{fig:exhibit1} panels (a) and (b)
+			\\~\\
+			the accumulation margin of $P(r)$; the timing profile $r\mapsto P(r)$ & $V_d$ (with
+			$C_{Hd}$): the curvature of the surface
+			\\~\\
+			the pathway margin; targeting on a level & $C_{Hd}$, locally $C_{Hd}(a)\equiv
+			\Cov_j(\bar h_{j,a},d_j)$, whose sign says diverging or converging: Figure~\ref{fig:exhibit1} panel (c)
+			\\~\\
+			targeting on a type & $P_j(r)$ across types, i.e.\ the paths of Section~\ref{sec:types} \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+
+	Read through \eqref{eq:Pr}, Figure~\ref{fig:exhibit1} says how the return moves with the start age: an accelerating mean raises the mean channel for later starts; a $V_d$ that falls with age puts the accumulation margin early; a $C_{Hd}(a)$ that changes over time works through the pathway margin, and its sign is what targeting on initial health turns on. The between-type channel this prices is also the moments-only check on the clustering: it should match the channel the estimated paths of Section~\ref{sec:types} imply.
+
 	
 	\begin{itemize}
 		\item \todo{We should decide which noise class to focus on. The data generally pushes us towards a spike and pretty high $\rho$ (maybe the high rho is also making up for some individual fixed effect though?). This would be Case~4 getting close to its $\rho\to1$ limit. We do have a random walk case in the conceptual note (Proposition F.1 random walk plus spike), but here the diagonal becomes useless which sort of undercuts our identification forces...}
@@ -658,6 +664,7 @@ Small robustness exercise:
 	
 	\begin{itemize}
 		\item \textbf{The bill and what prevention avoids} (Figure~\ref{fig:prevention}(a), (b); Table~\ref{tab:returnsbayes}). The treatment bill from 30 is \pounds38{,}000 per person to 90, \pounds30{,}000 from 50 and \pounds18{,}000 from 70. On the AR(1) plus ``spike'' classes about 71\% of it is the cost along the mean path, 13\% is what the type differences add and 16\% is realised deviations, the part no prevention reaches (15\% from 50, 13\% from 70). Uniform prevention from 30 avoids \pounds35{,}000 of it per unit of $\mu$, so $P(r)/C(r)$ is $0.91$ at 30, falling to $0.67$ at 50 and $0.39$ at 70: the later the start, the larger the share of the remaining bill that is already determined. On the independent-residuals classes the shares are $0.68$, $0.47$ and $0.26$, since more of the decline is read as noise.
+		\item \textbf{Gap times preventable decline} (Result~\ref{res:prev}). Panels (a) and (c) of Figure~\ref{fig:prevention} are the two factors of \eqref{eq:Pj} multiplied age by age: (c) is $s_j(a\mid r)$, the gap at $a$ times the decline opened by $a$, and (a) is its sum over ages. From 30 the worst class returns twice the uniform return (\pounds71{,}500 against \pounds34{,}500) because its gap and its decline coincide, already below the others at 30 and falling fastest; the middle class returns about the uniform amount; the best class, healthy and nearly flat, a sixth of it (\pounds5{,}600). The mean channel of Corollary~\ref{cor:uniform} is 65\% of the uniform return from 30, 75\% from 50 and 93\% from 70, the between-class covariance the rest.
 		\item \textbf{Timing.} On the AR(1) plus ``spike'' classes the between-class channel of $P(r)$ is positive at every start age: $+35\%$ of $P(30)$, $+25\%$ of $P(50)$ and $+7\%$ of $P(70)$. On the independent-residuals classes it is $+13\%$ at 30 and turns negative by 50 ($-8\%$), reaching $-42\%$ at 70: the sign change of Figure~\ref{fig:exhibit1} priced. Once the one-period noise is absorbed, the classes fan out for longer, and divergence keeps working for uniform prevention into old age.
 		\item \textbf{Targeting on the class.} From 30 the worst class's return is \pounds72{,}000, against \pounds35{,}000 uniform and \pounds5{,}600 for the best class, so class targeting collects about twice the uniform return (a gain of 107\%). From 50 the worst class still has the highest return and the gain is 32\%; from 70 the middle class does, and the gain is 50\%. On the independent-residuals classes the gains are 151\%, 49\% and 50\%.
 		\item Skeleton for the full version:

@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex paper_skeleton"] 1791897619.7471 "paper_skeleton.aux" "paper_skeleton.bbl" "paper_skeleton" 1791897663.5127 0
+["bibtex paper_skeleton"] 1791898167.57656 "paper_skeleton.aux" "paper_skeleton.bbl" "paper_skeleton" 1791898208.96041 0
   "./references.bib" 1790071007.10948 12223 860db25ed6da8373c53c9f6903866ced ""
   "/usr/local/texlive/2026/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "paper_skeleton.aux" 1791897662.62846 84218 9670e9e96f2935e7cd19e1c584685a95 "pdflatex"
+  "paper_skeleton.aux" 1791898208.03059 84484 3a1973f90a97a0b3939c3034e5f3fc85 "pdflatex"
   (generated)
   "paper_skeleton.bbl"
   "paper_skeleton.blg"
   (rewritten before read)
-["pdflatex"] 1791897620.01015 "paper_skeleton.tex" "paper_skeleton.pdf" "paper_skeleton" 1791897663.51372 0
+["pdflatex"] 1791898167.88642 "paper_skeleton.tex" "paper_skeleton.pdf" "paper_skeleton" 1791898208.9609 0
   "/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2026/texmf-dist/fonts/tfm/jknappen/ec/tcrm0900.tfm" 1136768653 1536 c4f439db76ef96a9c53bc437f35ffe20 ""
@@ -212,10 +212,10 @@
   "figures/fig_windows.png" 1791883513.28834 418504 dbe7924c0cc1b28ac3b03131b46c0ef7 ""
   "figures/fig_windows_bayes.png" 1791887240.57545 485628 eb558fabb4258b958dfe6420497b8f10 ""
   "figures/fig_windows_h.png" 1791883513.44285 402548 15415967ff4655643fe67fde0783b0ec ""
-  "paper_skeleton.aux" 1791897662.62846 84218 9670e9e96f2935e7cd19e1c584685a95 "pdflatex"
-  "paper_skeleton.bbl" 1791897620.0025 10283 5484db39dabe2ef64cae296835ba688c "bibtex paper_skeleton"
-  "paper_skeleton.out" 1791897662.63788 8172 9ff54ee89405f32be9ad6416ad658c74 "pdflatex"
-  "paper_skeleton.tex" 1791897504.97746 161292 3903ca02692bd9d399df0427c7c6b48d ""
+  "paper_skeleton.aux" 1791898208.03059 84484 3a1973f90a97a0b3939c3034e5f3fc85 "pdflatex"
+  "paper_skeleton.bbl" 1791898167.87533 10283 5484db39dabe2ef64cae296835ba688c "bibtex paper_skeleton"
+  "paper_skeleton.out" 1791898208.03982 8172 9ff54ee89405f32be9ad6416ad658c74 "pdflatex"
+  "paper_skeleton.tex" 1791898128.18554 163781 1ced51f6981db10a3286734b83b42a4f ""
   "tables/tab_life_expectancy.tex" 1791380968.04855 615 61e8546382b91fa68d8268520bb52fdb ""
   "tables/tab_measure_correlations.tex" 1791191364.09621 344 25019853a70554d01540a764f92f06fb ""
   "tables/tab_prediction.tex" 1791281974.75289 1438 d02bf1b0c2f0679d57cb684464ad2aad ""
