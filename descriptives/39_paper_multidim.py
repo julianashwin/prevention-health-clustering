@@ -273,7 +273,7 @@ def main() -> int:
         share_ylim(list(axes[:, c]))
     n = fits[0]["n_person"]; ev = fits[0]["events"]
     fig.text(0.01, 0.005,
-             f"Multidimensional K = 3 mixtures on the multidim health contract ({n:,} people, the health contract's people with a mental score on every row; "
+             f"Multidimensional {'K = 3 ' if not KMODE else ''}mixtures on the multidim health contract ({n:,} people, the health contract's people with a mental score on every row; "
              f"{ev:,} deaths). Rows: the physical measure and the stochastic specification. Columns: the physical and mental class paths at the posterior mean\n"
              "in each channel's units (dotted: the observed class mean at each age, posterior-weighted), the class-specific Gompertz-Makeham yearly hazard "
              "(circles: the posterior-weighted crude death rate by five-year band), and the posterior class composition of the person-waves observed at each age.\n"
