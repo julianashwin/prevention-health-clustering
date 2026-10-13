@@ -70,7 +70,8 @@ def main() -> int:
     fits = {w: (full if w == (MIN_AGE, MAX_AGE) else window_fit(*w)) for w in dict.fromkeys(SLIDING + BACKWARD)}
     for w, f in fits.items():
         print(f"{w[0]}-{w[1]}: {f['n']:,} people, rhat {f['rhat']:.3f}, shares {np.round(f['share'], 3)}, rho {np.round(f['rho'], 2)}, wall {f['wall']}")
-    fig, axes = plt.subplots(2, 3, figsize=(12.5, 7.6), gridspec_kw={"wspace": 0.25, "hspace": 0.42}, squeeze=False)
+    fig, axes = plt.subplots(2, 3, figsize=(12.5, 7.9), gridspec_kw={"wspace": 0.25, "hspace": 0.45}, squeeze=False)
+    fig.suptitle("$\\theta$, K = 3 AR(1) + \"spike\" classes refitted on age windows", x=0.125, ha="left", fontsize=11, fontweight="bold", y=0.96)
     cmap = plt.get_cmap("viridis")
     rows = []
     for col, (wins, name) in enumerate([(SLIDING, "sliding twenty-year windows"), (BACKWARD, "windows expanding backwards from 90")]):
@@ -91,7 +92,7 @@ def main() -> int:
                          "same_vs_full": float((modal.loc[both] == full_modal.loc[both]).mean()),
                          "worst_share": float(f["share"][0]), "worst_modal_share": float((modal == 0).mean()), "rhat": f["rhat"],
                          "rho_worst": f["rho"][0], "rho_mid": f["rho"][1], "rho_best": f["rho"][2]})
-        ax.set_title(f"({'ab'[col]}) {'sliding twenty-year windows' if col == 0 else 'windows expanding back from 90'}", loc="left", fontsize=9.5)
+        ax.set_title(f"({'ab'[col]}) {'sliding twenty-year windows' if col == 0 else 'windows expanding backwards from 90'}", loc="left", fontsize=9.5)
         ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_xlabel("age")
     r = pd.DataFrame(rows)
     ax = axes[0, 2]
@@ -109,7 +110,7 @@ def main() -> int:
         for i_w, (lo, hi) in enumerate(wl):
             q = fits[(lo, hi)]["comp"]["class1"].rolling(5, center=True, min_periods=1).mean()
             ax.plot(q.index, q, color=cmap(0.85 * i_w / max(len(wl) - 1, 1)), lw=1.4, zorder=2, label=f"{lo}-{hi}")
-        ax.set_title(f"({'de'[col]}) worst class's share by age: {'sliding' if col == 0 else 'backward'}", loc="left", fontsize=9.5)
+        ax.set_title(f"({'de'[col]}) worst class's share by age, {'sliding' if col == 0 else 'backward'}", loc="left", fontsize=9.5)
         ax.set_ylim(0, 0.6); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_xlabel("age"); ax.legend(fontsize=6.8, ncols=2, loc="upper left")
     ax = axes[1, 2]
     for kind, mk, c in [("sliding", "o", CLUSTER[1]), ("backward", "s", CLUSTER[0])]:
@@ -118,7 +119,7 @@ def main() -> int:
         ax.plot(x, q["worst_share"], marker=mk, color=c, lw=1.4, label=f"{kind} windows" + (" (x = midpoint)" if kind == "sliding" else " (x = start age)"))
     ax.axhline(full["share"][0], color=INK3, lw=1.4, ls="--", label="lifecycle typology")
     ax.set_ylim(0, 0.6); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-    ax.set_title("(f) worst class's share of a window's people", loc="left", fontsize=9.5); ax.legend(loc="upper left", fontsize=7.5); ax.set_xlabel("age")
+    ax.set_title("(f) worst class's share per window", loc="left", fontsize=9.5); ax.legend(loc="upper left", fontsize=7.5); ax.set_xlabel("age")
     share_ylim([axes[0, 0], axes[0, 1]])
     footer = ("Each window refits the K = 3 AR(1) + \"spike\" mixture on theta on the people observed at least three times inside it (its own contract and fit). Coloured lines: the window's class paths at the posterior "
               "mean over its own age range (tick at the start; line width proportional to the class share); grey: the lifecycle 20-90 fit. Panel (c): adjusted Rand index between a window's modal class and the "
