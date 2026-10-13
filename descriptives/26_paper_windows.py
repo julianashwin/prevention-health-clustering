@@ -6,9 +6,10 @@ inside each window (22_paper_kmeans.py). Two rows (h, theta), three columns:
       own age range, with the full-lifecycle types in grey behind
   (b) windows expanding backwards from age 90: 70-90, 60-90, ..., 20-90
   (c) agreement of each window's typology with the full-lifecycle one on the
-      people both contain: the adjusted Rand index, and the co-assignment correlation
-      (over pairs of people, the correlation of the two same-cluster indicators, which
-      needs no label correspondence; _paper_common.coassignment_corr); (f) the worst type's share
+      people both contain: the co-assignment correlation (over pairs of people, the
+      correlation of the two same-cluster indicators, which needs no label
+      correspondence; _paper_common.coassignment_corr); the adjusted Rand index goes
+      to the csv only; (f) the worst type's share
 
 Outputs: paper/figures/fig_windows.png, artifacts/descriptives/paper_windows_agreement.csv
 """
@@ -74,12 +75,11 @@ def main() -> int:
         for kind, mk, c in [("sliding", "o", CLUSTER[1]), ("backward", "s", CLUSTER[0])]:
             q = r[r["kind"] == kind]
             x = q["lo"] + (q["hi"] - q["lo"]) / 2 if kind == "sliding" else q["lo"]
-            ax.plot(x, q["ari_vs_full"], marker=mk, color=c, lw=1.4,
-                    label=f"{kind}: ARI" + (" (x = window midpoint)" if kind == "sliding" else " (x = start age)"))
-            ax.plot(x, q["coassign_corr"], marker=mk, color=c, lw=1.4, ls="--", mfc="white", label=f"{kind}: co-assignment correlation")
+            ax.plot(x, q["coassign_corr"], marker=mk, color=c, lw=1.4,
+                    label=f"{kind} windows" + (" (x = window midpoint)" if kind == "sliding" else " (x = start age)"))
         ax.set_ylim(0, 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-        ax.set_title(f"(c) {LABEL[v]}: agreement with the lifecycle typology", loc="left", fontsize=9.5)
-        ax.legend(loc="lower left", fontsize=6.8)
+        ax.set_title(f"(c) {LABEL[v]}: co-assignment correlation with the lifecycle typology", loc="left", fontsize=9.5)
+        ax.legend(loc="lower left", fontsize=7.5)
         ax.set_xlabel("age")
         # ---- lower row: the worst type's share of the person-waves observed at each age, window by window
         comp_v = comp_all[(comp_all["variant"] == v) & (comp_all["cluster"] == 0)]
@@ -105,8 +105,8 @@ def main() -> int:
     fig.text(0.01, -0.01,
              "Each window refits K = 3 on the people observed at least three times inside it. Coloured lines: the "
              "window's type means over its own age range (tick at the start); grey: the full 20-90 typology.\n"
-             "Panel (c), solid: adjusted Rand index between a window's assignment and the lifecycle assignment, on the "
-             "people both contain; dashed: over pairs of people (a random 3,000), the correlation between the same-type indicator under the window and under the lifecycle typology, which needs no label correspondence. Panels (d), (e): the share of the person-waves observed at each age that the window assigns to its worst type (five-year rolling mean), "
+             "Panel (c): over pairs of people in both the window and the lifecycle typology (a random 3,000), the correlation between the same-type indicator under the window and under "
+             "the lifecycle typology, which needs no correspondence between the two sets of labels (the adjusted Rand index is in the csv). Panels (d), (e): the share of the person-waves observed at each age that the window assigns to its worst type (five-year rolling mean), "
              "one line per window, against the lifecycle typology in grey; (f) the worst type's share of each window's people. Types are ordered worst to best within each window.",
              fontsize=7.4, color=INK2, va="top")
     sfx = "" if V_ONLY == "theta" else "_h"
