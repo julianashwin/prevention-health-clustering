@@ -60,6 +60,14 @@ FRAILTY = ["frailty", "logfrailty"]   # comparison measures, --frailty only
 # "theta_firstheld", "h_firstheld", "theta_first2held", "h_first2held" for 43_paper_type_from_initial.py
 FIRSTHELD = {"theta_firstheld": ("theta", 1), "h_firstheld": ("h", 1),
              "theta_first2held": ("theta", 2), "h_first2held": ("h", 2)}
+# --denoise: theta with the one-period "spike" taken out before clustering, the K-means analogue of
+# reading the covariance matrix off the diagonal (29_paper_moments.py). Two versions, stored as variants:
+#   theta_nbr  each observed row replaced by the mean of the person's adjacent observed rows (the one
+#              before and the one after; a single neighbour at the ends): the type and the carried
+#              component survive (attenuated by rho over the gap), the spike does not
+#   theta_ma3  a centred three-row rolling mean within person including the row itself: the spike's
+#              variance is cut to a third, the signal kept whole
+DENOISE = {"theta_nbr": "nbr", "theta_ma3": "ma3"}
 # --mental: the mental GRM alone, on the multidim contract's rows (the rows the Bayesian mental fits use)
 MENTAL_CONTRACT = PROCESSED_DATA_DIR / "contracts" / "multidim_health_20_89_minobs3_v1"
 WORSE_HIGH = {"predcost", "frailty", "logfrailty"}
@@ -72,6 +80,16 @@ def panel(which: str = "health") -> pd.DataFrame:
     if which not in _panel:
         if which == "mental":
             p = pd.read_csv(MENTAL_CONTRACT / "long.csv", usecols=["pidp", "age", "theta_ment_nodepr"]).rename(columns={"theta_ment_nodepr": "mental"})
+        elif which in DENOISE:
+            p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
+                            usecols=["pidp", "age", "theta"]).sort_values(["pidp", "age"]).reset_index(drop=True)
+            g = p.groupby("pidp")["theta"]
+            if DENOISE[which] == "nbr":
+                prev, nxt = g.shift(1), g.shift(-1)
+                p[which] = pd.concat([prev, nxt], axis=1).mean(axis=1)        # mean of the neighbours present
+            else:
+                p[which] = g.transform(lambda x: x.rolling(3, center=True, min_periods=2).mean())
+            p = p.dropna(subset=[which]).drop(columns="theta")
         elif which in FIRSTHELD:
             v, k = FIRSTHELD[which]
             p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
@@ -88,7 +106,7 @@ def panel(which: str = "health") -> pd.DataFrame:
 def run(task: tuple[str, int, int]):
     variant, lo, hi = task
     t0 = time.time()
-    p = load_predicted_cost_rows("h") if variant == "predcost" else panel(variant if variant == "mental" or variant in FIRSTHELD else "health")
+    p = load_predicted_cost_rows("h") if variant == "predcost" else panel(variant if variant == "mental" or variant in FIRSTHELD or variant in DENOISE else "health")
     p = p[p["age"].between(lo, hi)]
     w = p.pivot_table(index="pidp", columns="age", values=variant, aggfunc="mean")
     w = w.reindex(columns=range(lo, hi + 1))
@@ -122,6 +140,8 @@ def main() -> int:
         tasks = [(v, *FULL) for v in FRAILTY]
     elif "--mental" in sys.argv:
         tasks = [("mental", *FULL)]
+    elif "--denoise" in sys.argv:
+        tasks = [(v, *FULL) for v in DENOISE]
     elif "--first-held" in sys.argv:
         # --first-held [k] [--variants theta,h]: default both measures, k = 1
         nxt = sys.argv[sys.argv.index("--first-held") + 1:]
@@ -129,7 +149,7 @@ def main() -> int:
         tasks = [(f"{v}_first{'' if k == 1 else k}held", *FULL) for v in ("theta", "h") if only is None or v in only]
     elif "--windows-only" not in sys.argv:
         tasks += [(v, *FULL) for v in VARIANTS + EXTRA if only is None or v in only]
-    if "--full-only" not in sys.argv and not any(f in sys.argv for f in ("--frailty", "--mental", "--first-held")):
+    if "--full-only" not in sys.argv and not any(f in sys.argv for f in ("--frailty", "--mental", "--first-held", "--denoise")):
         tasks += [(v, lo, hi) for v in ("h", "theta") if only is None or v in only for lo, hi in dict.fromkeys(SLIDING + BACKWARD)]
     print(f"{len(tasks)} runs", flush=True)
     with Pool(int(os.environ.get("KMEANS_PROCS", "3"))) as pool:
