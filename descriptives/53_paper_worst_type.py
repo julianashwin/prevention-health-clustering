@@ -78,7 +78,7 @@ def main() -> int:
     print(T.round(3).to_string(index=False))
     with open(TAB / "tab_worst_type_by_K.tex", "w") as fh:
         fh.write("\\begin{tabular}{llrrrrrrrrr}\n\\toprule\n")
-        fh.write("method & $K$ & share & $\\theta$ at 20 & at 50 & at 80 & slope to 50 & within sd at 50 & $\\rho$ & $K=3$ worst retained & worst under the other method \\\\\n\\midrule\n")
+        fh.write("method & $K$ & share & $\\theta_{20}$ & $\\theta_{50}$ & $\\theta_{80}$ & slope to 50 & sd at 50 & $\\rho$ & of $K{=}3$ worst & worst under other \\\\\n\\midrule\n")
         for meth in ("K-means", 'AR(1) + "spike"'):
             for k in KS:
                 q = T[(T["method"] == meth) & (T["K"] == k)].iloc[0]
