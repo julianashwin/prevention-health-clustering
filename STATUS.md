@@ -1,6 +1,6 @@
 # Status
 
-Last updated 14 October 2026. The draft is `paper/paper_skeleton.tex` (99 pages,
+Last updated 14 October 2026. The draft is `paper/paper_skeleton.tex` (105 pages,
 builds clean); red `\todo` marks in the PDF are open decisions, grey `\note`
 marks are drafting notes.
 

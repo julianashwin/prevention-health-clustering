@@ -82,9 +82,11 @@ def main() -> int:
         for meth in ("K-means", 'AR(1) + "spike"'):
             for k in KS:
                 q = T[(T["method"] == meth) & (T["K"] == k)].iloc[0]
-                share = f"{q['share_modal']:.0%}" + (f" ({q['share_mass']:.0%})" if pd.notna(q["share_mass"]) else "")
+                pct = lambda x: f"{100 * x:.0f}\\%"  # noqa: E731
+                share = pct(q["share_modal"]) + (f" ({pct(q['share_mass'])})" if pd.notna(q["share_mass"]) else "")
+                rho = "" if pd.isna(q["rho"]) else f"{q['rho']:.2f}"
                 fh.write(f"{meth if k == 3 else ''} & {k} & {share} & {q['theta_20']:.2f} & {q['theta_50']:.2f} & {q['theta_80']:.2f} & {q['slope_20_50']:.3f} & {q['within_sd_50']:.2f} & "
-                         f"{'' if pd.isna(q['rho']) else f'{q["rho"]:.2f}'} & {q['k3_worst_retained']:.0%} & {q['worst_under_other_method']:.0%} \\\\\n")
+                         f"{rho} & {pct(q['k3_worst_retained'])} & {pct(q['worst_under_other_method'])} \\\\\n")
             if meth == "K-means":
                 fh.write("\\addlinespace\n")
         fh.write("\\bottomrule\n\\end{tabular}\n")
