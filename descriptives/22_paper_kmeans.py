@@ -67,7 +67,11 @@ FIRSTHELD = {"theta_firstheld": ("theta", 1), "h_firstheld": ("h", 1),
 #              component survive (attenuated by rho over the gap), the spike does not
 #   theta_ma3  a centred three-row rolling mean within person including the row itself: the spike's
 #              variance is cut to a third, the signal kept whole
-DENOISE = {"theta_nbr": "nbr", "theta_ma3": "ma3"}
+#   theta_ma5  the same over five rows
+#   theta_fit  each person's rows replaced by their own least-squares path in age, linear with three to
+#              five rows and quadratic with six or more: the strongest per-person smoothing, the
+#              K-means counterpart of a growth mixture's person-level path
+DENOISE = {"theta_nbr": "nbr", "theta_ma3": "ma3", "theta_ma5": "ma5", "theta_fit": "fit"}
 # --mental: the mental GRM alone, on the multidim contract's rows (the rows the Bayesian mental fits use)
 MENTAL_CONTRACT = PROCESSED_DATA_DIR / "contracts" / "multidim_health_20_89_minobs3_v1"
 WORSE_HIGH = {"predcost", "frailty", "logfrailty"}
@@ -84,11 +88,20 @@ def panel(which: str = "health") -> pd.DataFrame:
             p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
                             usecols=["pidp", "age", "theta"]).sort_values(["pidp", "age"]).reset_index(drop=True)
             g = p.groupby("pidp")["theta"]
-            if DENOISE[which] == "nbr":
+            kind = DENOISE[which]
+            if kind == "nbr":
                 prev, nxt = g.shift(1), g.shift(-1)
                 p[which] = pd.concat([prev, nxt], axis=1).mean(axis=1)        # mean of the neighbours present
+            elif kind in ("ma3", "ma5"):
+                win = 3 if kind == "ma3" else 5
+                p[which] = g.transform(lambda x: x.rolling(win, center=True, min_periods=2).mean())
             else:
-                p[which] = g.transform(lambda x: x.rolling(3, center=True, min_periods=2).mean())
+                import numpy as np
+                def fit_person(df):
+                    a = df["age"].to_numpy(float); y = df["theta"].to_numpy(float)
+                    deg = 2 if len(a) >= 6 else 1 if len(a) >= 3 else 0
+                    return pd.Series(np.polyval(np.polyfit(a - a.mean(), y, deg), a - a.mean()), index=df.index)
+                p[which] = p.groupby("pidp", group_keys=False)[["age", "theta"]].apply(fit_person)
             p = p.dropna(subset=[which]).drop(columns="theta")
         elif which in FIRSTHELD:
             v, k = FIRSTHELD[which]
@@ -141,7 +154,7 @@ def main() -> int:
     elif "--mental" in sys.argv:
         tasks = [("mental", *FULL)]
     elif "--denoise" in sys.argv:
-        tasks = [(v, *FULL) for v in DENOISE]
+        tasks = [(v, *FULL) for v in DENOISE if only is None or v in only]
     elif "--first-held" in sys.argv:
         # --first-held [k] [--variants theta,h]: default both measures, k = 1
         nxt = sys.argv[sys.argv.index("--first-held") + 1:]
