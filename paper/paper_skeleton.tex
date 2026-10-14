@@ -514,6 +514,12 @@ Small robustness exercise:
 		\label{fig:trajK}
 	\end{figure}
 	
+	\paragraph{Is there always a bad group?}
+	\begin{itemize}
+		\item \textbf{Yes, and it is the same people under every method.} Every typology finds a worst group of 15--18\% by modal label: 18\% under partial K-means, 15\% under independent residuals, 18\% under AR(1) plus ``spike'' and 16\% under the multidimensional fit. Of the K-means worst type, 84\% are worst under independent residuals, 85\% under AR(1) plus ``spike'' and 74\% under the multidimensional fit; the mixtures give the K-means worst people a posterior probability of the worst class of $0.73$--$0.84$ and everyone else $0.00$--$0.13$. The AR(1) plus ``spike'' fit's larger share, 25\%, is probability mass rather than people: a quarter of the population is in the worst class in expectation, 18\% by argmax, because the persistent component leaves 38\% of people with a maximum posterior below $0.6$ (4\% under independent residuals).
+		\item \textbf{What the stochastic structure changes is the account of how they got there, not the size of the group.} K-means and the independent-residuals mixture, which classify on levels, find a worst type that is already a full unit of $\theta$ below the others at 20 and whose cross-sectional path flattens after 60. The AR(1) plus ``spike'' fit finds a worst class that starts near the average and declines fastest, because a low level at 20 can be read as a carried deviation rather than as type; it therefore puts the between-type share of the variance at 19\% at 30 where K-means puts it at 48\% (Figure~\ref{fig:decomp}), and it keeps the class declining through old age. So K-means does not understate the bad group; it overstates its early separation and understates its decline, and it is the decline, not the level, that the prevention returns of Section~\ref{sec:policy} price. The noisier the process, the more of the early-life gap a level-based method attributes to type.
+	\end{itemize}
+
 	\paragraph{Extensions: $K$, dimensions, mortality.}
 	\begin{itemize}
 		\item $K=4$ and $K=5$ (Figure~\ref{fig:trajK}) converge cleanly on every specification (max $\hat R\le1.004$). Under independent residuals each added class is a new sickest group, 10\% of people at $K=4$ and a further 6\% at $K=5$, and the healthy majority is left alone.
@@ -605,6 +611,8 @@ Small robustness exercise:
 	\subsection{Predictive value}
 	
 	Broadly two types of exercise here - hold out the last two observed rows, or hold out the first two observed rows. The first tells us how valuable/accurate these clusters are at predicting future developments, and the second tells us how easy cluster membership is to predict based on health and other observables. 
+	
+	
 	\begin{itemize}
 		\item Rebuilt on the held-out fits (\code{descriptives/33\_paper\_prediction.py}): every Bayesian fit was refitted with each person's last two observed rows held out (the 29,901 people with at least five rows on the health contract; 26,664 people are in both the single-channel and the multidimensional held-out samples and the exercise runs on them). One prediction per person and horizon from the last fitted row $t$, with outcomes at the two held rows $t+1$ and $t+2$: the measure, the cost proxy in pounds (the flat-cost index capped at its 99th percentile, waves 7--15), and employment (employed or self-employed, people aged 20--64 at $t$). Class posteriors and the models' own forecasts are computed from the fitted window alone and carried to the outcome's age, so nothing after $t$ informs them. People are split 70/30, fitted on the 70 and scored on the 30 (Figure~\ref{fig:pred}, Table~\ref{tab:pred}).
 		\item \textbf{Observables predict almost nothing about health or cost, but more than health about employment.} Education, income and sex add $0.06$ of $R^2$ for $\theta_{t+1}$ and $0.01$ for cost over age, against $0.48$--$0.54$ and $0.08$--$0.09$ for the held-out classes. For employment they lift the AUC from $0.64$ to $0.78$, against $0.74$--$0.76$ for any health summary, and the two together reach $0.82$. Employment at $t$ alone reaches $0.90$: once current status is known, health adds little to the labour-market outcome.
