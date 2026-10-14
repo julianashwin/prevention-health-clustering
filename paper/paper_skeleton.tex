@@ -443,18 +443,18 @@
 	\end{figure}
 
 	
-	Figure~\ref{fig:decomp} shows the key moments of Figures~\ref{fig:exhibit1} and~\ref{fig:ex2main} computed from the types rather than from the covariance surface, for the AR(1) plus ``spike'' classes (solid) and the K-means types (dashed), with the age-specific type composition as the weights throughout.
+	Figure~\ref{fig:decomp} shows the key moments of Figures~\ref{fig:exhibit1} and~\ref{fig:ex2main} computed from the K-means types rather than from the covariance surface, with the age-specific type composition as the weights throughout.
 	\begin{itemize}
-		\item Top panel: the between-type share of the cross-sectional variance rises with age and peaks around 60 to 70 under both typologies: from 48\% at 30 to 65\% at 70 and 57\% at 85 for the K-means types, and from 19\% at 30 to 54\% at 70 and 52\% at 85 for the mixture classes, whose paths coincide at 20 and separate only after 30. The within-type variance is flat on $\theta$ under K-means and falls slowly with age under the mixture. \note{The mixture's low between share at young ages is the same fact as the windows result of Figure~\ref{fig:windows}: on $\theta$ the classes are not distinguishable before the divergence.}
-		\item Middle panel: the spread of the type slopes across types, $\mathrm{sd}_j(d_{j,a})$, is lowest around 60 (57 under K-means, 60 under the mixture) and rises towards both ends, so slopes are most consistent across types in late middle age. The mixture's V is what quadratic class paths give by construction; the K-means spread peaks at 36, the worst type's early decline, and again after 75.
-		\item Bottom panel: $\Cov_j(\bar h_{j,a},d_{j,a})$ goes from positive to negative at 61 under K-means and 67 under the mixture: divergence and then convergence, the accumulation and pathway margins of Corollary~\ref{cor:uniform} changing sign in the data.
+		\item Top panel: the between-type share of the cross-sectional variance rises from 48\% at 30 to 65\% at 70 and falls back to 57\% by 85. The within-type variance is flat on $\theta$. \note{The AR(1) plus ``spike'' classes give the same shape from 40 on but a between share of only 19\% at 30, because their paths coincide at 20 and separate only after 30; that is the same fact as the windows result of Figure~\ref{fig:windows}.}
+		\item Middle panel: the spread of the type slopes across types, $\mathrm{sd}_j(d_{j,a})$, is lowest around 60 and rises towards both ends: it peaks at 36, the worst type's early decline, and again after 75, so slopes are most consistent across types in late middle age.
+		\item Bottom panel: $\Cov_j(\bar h_{j,a},d_{j,a})$ goes from positive to negative at 61: divergence and then convergence, the accumulation and pathway margins of Corollary~\ref{cor:uniform} changing sign in the data.
 		\item The key messages are relatively consistent across $h$ and $\theta$ (Appendix~\ref{app:measures}).
 		\item \note{Between-type shares are partly mechanical: the clusters are chosen to maximise them. The comparison that is not mechanical is with observables in Section~\ref{sec:observables}.}
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=0.55\linewidth]{fig_cluster_decomposition.png}
-		\caption{Between versus within by age, on $\theta$, for the AR(1) plus ``spike'' classes (solid) and the K-means types (dashed). (a) The cross-sectional variance split into between types, the variance of the type means under the age-specific composition, and within; (b) the spread of the type slopes across types, $\mathrm{sd}_j(d_{j,a})$, in $\theta$ per year; (c) the level-slope covariance across types. Mixture slopes are the derivative of the quadratic class paths, K-means slopes the one-year changes of the smoothed type paths; ten-year rolling means; age-specific composition shares throughout. The same figure on $h$ and the two frailty indices is in Appendix~\ref{app:measures}.}
+		\caption{Between versus within by age, on $\theta$, for the K-means types. (a) The cross-sectional variance split into between types, the variance of the type means under the age-specific composition, and within; (b) the spread of the type slopes across types, $\mathrm{sd}_j(d_{j,a})$, in $\theta$ per year, the slopes being the one-year changes of the smoothed type paths; (c) the level-slope covariance across types. Ten-year rolling means; age-specific composition shares throughout. The same figure on $h$ and the two frailty indices is in Appendix~\ref{app:measures}.}
 		\label{fig:decomp}
 	\end{figure}
 
@@ -600,7 +600,11 @@ Small robustness exercise:
 		\label{fig:obs}
 	\end{figure}
 	
-	\paragraph{Predictive value.}
+	
+	
+	\subsection{Predictive value}
+	
+	Broadly two types of exercise here - hold out the last two observed rows, or hold out the first two observed rows. The first tells us how valuable/accurate these clusters are at predicting future developments, and the second tells us how easy cluster membership is to predict based on health and other observables. 
 	\begin{itemize}
 		\item Rebuilt on the held-out fits (\code{descriptives/33\_paper\_prediction.py}): every Bayesian fit was refitted with each person's last two observed rows held out (the 29,901 people with at least five rows on the health contract; 26,664 people are in both the single-channel and the multidimensional held-out samples and the exercise runs on them). One prediction per person and horizon from the last fitted row $t$, with outcomes at the two held rows $t+1$ and $t+2$: the measure, the cost proxy in pounds (the flat-cost index capped at its 99th percentile, waves 7--15), and employment (employed or self-employed, people aged 20--64 at $t$). Class posteriors and the models' own forecasts are computed from the fitted window alone and carried to the outcome's age, so nothing after $t$ informs them. People are split 70/30, fitted on the 70 and scored on the 30 (Figure~\ref{fig:pred}, Table~\ref{tab:pred}).
 		\item \textbf{Observables predict almost nothing about health or cost, but more than health about employment.} Education, income and sex add $0.06$ of $R^2$ for $\theta_{t+1}$ and $0.01$ for cost over age, against $0.48$--$0.54$ and $0.08$--$0.09$ for the held-out classes. For employment they lift the AUC from $0.64$ to $0.78$, against $0.74$--$0.76$ for any health summary, and the two together reach $0.82$. Employment at $t$ alone reaches $0.90$: once current status is known, health adds little to the labour-market outcome.
