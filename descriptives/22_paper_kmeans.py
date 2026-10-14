@@ -72,6 +72,10 @@ FIRSTHELD = {"theta_firstheld": ("theta", 1), "h_firstheld": ("h", 1),
 #              five rows and quadratic with six or more: the strongest per-person smoothing, the
 #              K-means counterpart of a growth mixture's person-level path
 DENOISE = {"theta_nbr": "nbr", "theta_ma3": "ma3", "theta_ma5": "ma5", "theta_fit": "fit"}
+# --k 4,5: lifecycle K-means on theta with that many types, stored as variants "theta_k4", "theta_k5"
+# (53_paper_worst_type.py); the column is theta, the class count is read from the variant name
+import re
+KVAR = re.compile(r"^(theta|h)_k(\d)$")
 # --mental: the mental GRM alone, on the multidim contract's rows (the rows the Bayesian mental fits use)
 MENTAL_CONTRACT = PROCESSED_DATA_DIR / "contracts" / "multidim_health_20_89_minobs3_v1"
 WORSE_HIGH = {"predcost", "frailty", "logfrailty"}
@@ -119,12 +123,16 @@ def panel(which: str = "health") -> pd.DataFrame:
 def run(task: tuple[str, int, int]):
     variant, lo, hi = task
     t0 = time.time()
+    kv = KVAR.match(variant)
+    col, k = (kv.group(1), int(kv.group(2))) if kv else (variant, K)
     p = load_predicted_cost_rows("h") if variant == "predcost" else panel(variant if variant == "mental" or variant in FIRSTHELD or variant in DENOISE else "health")
     p = p[p["age"].between(lo, hi)]
+    if kv:
+        p = p.rename(columns={col: variant})
     w = p.pivot_table(index="pidp", columns="age", values=variant, aggfunc="mean")
     w = w.reindex(columns=range(lo, hi + 1))
     w = w[w.notna().sum(axis=1) >= MIN_OBS]
-    lab = pd.Series(partial_kmeans(w, n_clusters=K), index=w.index)
+    lab = pd.Series(partial_kmeans(w, n_clusters=k), index=w.index)
     # type 1 is worst health: lowest score, or for the cost index the highest cost
     order = w.mean(axis=1).groupby(lab).mean().sort_values(ascending=(variant not in WORSE_HIGH)).index
     lab = lab.map({old: new for new, old in enumerate(order)}).astype(int)
@@ -141,7 +149,7 @@ def run(task: tuple[str, int, int]):
     return (pd.DataFrame({**meta, "pidp": lab.index, "cluster": lab.to_numpy()}),
             traj.assign(**meta), comp.assign(**meta),
             pd.DataFrame([{**meta, "people": len(w), "seconds": round(time.time() - t0),
-                           **{f"share_{c + 1}": float(shares.get(c, 0.0)) for c in range(K)}}]))
+                           **{f"share_{c + 1}": float(shares.get(c, 0.0)) for c in range(k)}}]))
 
 
 def main() -> int:
@@ -155,6 +163,8 @@ def main() -> int:
         tasks = [("mental", *FULL)]
     elif "--denoise" in sys.argv:
         tasks = [(v, *FULL) for v in DENOISE if only is None or v in only]
+    elif "--k" in sys.argv:
+        tasks = [(f"theta_k{k}", *FULL) for k in sys.argv[sys.argv.index("--k") + 1].split(",")]
     elif "--first-held" in sys.argv:
         # --first-held [k] [--variants theta,h]: default both measures, k = 1
         nxt = sys.argv[sys.argv.index("--first-held") + 1:]
@@ -162,7 +172,7 @@ def main() -> int:
         tasks = [(f"{v}_first{'' if k == 1 else k}held", *FULL) for v in ("theta", "h") if only is None or v in only]
     elif "--windows-only" not in sys.argv:
         tasks += [(v, *FULL) for v in VARIANTS + EXTRA if only is None or v in only]
-    if "--full-only" not in sys.argv and not any(f in sys.argv for f in ("--frailty", "--mental", "--first-held", "--denoise")):
+    if "--full-only" not in sys.argv and not any(f in sys.argv for f in ("--frailty", "--mental", "--first-held", "--denoise", "--k")):
         tasks += [(v, lo, hi) for v in ("h", "theta") if only is None or v in only for lo, hi in dict.fromkeys(SLIDING + BACKWARD)]
     print(f"{len(tasks)} runs", flush=True)
     with Pool(int(os.environ.get("KMEANS_PROCS", "3"))) as pool:

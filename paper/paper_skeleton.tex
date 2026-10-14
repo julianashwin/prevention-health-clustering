@@ -447,7 +447,7 @@
 	\begin{itemize}
 		\item Top panel: the between-type share of the cross-sectional variance rises from 48\% at 30 to 65\% at 70 and falls back to 57\% by 85. The within-type variance is flat on $\theta$. \note{The AR(1) plus ``spike'' classes give the same shape from 40 on but a between share of only 19\% at 30, because their paths coincide at 20 and separate only after 30; that is the same fact as the windows result of Figure~\ref{fig:windows}.}
 		\item Middle panel: the spread of the type slopes across types, $\mathrm{sd}_j(d_{j,a})$, is lowest around 60 and rises towards both ends: it peaks at 36, the worst type's early decline, and again after 75, so slopes are most consistent across types in late middle age.
-		\item Bottom panel: $\Cov_j(\bar h_{j,a},d_{j,a})$ goes from positive to negative at 61: divergence and then convergence, the accumulation and pathway margins of Corollary~\ref{cor:uniform} changing sign in the data.
+		\item Bottom panel: $\Cov_j(\bar h_{j,a},d_{j,a})$ goes from positive to negative at 61: divergence and then convergence, the accumulation and pathway margins of Corollary~\ref{cor:uniform} changing sign in the data. The reversal is the unhealthy fifth: refitting Figure~\ref{fig:ex2main} without the bottom quintile of the age-standardised person mean, or without either method's worst type, removes it, and the worst type's own term carries nearly all of the negative covariance (Appendix~\ref{app:reversal}).
 		\item The key messages are relatively consistent across $h$ and $\theta$ (Appendix~\ref{app:measures}).
 		\item \note{Between-type shares are partly mechanical: the clusters are chosen to maximise them. The comparison that is not mechanical is with observables in Section~\ref{sec:observables}.}
 	\end{itemize}
@@ -517,7 +517,7 @@ Small robustness exercise:
 	\paragraph{Is there always a bad group?}
 	\begin{itemize}
 		\item \textbf{Yes, and it is the same people under every method.} Every typology finds a worst group of 15--18\% by modal label: 18\% under partial K-means, 15\% under independent residuals, 18\% under AR(1) plus ``spike'' and 16\% under the multidimensional fit. Of the K-means worst type, 84\% are worst under independent residuals, 85\% under AR(1) plus ``spike'' and 74\% under the multidimensional fit; the mixtures give the K-means worst people a posterior probability of the worst class of $0.73$--$0.84$ and everyone else $0.00$--$0.13$. The AR(1) plus ``spike'' fit's larger share, 25\%, is probability mass rather than people: a quarter of the population is in the worst class in expectation, 18\% by argmax, because the persistent component leaves 38\% of people with a maximum posterior below $0.6$ (4\% under independent residuals).
-		\item \textbf{What the stochastic structure changes is the account of how they got there, not the size of the group.} K-means and the independent-residuals mixture, which classify on levels, find a worst type that is already a full unit of $\theta$ below the others at 20 and whose cross-sectional path flattens after 60. The AR(1) plus ``spike'' fit finds a worst class that starts near the average and declines fastest, because a low level at 20 can be read as a carried deviation rather than as type; it therefore puts the between-type share of the variance at 19\% at 30 where K-means puts it at 48\% (Figure~\ref{fig:decomp}), and it keeps the class declining through old age. So K-means does not understate the bad group; it overstates its early separation and understates its decline, and it is the decline, not the level, that the prevention returns of Section~\ref{sec:policy} price. The noisier the process, the more of the early-life gap a level-based method attributes to type.
+		\item \textbf{What the stochastic structure changes is the account of how they got there, not the size of the group} (Appendix~\ref{app:worsttype} for the worst type by method and $K$). K-means and the independent-residuals mixture, which classify on levels, find a worst type that is already a full unit of $\theta$ below the others at 20 and whose cross-sectional path flattens after 60. The AR(1) plus ``spike'' fit finds a worst class that starts near the average and declines fastest, because a low level at 20 can be read as a carried deviation rather than as type; it therefore puts the between-type share of the variance at 19\% at 30 where K-means puts it at 48\% (Figure~\ref{fig:decomp}), and it keeps the class declining through old age. So K-means does not understate the bad group; it overstates its early separation and understates its decline, and it is the decline, not the level, that the prevention returns of Section~\ref{sec:policy} price. The noisier the process, the more of the early-life gap a level-based method attributes to type.
 	\end{itemize}
 
 	\paragraph{Extensions: $K$, dimensions, mortality.}
@@ -1046,6 +1046,26 @@ Small robustness exercise:
 	
 	
 	\section{Additional descriptive figures} \label{app:descriptive}
+
+	\subsection{Is the level-slope reversal the unhealthy tail?}
+	\label{app:reversal}
+
+	\begin{figure}[H]\centering
+		\includegraphics[height=0.86\textheight,keepaspectratio]{fig_exhibit2_samples.png}
+		\caption{Figure~\ref{fig:ex2main} refitted on six samples, one per row: everyone; everyone but the bottom decile, quintile and quartile of the person's mean age-standardised $\theta$ ($\theta$ standardised within single year of age, then averaged over the person's rows); everyone but the K-means worst type; everyone but the modal worst class of the AR(1) plus ``spike'' mixture. Case~4, main design. Panel titles give $\rho$ and $\Corr(H,d)$, marked where the $|\Corr|\le1$ constraint binds, which it does in the young bands of every reduced sample because removing the low group removes most of the level variance.}
+		\label{fig:ex2samples}
+	\end{figure}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_reversal_types.png}
+		\caption{The level-slope covariance across types split into each type's term $\pi_j(a)(\bar h_{j,a}-\bar h_a)(d_{j,a}-\bar d_a)$, age-specific composition shares, stacked: (a) the K-means types and (b) the AR(1) plus ``spike'' classes at $K=3$; (c), (d) the multidimensional mixture's physical channel at $K=4$ and $5$. A type's term is negative when it sits below the mean and declines more slowly than the mean, or above and faster. (e) The K-means covariance with slopes taken from within-person changes rather than the type mean paths, which removes composition and selection from the slopes. Ten-year rolling means.}
+		\label{fig:reversaltypes}
+	\end{figure}
+
+	\begin{itemize}
+		\item \textbf{The reversal is the bottom fifth.} On everyone, $\Corr(H,d)$ is $+0.45$ and $+0.78$ in the two bands before 60 and $-0.56$ and $-0.53$ after. Dropping the bottom decile of the age-standardised person mean leaves it in the oldest band only ($-0.13$ at 60--75, $-0.50$ at 75--90); dropping the bottom quintile or quartile removes it ($-0.04$ and $-0.16$; $+0.11$ and $-0.16$), as does dropping the K-means worst type ($0.00$ and $-0.27$) or the mixture's worst class ($+0.99$ and $+0.06$). What remains above the bottom fifth diverges to 75 and is flat after. The same group holds most of the level variance ($V_H$ at 60--75 falls from $0.46$ to $0.10$ without the bottom quartile), so the two statements are partly one.
+		\item \textbf{Seen through the types, it is the worst type's own convergence.} Its term carries nearly all of the negative covariance after 60 under every typology and every $K$ (K-means $-3.5$ of $-3.8$ at 70, in thousandths; the univariate mixture $-2.5$ of $-0.8$, with the healthy class still diverging). With slopes from within-person changes the K-means covariance still turns negative, at 65 rather than 61, and more steeply after 75: the worst type's members do slow their decline relative to the others as they age, over and above the composition and mortality selection that flatten its cross-sectional path. The accumulation margin of Section~\ref{sec:framework} therefore turns negative because the unhealthy fifth stops falling away, while the healthy start to fall late.
+	\end{itemize}
 	
 	\note{Here include extra figures/robustness for Sections \ref{subsec:health_moments} \ref{subsec:lin_ident}}
 	
@@ -1130,6 +1150,26 @@ Small robustness exercise:
 	\end{itemize}
 
 	\section{Additional Bayesian results} \label{app:bayesian}
+
+	\subsection{The worst type by method and by number of classes}
+	\label{app:worsttype}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_worst_type_by_K.png}
+		\caption{The worst type on $\theta$ under partial K-means (top) and the AR(1) plus ``spike'' mixture (bottom) at $K=3$, $4$ and $5$, drawn in colour with the other types in grey and the $K=3$ worst type dotted in red. K-means paths are ten-year rolling means of the type means, mixture paths the quadratic class paths; the mixture's share in the legend is probability mass, Table~\ref{tab:worsttype} gives the modal share too.}
+		\label{fig:worsttype}
+	\end{figure}
+
+	\begin{table}[H]\centering\scriptsize\setlength{\tabcolsep}{3pt}
+		\input{tables/tab_worst_type_by_K}
+		\caption{The worst type by method and $K$: its share (mixture: modal, with the probability mass in brackets), its path, its slope to 50 in $\theta$ per year, the within-type sd at 50 (K-means: among members at 48--52; mixture: the stationary within-class sd), the mixture's persistence, the share of the $K=3$ worst type still worst at this $K$, and the share of this method's worst type that is worst under the other method at the same $K$.}
+		\label{tab:worsttype}
+	\end{table}
+
+	\begin{itemize}
+		\item \textbf{The error structure changes the shape of the worst type's path, not its membership.} Of the K-means worst type, 85\% are in the mixture's worst class at $K=3$, 92\% at $K=4$ and 94\% at $K=5$. Yet the two paths differ: the mixture's starts near the average ($+0.35$ at 20) and declines at $0.043$ a year to 50, the K-means type starts a unit lower ($-0.33$) and declines at $0.033$, because the persistent component lets the mixture read a low level at 20 as a carried deviation. The mixture's worst class is also the wider one within (sd $0.81$ against $0.66$ at 50) and its members are held with uncertainty: 45\% of its modal members have a posterior above $0.9$, at every $K$.
+		\item \textbf{The number of classes refines who is in the worst type and tightens it, but leaves its mean shape alone.} Under K-means the worst type halves from 18\% to 9\% by $K=5$, keeping 63\% and then 48\% of the $K=3$ members, its within-type sd falls from $0.66$ to $0.55$, and its path keeps the same shape shifted down by a quarter to a third of a unit. Under the mixture the worst class moves from 18\% to 14\% by modal label, keeps 84\% and 76\% of its $K=3$ members, and its path, persistence and within-class spread barely move; the added classes split the middle and the healthy. The two methods converge on the same core: the $K=5$ K-means worst type is almost entirely inside the mixture's worst class.
+	\end{itemize}
 	
 	\subsection{Birth-decade cohort effects}
 	\label{app:cohort}
