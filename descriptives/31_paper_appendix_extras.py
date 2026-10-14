@@ -74,7 +74,7 @@ def main() -> int:
         DESC / f"paper_exhibit1_cost_{v}.csv", index=False)
     axes[2].set_xlabel("age")
     fig.text(0.01, -0.01, f"{len(cost):,} person-ages on {cost['pidp'].nunique():,} people, waves 7-15, ages 20-90. "
-             "Five-year centred rolling means;\ncells with fewer than 100 person-ages dropped; rows run eight years. "
+             "Ten-year centred rolling means (mean and variance);\ncells with fewer than 100 person-ages dropped; rows run eight years. "
              "Panels (b) and (c) share a vertical scale.",
              fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / "fig_exhibit1_cost.png"); plt.close(fig)
