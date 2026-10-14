@@ -10,13 +10,18 @@ for the appendix), one column per variant of the measure:
   bottom  cluster composition of the person-waves observed at each age
 
 Figure 4 (fig_cluster_decomposition.png, theta; h and the frailty indices with
---measures), the clustering version of Exhibit 1:
-  (a) the cross-sectional variance at each age split into between-cluster
-      (Var of the cluster means, age-specific shares) and within
-  (b) Var_j(d_j,a): the between-type variance of the one-year change of the
-      smoothed cluster paths, person-level shares
-  (c) Cov_j(hbar_j,a, d_j,a): the level-change covariance across types, whose
+--measures), the clustering version of Exhibit 1, for two typologies on each
+measure, the AR(1) + "spike" classes (solid; _paper_common.ssm_fit) and the
+partial K-means types (dashed):
+  (a) the cross-sectional variance at each age split into between-type
+      (Var of the type means under the age-specific composition) and within
+  (b) sd_j(d_j,a): the spread of the type slopes across types (the square root of
+      Var_j(d_j,a), in the measure's units per year), age-specific composition
+      shares; K-means slopes are one-year changes of the smoothed type paths,
+      mixture slopes the derivative of the quadratic class paths
+  (c) Cov_j(hbar_j,a, d_j,a): the level-slope covariance across types, whose
       sign says whether types are diverging or converging at that age
+Rolling windows are PROFILE_WINDOW years (ten) on the K-means paths and series.
 
 Outputs also artifacts/descriptives/paper_cluster_decomposition.csv and
 paper_cluster_agreement.csv (ARI between the three variants' typologies).
@@ -45,8 +50,8 @@ from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import (  # noqa: E402
-    AGES, DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, HEALTHIER_HIGH, K, LABEL, MAX_AGE, MENTAL_SUFFIX, MENTAL_VARIANTS, MIN_AGE, VARIANTS, load_labels,
-    load_measure, load_predicted_cost_rows, load_trajectories, smooth_path,
+    AGES, DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, HEALTHIER_HIGH, K, LABEL, MAX_AGE, MENTAL_SUFFIX, MENTAL_VARIANTS, MIN_AGE, PROFILE_WINDOW, VARIANTS, load_labels,
+    load_measure, load_predicted_cost_rows, load_trajectories, smooth_path, ssm_fit,
 )
 from _style import BLUE, CLUSTER, GREEN, INK2, VERM, apply_style  # noqa: E402
 
@@ -134,39 +139,58 @@ def main() -> int:
                                                   include_groups=False).reindex(cell["age"]).to_numpy()
         between = cell.assign(b=lambda x: x["share"] * (x["mean"] - x["gmean"]) ** 2).groupby("age")["b"].sum()
         tot = prof["var"].where(prof["count"] >= 100)
-        sm = lambda x: x.rolling(5, center=True).mean()  # noqa: E731
+        W_ = PROFILE_WINDOW
+        sm = lambda x: x.rolling(W_, center=True).mean()  # noqa: E731
         let = "abc" if nh == 1 else ["adg", "beh", "cfi"][j] if nh == 3 else ["ace", "bdf"][j]
-        ax = ax4[0]
-        ax.plot(tot.index, sm(tot), color=VERM, lw=1.8, label="total")
-        ax.plot(between.index, sm(between), color=BLUE, lw=1.8, label="between types")
-        ax.plot(tot.index, sm(tot - between), color=GREEN, lw=1.8, label="within types")
-        ax.set_title(f"({let[0]}) variance of {lab} by age", loc="left")
-        ax.legend(loc="upper left"); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_ylim(bottom=0)
+        # ---- K-means: smoothed type paths, one-year changes, age-specific composition as the weights
         paths = np.vstack([smooth_path(t["age"].to_numpy(), t["mean"].to_numpy(), t["count"].to_numpy(),
-                                       min_count=MIN_SUPPORT).to_numpy()
+                                       min_count=MIN_SUPPORT, window=W_).to_numpy()
                            for c in range(K) for t in [traj[traj["cluster"] == c]]])
-        w = pi.reindex(range(K)).to_numpy()
+        comp_k = cell.pivot(index="age", columns="cluster", values="share").reindex(AGES).ffill().bfill().to_numpy()
         dpath = np.diff(paths, axis=1)                       # change from a to a+1, ages 20..89
         lev = paths[:, :-1]
-        mean_l, mean_d = w @ lev, w @ dpath
-        var_l = w @ (lev - mean_l) ** 2
-        var_d = w @ (dpath - mean_d) ** 2
-        cov_ld = w @ ((lev - mean_l) * (dpath - mean_d))
         a = AGES[:-1]
-        roll = lambda x: pd.Series(x).rolling(5, center=True).mean().to_numpy()  # noqa: E731
+        def type_moments(lev, d, w):
+            ml = (w * lev.T).sum(1); md = (w * d.T).sum(1)
+            var_l = (w * (lev.T - ml[:, None]) ** 2).sum(1); var_d = (w * (d.T - md[:, None]) ** 2).sum(1)
+            cov = (w * (lev.T - ml[:, None]) * (d.T - md[:, None])).sum(1)
+            return var_l, var_d, cov
+        var_l, var_d, cov_ld = type_moments(lev, dpath, comp_k[:-1])
+        roll = lambda x: pd.Series(x).rolling(W_, center=True).mean().to_numpy()  # noqa: E731
+        # ---- the AR(1) + "spike" classes on the same measure: quadratic paths, their derivative, the posterior composition
+        f = ssm_fit(v)
+        comp_b = f["comp"][[f"class{k + 1}" for k in range(K)]].reindex(AGES).ffill().bfill().to_numpy()
+        gm_b = (comp_b * f["paths"].T).sum(1)
+        between_b = pd.Series((comp_b * (f["paths"].T - gm_b[:, None]) ** 2).sum(1), index=AGES)
+        var_l_b, var_d_b, cov_b = type_moments(f["paths"], f["slopes"], comp_b)
+        ax = ax4[0]
+        ax.plot(tot.index, sm(tot), color=VERM, lw=1.8, label="total")
+        ax.plot(AGES, between_b.reindex(AGES), color=BLUE, lw=1.8, label="between types")
+        ax.plot(tot.index, sm(tot) - between_b.reindex(tot.index), color=GREEN, lw=1.8, label="within types")
+        ax.plot(between.index, sm(between), color=BLUE, lw=1.6, ls="--")
+        ax.plot(tot.index, sm(tot - between), color=GREEN, lw=1.6, ls="--")
+        ax.plot([], [], color=INK2, lw=1.6, label='AR(1) + "spike" (solid), K-means (dashed)')
+        ax.set_title(f"({let[0]}) variance of {lab} by age", loc="left")
+        ax.legend(loc="upper left", fontsize=7.5); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_ylim(bottom=0)
         ax = ax4[1]
-        ax.plot(a, roll(var_d), color=BLUE, lw=1.8)
-        ax.set_title(rf"({let[1]}) $\mathrm{{Var}}_j(d_{{j,a}})$, one-year change", loc="left")
-        ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_ylim(bottom=0)
+        ax.plot(AGES, np.sqrt(var_d_b), color=BLUE, lw=1.8, label='AR(1) + "spike" classes')
+        ax.plot(a, np.sqrt(roll(var_d)), color=BLUE, lw=1.6, ls="--", label="K-means types")
+        ax.set_title(rf"({let[1]}) $\mathrm{{sd}}_j(d_{{j,a}})$, spread of the type slopes, per year", loc="left")
+        ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_ylim(bottom=0); ax.legend(fontsize=7.5, loc="upper left")
         ax = ax4[2]
-        ax.plot(a, roll(cov_ld), color=BLUE, lw=1.8)
+        ax.plot(AGES, cov_b, color=BLUE, lw=1.8)
+        ax.plot(a, roll(cov_ld), color=BLUE, lw=1.6, ls="--")
         ax.axhline(0, color=INK2, lw=0.8)
         ax.set_title(rf"({let[2]}) $\mathrm{{Cov}}_j(\bar h_{{j,a}}, d_{{j,a}})$", loc="left")
         ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_xlabel("age")
-        for age_, vt, vb, vd, cv in zip(a, tot.reindex(a), between.reindex(a), var_d, cov_ld):
-            dec_rows.append({"variant": v, "age": age_, "var_total": vt, "var_between": vb,
+        for age_, vt, vb, vd, vl, cv in zip(a, tot.reindex(a), between.reindex(a), var_d, var_l, cov_ld):
+            dec_rows.append({"variant": v, "typology": "kmeans", "age": age_, "var_total": vt, "var_between": vb,
                              "var_within": vt - vb if pd.notna(vt) else np.nan, "var_d": vd, "cov_level_d": cv,
-                             "corr_level_d": cv / np.sqrt(var_l[age_ - MIN_AGE] * vd) if vd > 0 else np.nan})
+                             "corr_level_d": cv / np.sqrt(vl * vd) if vd > 0 else np.nan})
+        for age_, vt, vb, vd, vl, cv in zip(AGES, tot.reindex(AGES), between_b, var_d_b, var_l_b, cov_b):
+            dec_rows.append({"variant": v, "typology": "ssm", "age": age_, "var_total": vt, "var_between": vb,
+                             "var_within": vt - vb if pd.notna(vt) else np.nan, "var_d": vd, "cov_level_d": cv,
+                             "corr_level_d": cv / np.sqrt(vl * vd) if vd > 0 else np.nan})
     measure = {"": "theta", "_measures": "h (left), the 31-deficit frailty index (middle) and log(frailty + 1/31) (right)",
              FRAILTY_SUFFIX: "the 31-deficit frailty index (left) and log(frailty + 1/31) (right)",
              MENTAL_SUFFIX: "the mental GRM"}[tag]
@@ -190,10 +214,11 @@ def main() -> int:
                    fontsize=7.4, color=INK2, va="top")
         fig3p.savefig(FIG / "fig_clusters_predcost.png", bbox_inches="tight")
     fig4.text(0.01, -0.01,
-              ("Row (a): the cross-sectional variance of the measure\namong the clustered people, split by the age-specific\ntype composition; "
-               "five-year rolling means. Rows (b)\nand (c): the smoothed type mean paths (five-year\nrolling means, ends extended linearly), d the one-year\n"
-               "change, moments across types with person-level\nshares, then a further five-year rolling mean."
-               if narrow else f"As the main-text decomposition figure, on {measure}."),
+              (f"Two typologies, K = 3: the AR(1) + \"spike\" classes (solid)\nand the partial K-means types (dashed). Row (a): the\ncross-sectional variance of the measure among the contract's\npeople, "
+               f"split into between types (the variance of the type\nmeans under the age-specific composition) and within;\n{PROFILE_WINDOW}-year rolling means. Rows (b) and (c): moments of the\ntype slopes across types "
+               f"with age-specific composition shares.\nMixture: quadratic class paths and their derivative. K-means:\nsmoothed type paths ({PROFILE_WINDOW}-year rolling means, ends extended\nlinearly), "
+               f"one-year changes, then a further {PROFILE_WINDOW}-year rolling mean."
+               if narrow else f"As the main-text decomposition figure, on {measure}: AR(1) + \"spike\" classes solid, K-means types dashed, {PROFILE_WINDOW}-year rolling means, age-specific composition shares."),
               fontsize=7.4, color=INK2, va="top")
     fig4.savefig(FIG / f"fig_cluster_decomposition{tag}.png", bbox_inches="tight")
     pd.DataFrame(dec_rows).to_csv(DESC / f"paper_cluster_decomposition{tag}.csv", index=False)

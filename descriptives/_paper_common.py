@@ -117,6 +117,23 @@ def load_labels(variant: str, lo: int = MIN_AGE, hi: int = MAX_AGE) -> pd.Series
 MODE_CHAINS = {"health-h-ssm-k5": [1, 2, 4], "health-frailty-ssm-k4": [1, 2, 3]}
 
 
+def ssm_fit(v: str, Kc: int = K) -> dict:
+    """The K = 3 AR(1) + "spike" fit on a measure, read with bayes_fit: theta and h from
+    artifacts/health-ssm, the frailty indices from health-frailty, the mental GRM from
+    mental-health on the multidim contract. Adds ``paths`` (K x AGES, the measure's units)
+    and ``slopes`` (theta per year, the derivative of the quadratic)."""
+    if v == "mental":
+        r = bayes_fit(ARTIFACTS_DIR / "mental-health" / "mental-theta-ssm", v, Kc, contract=MULTIDIM_CONTRACT, col=MENTAL_COL)
+    else:
+        folder = "health-frailty" if v in ("frailty", "logfrailty") else "health-ssm"
+        r = bayes_fit(ARTIFACTS_DIR / folder / f"health-{v}-ssm", v, Kc, chains=MODE_CHAINS.get(f"health-{v}-ssm"))
+    A = (AGES - 55) / 10
+    m, sd = r["mom"]["mean"], r["mom"]["sd"]
+    r["paths"] = np.vstack([m + sd * (c[0] + c[1] * A + c[2] * A ** 2) for c in r["coef"]])
+    r["slopes"] = np.vstack([sd * (c[1] + 2 * c[2] * A) / 10 for c in r["coef"]])
+    return r
+
+
 def coassignment_corr(post_a: pd.DataFrame, post_b: pd.DataFrame, n: int = 3000, seed: int = 0) -> float:
     """Agreement of two typologies without label correspondence: over pairs of people (a random
     ``n`` of those in both), the correlation between the probability that typology A puts the pair
@@ -175,13 +192,17 @@ def write_table(path, header: list[str], rows: list[list[str]], colspec: str | N
         f.write("\\bottomrule\n\\end{tabular}\n")
 
 
-def profile_rows(d: pd.DataFrame, v: str, *, row_len: int = 9, min_cell: int = 100):
+PROFILE_WINDOW = 10      # the rolling window, in years, of the mean and variance profiles (Exhibit 1) and of the type-based moments (Figure 5)
+
+
+def profile_rows(d: pd.DataFrame, v: str, *, row_len: int = 9, min_cell: int = 100, window: int = PROFILE_WINDOW):
     """Exhibit 1's ingredients for one variable: the smoothed mean and variance
-    profile by age, and the rows of the age-covariance matrix leaving the
-    diagonal at five-year base-age bins and running ``row_len`` years."""
+    profile by age (centred rolling mean over ``window`` years), and the rows of
+    the age-covariance matrix leaving the diagonal at five-year base-age bins
+    and running ``row_len`` years."""
     prof = d.groupby("age")[v].agg(["mean", "var", "count"])
     prof = prof[prof["count"] >= min_cell]
-    smooth = prof[["mean", "var"]].rolling(5, center=True).mean().dropna()
+    smooth = prof[["mean", "var"]].rolling(window, center=True).mean().dropna()
     base = d[d["age"] <= MAX_AGE - row_len]
     pairs = base.merge(d, on="pidp", suffixes=("", "_t"))
     pairs = pairs[(pairs["age_t"] >= pairs["age"]) & (pairs["age_t"] - pairs["age"] <= row_len)]

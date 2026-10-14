@@ -4,7 +4,7 @@ The framework's Figure 3 on the project's measure: the mean path, the
 cross-sectional variance profile, and the rows of the age-covariance matrix,
 each row starting on the diagonal at a five-year base-age bin and running nine
 years. Two versions, h and theta, one row of panels each, in the measure's own
-units. Five-year centred rolling means; cells with n < 100 dropped. Variance
+units. Ten-year centred rolling means (_paper_common.PROFILE_WINDOW); cells with n < 100 dropped. Variance
 and covariance panels share a vertical scale within a variant, so the drop
 from the profile to the row leaving it is the one-year spike.
 
@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import FRAILTY_SUFFIX, MENTAL_SUFFIX, MAX_AGE, MIN_AGE, draw_exhibit1_row, profile_rows, profile_rows_balanced, read_scores  # noqa: E402
+from _paper_common import FRAILTY_SUFFIX, MENTAL_SUFFIX, MAX_AGE, MIN_AGE, PROFILE_WINDOW, draw_exhibit1_row, profile_rows, profile_rows_balanced, read_scores  # noqa: E402
 from _style import INK2, VERM, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR, ROOT_DIR  # noqa: E402
@@ -73,11 +73,11 @@ def main() -> int:
              ("Frailty: the share of 31 equal-weight deficits (six SF-12 physical items graded 0-1, eight impairment areas, the ever-diagnosed conditions), higher = frailer; "
               f"log frailty is log(frailty + 1/31), one whole deficit added, so the {(d['frailty'] == 0).mean():.0%} of person-waves with no deficit sit at the floor.\n" if (RULERS or FRAIL) else "") +
              ("The mental GRM: three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis; higher = better.\n" if MENTAL else "") +
-             (f"{len(d):,} person-waves, {d['pidp'].nunique():,} people, ages 20-90. Profiles are five-year centred "
+             (f"{len(d):,} person-waves, {d['pidp'].nunique():,} people, ages 20-90. Profiles are {PROFILE_WINDOW}-year centred "
               "rolling means; cells with fewer than 100 person-waves\nare dropped. Each covariance row starts on the "
               "diagonal at its five-year base-age bin (dotted: the variance profile)\nand runs nine years. Rows two and "
               "three share a vertical scale within each column." if nc > 1 else
-              f"{len(d):,} person-waves, {d['pidp'].nunique():,} people, ages 20-90.\nProfiles are five-year centred rolling means;\n"
+              f"{len(d):,} person-waves, {d['pidp'].nunique():,} people, ages 20-90.\nProfiles are {PROFILE_WINDOW}-year centred rolling means;\n"
               "cells with fewer than 100 person-waves are dropped.\nEach covariance row starts on the diagonal at its\n"
               "five-year base-age bin (dotted: the variance profile)\nand runs nine years. Panels (b) and (c) share a vertical scale."),
              fontsize=7.4, color=INK2, va="top")

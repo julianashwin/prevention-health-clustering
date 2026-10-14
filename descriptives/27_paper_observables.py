@@ -34,7 +34,7 @@ import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import DESC, FIG, K, MAX_AGE, MIN_AGE, TAB, load_labels, load_measure, write_table  # noqa: E402
+from _paper_common import AGES, DESC, FIG, K, MAX_AGE, MIN_AGE, TAB, load_labels, load_measure, ssm_fit, write_table  # noqa: E402
 from _style import CLUSTER, INK2, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import PROCESSED_DATA_DIR  # noqa: E402
@@ -66,6 +66,12 @@ def main() -> int:
     v = "h" if "--h" in sys.argv else "theta"          # the paper's figure is theta; --h the appendix version
     VL = {"h": "$h$", "theta": r"$\theta$"}[v]
     sfx = "" if v == "theta" else "_h"
+    # --roll N: centred N-year rolling means of every cell-mean series; --bayes: panel (a) draws the AR(1) + "spike"
+    # class paths solid with the K-means type means dashed; --out DIR: write the figure there (a trial, not the paper's)
+    ROLL = int(sys.argv[sys.argv.index("--roll") + 1]) if "--roll" in sys.argv else 1
+    BAYES = "--bayes" in sys.argv
+    OUT = Path(sys.argv[sys.argv.index("--out") + 1]) if "--out" in sys.argv else FIG
+    rollm = (lambda q: q.assign(mean=q["mean"].rolling(ROLL, center=True, min_periods=1).mean())) if ROLL > 1 else (lambda q: q)
     d = load_measure([v])
     L = load_labels(v)
     per = pd.read_parquet(PROCESSED_DATA_DIR / "measures" / "observables_person.parquet")
@@ -91,16 +97,21 @@ def main() -> int:
     # (a) types
     ax = axes[0, 0]
     t = cell_means(s, "cluster", v)
+    if BAYES:
+        f = ssm_fit(v)
+        for c in range(K):
+            ax.plot(AGES, f["paths"][c], color=CLUSTER[c], lw=1.8, label=f'AR(1) + "spike" class {c + 1} ({f["theta"][c]:.0%})')
     for c in range(K):
-        q = t[t["cluster"] == c]
-        ax.plot(q["age"], q["mean"], color=CLUSTER[c], lw=1.8, label=f"type {c + 1} ({float((L == c).mean()):.0%})")
-    ax.set_title("(a) health types", loc="left"); ax.legend(loc="lower left", fontsize=8)
+        q = rollm(t[t["cluster"] == c])
+        ax.plot(q["age"], q["mean"], color=CLUSTER[c], lw=1.6, ls="--" if BAYES else "-", label=f"{'K-means ' if BAYES else ''}type {c + 1} ({float((L == c).mean()):.0%})")
+    ax.set_title("(a) health types" + (' (AR(1) + "spike" solid, K-means dashed)' if BAYES else ""), loc="left", fontsize=10 if BAYES else None); ax.legend(loc="lower left", fontsize=7 if BAYES else 8)
     # (b) partitions
     ax = axes[0, 1]
     t = cell_means(s.dropna(subset=["partition"]), "partition", v)
     t = t[t["age"] <= INCOME_MAX_AGE]
     cmap = plt.get_cmap("winter")
     for k, (g, q) in enumerate(t.groupby("partition")):
+        q = rollm(q.sort_values("age"))
         ax.plot(q["age"], q["mean"], color=cmap(k / max(t["partition"].nunique() - 1, 1)), lw=0.8, alpha=0.8)
     ax.set_title(f"(b) observable partitions ({t['partition'].nunique()} groups)", loc="left")
     # (c) education
@@ -108,7 +119,7 @@ def main() -> int:
     t = cell_means(s.dropna(subset=["educ_group"]), "educ_group", v)
     cmap = plt.get_cmap("winter")
     for k, g in enumerate(EDUC_ORDER):
-        q = t[t["educ_group"] == g]
+        q = rollm(t[t["educ_group"] == g].sort_values("age"))
         ax.plot(q["age"], q["mean"], color=cmap(k / 3), lw=1.8, label=g)
     ax.set_title("(c) highest qualification", loc="left"); ax.legend(loc="lower left", fontsize=8)
     # (d) income deciles
@@ -116,7 +127,7 @@ def main() -> int:
     t = cell_means(s.dropna(subset=["income_decile"]), "income_decile", v)
     t = t[t["age"] <= INCOME_MAX_AGE]
     for k in range(10):
-        q = t[t["income_decile"] == f"D{k + 1}"]
+        q = rollm(t[t["income_decile"] == f"D{k + 1}"].sort_values("age"))
         ax.plot(q["age"], q["mean"], color=cmap(k / 9), lw=1.4, label=f"D{k + 1}")
     ax.set_title("(d) income deciles", loc="left"); ax.legend(loc="lower left", fontsize=7, ncols=2)
     for ax in axes.flat:
@@ -130,9 +141,11 @@ def main() -> int:
              "of " + ("theta" if v == "theta" else "h") + ", cells with fewer than 30 people suppressed. Partitions in (b): highest qualification (4) x sex (2) x\n"
              "white / other ethnic group (2) x income tercile (3). Income is the person's mean within-wave percentile "
              "rank of equivalised household net income; education the highest qualification ever recorded.\n"
-             f"Panels (b) and (d) involve income and stop at age {INCOME_MAX_AGE}.",
+             f"Panels (b) and (d) involve income and stop at age {INCOME_MAX_AGE}."
+             + (f" Every series is a centred {ROLL}-year rolling mean of the cell means." if ROLL > 1 else "")
+             + (" Panel (a) adds the AR(1) + \"spike\" class paths (quadratic, posterior mean) solid, the K-means type means dashed." if BAYES else ""),
              fontsize=7.4, color=INK2, va="top")
-    fig.savefig(FIG / f"fig_observables{sfx}.png")
+    fig.savefig(OUT / f"fig_observables{sfx}{'_roll' + str(ROLL) if ROLL > 1 else ''}{'_bayes' if BAYES else ''}.png", bbox_inches="tight")
 
     rows, recs = [], []
     per_l = per.join(L.rename("cluster"))

@@ -359,7 +359,7 @@
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=0.55\linewidth]{fig_exhibit1.png}
-		\caption{The measure's mean path, variance profile and covariance rows, model-free, on $\theta$. 387,599 person-waves; five-year centred rolling means; each covariance row starts on the diagonal at a five-year base age and runs nine years. The same figure on $h$, the frailty index and log frailty is in Appendix~\ref{app:measures}.}
+		\caption{The measure's mean path, variance profile and covariance rows, model-free, on $\theta$. 387,599 person-waves; the mean and variance profiles are ten-year centred rolling means; each covariance row starts on the diagonal at a five-year base age and runs nine years. The same figure on $h$, the frailty index and log frailty is in Appendix~\ref{app:measures}.}
 		\label{fig:exhibit1}
 	\end{figure}
 	
@@ -443,18 +443,18 @@
 	\end{figure}
 
 	
-	Figure~\ref{fig:decomp} shows the key moments based on the estimated K-means clusters. 
+	Figure~\ref{fig:decomp} shows the key moments of Figures~\ref{fig:exhibit1} and~\ref{fig:ex2main} computed from the types rather than from the covariance surface, for the AR(1) plus ``spike'' classes (solid) and the K-means types (dashed), with the age-specific type composition as the weights throughout.
 	\begin{itemize}
-		\item Top panel: the between-type share of the cross-sectional variance rises from 48\% at 30 to 65\% at 70 and falls back to 57\% by 85. \note{within type variance is satisfyingly flat for $\theta$}
-		\item Middle panel: roughly a U shape in $\Var_j(d_{j,a})$, lowest at about 48, so slopes are most consistent in middle age.
-		\item Bottom panel: $\Cov_j(\bar h_{j,a},d_{j,a})$ goes from positive to negative at about 59: divergence and then convergence, so P(ii) and P(iii).
+		\item Top panel: the between-type share of the cross-sectional variance rises with age and peaks around 60 to 70 under both typologies: from 48\% at 30 to 65\% at 70 and 57\% at 85 for the K-means types, and from 19\% at 30 to 54\% at 70 and 52\% at 85 for the mixture classes, whose paths coincide at 20 and separate only after 30. The within-type variance is flat on $\theta$ under K-means and falls slowly with age under the mixture. \note{The mixture's low between share at young ages is the same fact as the windows result of Figure~\ref{fig:windows}: on $\theta$ the classes are not distinguishable before the divergence.}
+		\item Middle panel: the spread of the type slopes across types, $\mathrm{sd}_j(d_{j,a})$, is lowest around 60 (57 under K-means, 60 under the mixture) and rises towards both ends, so slopes are most consistent across types in late middle age. The mixture's V is what quadratic class paths give by construction; the K-means spread peaks at 36, the worst type's early decline, and again after 75.
+		\item Bottom panel: $\Cov_j(\bar h_{j,a},d_{j,a})$ goes from positive to negative at 61 under K-means and 67 under the mixture: divergence and then convergence, the accumulation and pathway margins of Corollary~\ref{cor:uniform} changing sign in the data.
 		\item The key messages are relatively consistent across $h$ and $\theta$ (Appendix~\ref{app:measures}).
 		\item \note{Between-type shares are partly mechanical: the clusters are chosen to maximise them. The comparison that is not mechanical is with observables in Section~\ref{sec:observables}.}
 	\end{itemize}
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=0.55\linewidth]{fig_cluster_decomposition.png}
-		\caption{Between versus within by age, on $\theta$. (a) Cross-sectional variance split by type composition; (b) between-type variance of the one-year change of the smoothed type paths; (c) the level-change covariance across types. The same figure on $h$ and the two frailty indices is in Appendix~\ref{app:measures}.}
+		\caption{Between versus within by age, on $\theta$, for the AR(1) plus ``spike'' classes (solid) and the K-means types (dashed). (a) The cross-sectional variance split into between types, the variance of the type means under the age-specific composition, and within; (b) the spread of the type slopes across types, $\mathrm{sd}_j(d_{j,a})$, in $\theta$ per year; (c) the level-slope covariance across types. Mixture slopes are the derivative of the quadratic class paths, K-means slopes the one-year changes of the smoothed type paths; ten-year rolling means; age-specific composition shares throughout. The same figure on $h$ and the two frailty indices is in Appendix~\ref{app:measures}.}
 		\label{fig:decomp}
 	\end{figure}
 
