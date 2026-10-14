@@ -1,9 +1,10 @@
 """Figure 8: lifecycle health trajectories by health type and by observable groups.
 
 Four panels on the clustered people (theta by default, h with --h for the appendix; the health
-contract: at least three observed ages 20-89), each series an age-specific cell mean, cells with fewer than 30 people
-suppressed:
-  (a) the three health types
+contract: at least three observed ages 20-89), each series a centred five-year rolling mean of
+age-specific cell means, cells with fewer than 30 people suppressed:
+  (a) the three health types: the AR(1) + "spike" class paths (solid, _paper_common.ssm_fit)
+      and the K-means type means (dashed)
   (b) observable partitions: every cell of highest qualification (4) x sex (2)
       x white / other ethnic group (2) x tercile of the person's mean
       within-wave rank of equivalised household net income (3), 48 groups
@@ -66,11 +67,11 @@ def main() -> int:
     v = "h" if "--h" in sys.argv else "theta"          # the paper's figure is theta; --h the appendix version
     VL = {"h": "$h$", "theta": r"$\theta$"}[v]
     sfx = "" if v == "theta" else "_h"
-    # --roll N: centred N-year rolling means of every cell-mean series; --bayes: panel (a) draws the AR(1) + "spike"
-    # class paths solid with the K-means type means dashed; --out DIR: write the figure there (a trial, not the paper's)
-    ROLL = int(sys.argv[sys.argv.index("--roll") + 1]) if "--roll" in sys.argv else 1
-    BAYES = "--bayes" in sys.argv
-    OUT = Path(sys.argv[sys.argv.index("--out") + 1]) if "--out" in sys.argv else FIG
+    # Every cell-mean series is a centred ROLL-year rolling mean (--roll N to change; 1 for none), and panel (a) draws
+    # the AR(1) + "spike" class paths solid with the K-means type means dashed (--no-bayes for K-means alone)
+    ROLL = int(sys.argv[sys.argv.index("--roll") + 1]) if "--roll" in sys.argv else 5
+    BAYES = "--no-bayes" not in sys.argv
+    OUT = FIG
     rollm = (lambda q: q.assign(mean=q["mean"].rolling(ROLL, center=True, min_periods=1).mean())) if ROLL > 1 else (lambda q: q)
     d = load_measure([v])
     L = load_labels(v)
@@ -104,7 +105,7 @@ def main() -> int:
     for c in range(K):
         q = rollm(t[t["cluster"] == c])
         ax.plot(q["age"], q["mean"], color=CLUSTER[c], lw=1.6, ls="--" if BAYES else "-", label=f"{'K-means ' if BAYES else ''}type {c + 1} ({float((L == c).mean()):.0%})")
-    ax.set_title("(a) health types" + (' (AR(1) + "spike" solid, K-means dashed)' if BAYES else ""), loc="left", fontsize=10 if BAYES else None); ax.legend(loc="lower left", fontsize=7 if BAYES else 8)
+    ax.set_title("(a) health types", loc="left"); ax.legend(loc="lower left", fontsize=7 if BAYES else 8)
     # (b) partitions
     ax = axes[0, 1]
     t = cell_means(s.dropna(subset=["partition"]), "partition", v)
@@ -145,7 +146,7 @@ def main() -> int:
              + (f" Every series is a centred {ROLL}-year rolling mean of the cell means." if ROLL > 1 else "")
              + (" Panel (a) adds the AR(1) + \"spike\" class paths (quadratic, posterior mean) solid, the K-means type means dashed." if BAYES else ""),
              fontsize=7.4, color=INK2, va="top")
-    fig.savefig(OUT / f"fig_observables{sfx}{'_roll' + str(ROLL) if ROLL > 1 else ''}{'_bayes' if BAYES else ''}.png", bbox_inches="tight")
+    fig.savefig(OUT / f"fig_observables{sfx}.png", bbox_inches="tight")
 
     rows, recs = [], []
     per_l = per.join(L.rename("cluster"))
