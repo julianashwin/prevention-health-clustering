@@ -1,17 +1,17 @@
-"""Is the level-slope reversal driven by the unhealthy tail? Two appendix figures on theta.
+"""Which type drives the level-slope reversal? One appendix figure and one csv on theta.
 
-Figure 1 (fig_exhibit2_samples.png): Exhibit 2 (Figure 3; the Case 4 fit of 29_paper_moments.py,
-main design) refitted on six samples, one row each: everyone; everyone but the bottom decile,
-quintile and quartile of the person's mean age-standardised theta (theta standardised within
-single year of age, then averaged over the person's rows); everyone but the K-means worst type;
-everyone but the modal worst class of the AR(1) + "spike" mixture. The csv records Corr(H, d),
-C_Hd and V_H by band and sample, with the constraint flags.
-
-Figure 2 (fig_reversal_types.png): the level-slope covariance across types split into each
+Figure (fig_reversal_types.png): the level-slope covariance across types split into each
 type's term pi_j(a) (hbar_j,a - hbar_a)(d_j,a - d_a), age-specific composition shares, for
 K-means and the univariate mixture at K = 3 and the multidimensional mixture at K = 4 and 5,
 plus the K-means covariance with slopes from within-person changes (next observed age minus
 this one, per year, gaps of one to three years) instead of the type mean paths.
+
+Csv (paper_exhibit2_samples.csv): Exhibit 2 (Figure 3; the Case 4 fit of 29_paper_moments.py,
+main design) refitted on six samples: everyone; everyone but the bottom decile, quintile and
+quartile of the person's mean age-standardised theta (theta standardised within single year
+of age, then averaged over the person's rows); everyone but the K-means worst type; everyone
+but the modal worst class of the AR(1) + "spike" mixture. Corr(H, d), C_Hd and V_H by band and
+sample with the constraint flags; quoted in the appendix text, no figure.
 
     PYTHONPATH=src .venv/bin/python descriptives/54_paper_reversal_check.py
 """
@@ -54,7 +54,6 @@ def exhibit2_samples() -> None:
     spec = M29.DESIGNS["main"]; fits = {}; rows = []
     for name, pids in samples(d).items():
         key = name
-        M29.LABEL[key] = name.replace("without the ", "without\n")          # the row label the bar chart prints
         fits[key] = M29.fit_design(M29.wide(d[d["pidp"].isin(pids)], "theta"), spec)
         for (bn, case), (m, n, f) in fits[key].items():
             if case == "case4":
@@ -62,11 +61,6 @@ def exhibit2_samples() -> None:
                              "binds": bool(f.get("binds")), "weak": bool(f.get("weak"))})
     T = pd.DataFrame(rows); T.to_csv(DESC / "paper_exhibit2_samples.csv", index=False)
     print(T.pivot(index="sample", columns="band", values="corr").round(2).to_string())
-    footer = ("Exhibit 2 (Case 4: AR(1) plus one-period error) on theta, main design (four ages four years apart, pairwise moments pooled within band), refitted on six samples, one per row: everyone; everyone but the bottom decile, quintile and quartile of the person's mean "
-              "age-standardised theta (standardised within single year of age, then averaged over the person's rows); everyone but the K-means worst type; everyone but the modal worst class of the AR(1) + \"spike\" mixture. "
-              "Bars stack the fitted layers, black ticks the observed moments; the panel title gives rho and Corr(H, d), marked where the constraint |Corr| <= 1 binds (the estimator at its corner).")
-    M29.barchart(FIG / "fig_exhibit2_samples.png", [(k, "case4") for k in fits], fits, spec, "", "\n".join(textwrap.wrap(footer, 210)))
-    print(f"wrote fig_exhibit2_samples.png to {FIG}")
 
 
 def contributions(paths, slopes, comp) -> pd.DataFrame:
