@@ -55,12 +55,12 @@ BACKWARD = [(60, 90), (50, 90), (40, 90), (30, 90)]
 VARIANTS = ["h", "theta"]
 EXTRA = ["predcost"]             # lifecycle run only
 FRAILTY = ["frailty", "logfrailty"]   # comparison measures, --frailty only
-# --first-held [k]: theta and h with each person's first k rows (by age) dropped (k = 1 or 2), people
-# with at least k + 3 rows, the rows of the first-rows-held-out Bayesian fits
-# (clustering/runs/health_firstheld_queue.py, frailty_firstheld_queue.py); stored as variants
-# "theta_firstheld", "h_firstheld", "theta_first2held", "h_first2held" for 43_paper_type_from_initial.py
-FIRSTHELD = {"theta_firstheld": ("theta", 1), "h_firstheld": ("h", 1),
-             "theta_first2held": ("theta", 2), "h_first2held": ("h", 2)}
+# --first-held: theta and h with each person's first two rows (by age) dropped, people
+# with at least five rows, the rows of the first-two-rows-held-out Bayesian fits
+# (clustering/runs/health_firstheld_queue.py, cohort_first2_queue.py); stored as variants
+# "theta_first2held", "h_first2held" for 43_paper_type_from_initial.py
+# (the one-row variants theta_firstheld and h_firstheld are retired; their labels stay in the outputs)
+FIRSTHELD = {"theta_first2held": ("theta", 2), "h_first2held": ("h", 2)}
 # --last-held: theta and h with each person's last two rows (by age) dropped, people with at least
 # five rows, the rows of the last-rows-held-out Bayesian fits (artifacts/health-next/*-ho) that
 # 33_paper_prediction.py forecasts from; stored as variants "theta_last2held", "h_last2held"
@@ -178,10 +178,8 @@ def main() -> int:
     elif "--k" in sys.argv:
         tasks = [(f"theta_k{k}", *FULL) for k in sys.argv[sys.argv.index("--k") + 1].split(",")]
     elif "--first-held" in sys.argv:
-        # --first-held [k] [--variants theta,h]: default both measures, k = 1
-        nxt = sys.argv[sys.argv.index("--first-held") + 1:]
-        k = int(nxt[0]) if nxt and nxt[0].isdigit() else 1
-        tasks = [(f"{v}_first{'' if k == 1 else k}held", *FULL) for v in ("theta", "h") if only is None or v in only]
+        # --first-held [--variants theta,h]: default both measures
+        tasks = [(f"{v}_first2held", *FULL) for v in ("theta", "h") if only is None or v in only]
     elif "--last-held" in sys.argv:
         tasks = [(f"{v}_last2held", *FULL) for v in ("theta", "h") if only is None or v in only]
     elif "--windows-only" not in sys.argv:

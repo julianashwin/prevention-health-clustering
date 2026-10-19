@@ -1,48 +1,39 @@
-"""What identifies a person's health type: a health reading, or education and income?
+"""What identifies a person's health type: a health reading, or the observables?
 
-The types come from fits that never saw the initial row: partial K-means on theta
-with each person's first observed row dropped (22_paper_kmeans.py --first-held,
-variant theta_firstheld), and the K=3 independent-residuals and AR(1) plus "spike"
-mixtures with the first row held out (clustering/runs/health_firstheld_queue.py,
-artifacts/health-firstheld/), and the multidimensional AR(1) plus "spike" fit with
-mortality and the first row held out (clustering/runs/multidim_firstheld_launch.sh,
-artifacts/multidim-health/theta-ssm-mort-firstho, on the multidim contract). People
-with at least four rows, so everyone keeps at least three fitted rows. The
-Bayesian type is the modal class of the posterior computed from the fitted window
-alone (for the multidimensional fit: both channels plus survival through the
-fitted window).
+The types come from fits that never saw each person's first two rows (people with at
+least five rows, so everyone keeps at least three fitted rows): partial K-means on the
+remaining rows (22_paper_kmeans.py --first-held, variant theta_first2held), and the K=3
+independent-residuals and AR(1) plus "spike" mixtures, the latter also with birth-decade
+shifts, with the first two rows held out (artifacts/health-firstheld/*-first2ho), and the
+multidimensional AR(1) plus "spike" fit with mortality and the first two rows held out
+(artifacts/multidim-health/theta-ssm-mort-first2ho, on the multidim contract; it has no
+decade shifts). The Bayesian type is the modal class of the posterior computed from the
+fitted window alone (for the multidimensional fit: both channels plus survival through
+the fitted window). This mirrors 33_paper_prediction.py, which holds out the last two
+rows: here the window starts at t and the held rows are t-1 (the second row, closest to
+the window) and t-2 (the first row).
 
-The question is which is more informative about the type: the observables
-(education, income rank, sex) or a reading of the health measure itself. The
-predictor sets, all known at the first row and each on top of a quadratic in
-age, are: education alone, income alone, all three observables, one health
-reading (theta at the first row, with its age interaction), two readings
-(--first2), and the reading plus the observables; for the multidimensional
-types also the mental score at the first row. Multinomial logit on the modal
-type, people split 70/30 by a hash of pidp, fitted on the 70, scored on the
-30: accuracy (against the majority-type rate) and the macro one-vs-rest AUC. For the mixtures there is also the model's own
-answer, the class posterior implied by the single first observation under the
-fitted parameters (stationary variance plus "spike" under AR(1) + "spike"), which
-needs no regression, and with --first2 the posterior from both held rows (the
-Kalman likelihood of the two rows, the counterpart of the two-reading regression).
-The by-age split of the one-reading accuracy goes to a csv.
+The predictor sets, each on top of a quadratic in age at the first row: education
+alone, income alone, education, income and sex together, those plus region and ethnic
+group, one reading (theta at t-1, the closest held row, and separately at t-2, the
+first row; each with its age interaction), both readings, and the first reading plus
+the observables; for the multidimensional types also the mental score at the first row.
+Multinomial logit on the modal type, people split 70/30 by a hash of pidp, fitted on the
+70, scored on the 30: accuracy (against the majority-type rate), balanced accuracy (the
+mean per-type recall, 1/3 by chance) and the macro one-vs-rest AUC. For the mixtures also
+the model's own answer: the class posterior implied by the first observation alone
+under the fitted parameters, and from both held rows (the Kalman likelihood of the two
+rows from the stationary state). The by-age split of the first-reading accuracy goes to
+a csv.
 
-The multidimensional typology comes from theta-ssm-mort-first2ho when that fit
-exists; until it does, --first2 falls back to the first-row fit
-(theta-ssm-mort-firstho, people with at least four rows, one held reading) as a
-placeholder, labelled as such in the figure and the table.
+The first-row-only variant (fits with one row held out) is retired; its fits and outputs
+are in artifacts/archive/firstho/.
 
-Modes: the default is theta with the first row held out (the main-text figure);
---h the same on h; --first2 the fits with the first TWO rows held out (people
-with at least five rows), where the type is defined from the third row on, the
-AR(1) + "spike" fit with birth-decade shifts is a fourth typology and a set with
-both held readings shows what a second observation adds. The by-age split of the
-one-reading set goes to the csv. Outputs carry the
-suffix: fig_type_from_initial{,_h,_first2,_first2_h}.png, the matching
-tab_type_from_initial*.tex and paper_type_from_initial*{,_by_age}.csv. A fit
-that has not finished is skipped with a note.
+--h runs the same on h (no multidimensional typology). Outputs:
+fig_type_from_initial_first2{,_h}.png, tab_type_from_initial_first2{,_h}.tex,
+paper_type_from_initial_first2{,_h}.csv and paper_type_from_initial_by_age_first2{,_h}.csv.
 
-    PYTHONPATH=src .venv/bin/python descriptives/43_paper_type_from_initial.py [--h] [--first2]
+    PYTHONPATH=src .venv/bin/python descriptives/43_paper_type_from_initial.py [--h]
 """
 
 from __future__ import annotations
@@ -60,29 +51,27 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import CONTRACT, DESC, FIG, MENTAL_COL, MULTIDIM_CONTRACT, TAB, load_labels  # noqa: E402
+from _paper_common import CONTRACT, DESC, FIG, MENTAL_COL, MULTIDIM_CONTRACT, TAB, load_labels, region_ethnicity  # noqa: E402
 from _style import CLUSTER, GREEN, INK2, ORANGE, PURPLE, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
 
 M33 = importlib.import_module("33_paper_prediction")
 K = 3
-# --h: the exercise on h; --first2: the fits with the first TWO rows held out (people with at
-# least five rows), where the type is defined from the third row on and the cohort-shift
-# twin (health-{v}-ssm-cohort-first2ho) is a fourth typology
+# --h: the exercise on h. The fits hold out the first TWO rows (people with at least five
+# rows), the type is defined from the third row on, and the cohort-shift twin
+# (health-{v}-ssm-cohort-first2ho) is a fourth typology. (--first2 is accepted and ignored.)
 V = "h" if "--h" in sys.argv else "theta"
-KHELD = 2 if "--first2" in sys.argv else 1
+KHELD = 2
 MIN_ROWS = KHELD + 3
-HO = "first2ho" if KHELD == 2 else "firstho"
-SFX = ("_first2" if KHELD == 2 else "") + ("_h" if V == "h" else "")
+HO = "first2ho"
+SFX = "_first2" + ("_h" if V == "h" else "")
 VL = {"theta": r"$\theta$", "h": "$h$"}[V]
 FH = ARTIFACTS_DIR / "health-firstheld"
 MD_DIR = ARTIFACTS_DIR / "multidim-health"
 MD = MD_DIR / f"theta-ssm-mort-{HO}"
 MD_KHELD = KHELD
-if KHELD == 2 and not (MD / "run_summary.json").exists():      # placeholder until the two-row fit lands
-    MD, MD_KHELD = MD_DIR / "theta-ssm-mort-firstho", 1
-MD_LABEL = "multidimensional" + (" (first row only)" if MD_KHELD != KHELD else "")
+MD_LABEL = "multidimensional"
 EDUC = ["GCSE", "A-level", "degree or higher"]
 AGE_BANDS = [(20, 34), (35, 49), (50, 64), (65, 90)]
 TYPOLOGIES = [("kmeans", "K-means"), ("base", "independent residuals"), ("ssm", 'AR(1) + "spike"'),
@@ -105,6 +94,7 @@ def first_rows(contract=CONTRACT, extra: tuple[str, ...] = (), kheld: int = KHEL
     first["female"] = first["pidp"].map(panel.groupby("pidp")["sex"].first()).eq(2).astype(float)
     for g in EDUC:
         first[f"educ_{g}"] = (first["educ_group"] == g).astype(float)
+    first = first.join(region_ethnicity(first["pidp"].unique()), on="pidp")
     first["a0"] = (first["age0"] - 55) / 10
     return sub, first
 
@@ -195,13 +185,21 @@ def multidim_types(sub: pd.DataFrame, first: pd.DataFrame):
 
 
 def score(df: pd.DataFrame, cols: list[str], test: np.ndarray, probs: np.ndarray | None = None) -> dict:
+    """Scores on the test 30%; a set with missing values (region, ethnicity) is scored on the people
+    who have them, and its probabilities are NaN for the rest."""
+    keep = df[cols].notna().all(axis=1).to_numpy() if cols else np.ones(len(df), bool)
+    if not keep.all():
+        r = score(df[keep].reset_index(drop=True), cols, test[keep], None if probs is None else probs[keep])
+        full = np.full((len(df), r["probs"].shape[1]), np.nan); full[keep] = r["probs"]; r["probs"] = full
+        return r
     y = df["type"].to_numpy()
     if probs is None:
         X = np.column_stack([df["a0"], df["a0"] ** 2] + [df[c].to_numpy(float) for c in cols])
         clf = LogisticRegression(max_iter=2000, C=1e4).fit(X[~test], y[~test])
         probs = clf.predict_proba(X)
     pred = probs.argmax(axis=1)
-    return {"accuracy": float((pred[test] == y[test]).mean()),
+    recall = [float((pred[test & (y == k)] == k).mean()) for k in np.unique(y[test])]
+    return {"accuracy": float((pred[test] == y[test]).mean()), "balanced_accuracy": float(np.mean(recall)),
             "auc": float(roc_auc_score(y[test], probs[test], multi_class="ovr", average="macro")),
             "probs": probs}
 
@@ -215,7 +213,7 @@ def main() -> int:
     for tag in ("base", "ssm") + (("ssm-cohort",) if KHELD == 2 else ()):
         f = bayes_types(tag, sub, first)
         if f is None:
-            print(f"{tag}: first-rows-held-out fit not finished, skipped")
+            print(f"{tag}: first-two-rows-held-out fit not finished, skipped")
         else:
             frames[tag] = f
     if V == "theta":
@@ -224,16 +222,16 @@ def main() -> int:
         if f is None:
             print("md: first-rows-held-out multidimensional fit not finished, skipped")
         else:
-            if MD_KHELD != KHELD:
-                print(f"md: {MD.name} used as a placeholder for the {HO} fit (one held reading, people with at least {MD_KHELD + 3} rows)")
             frames["md"] = f
     obs = ["income_rank_mean", "female"] + [f"educ_{g}" for g in EDUC]
     educ = [f"educ_{g}" for g in EDUC]
     HEALTH = f"+ {V}(0)"
+    regeth = [c for c in first.columns if c.startswith(("region_", "ethnic_"))]
     SETS = {"age(0)": [], "+ education": educ, "+ income rank": ["income_rank_mean"], "+ education, income, sex": obs,
-            HEALTH: ["y0", "y0a"]}
-    if KHELD == 2:   # the second held reading, a year or so later: what a second observation adds
-        SETS[f"+ {V}(0), {V}(1)"] = ["y0", "y0a", "y1", "y1a"]
+            "+ education, income, sex, region, ethnicity": obs + regeth,
+            f"+ {V}(1)": ["y1", "y1a"],         # the closest held reading, t-1
+            HEALTH: ["y0", "y0a"]}               # the first row, t-2
+    SETS[f"+ {V}(0), {V}(1)"] = ["y0", "y0a", "y1", "y1a"]
     SETS[f"+ {V}(0), education, income, sex"] = ["y0", "y0a"] + obs
     MD_SETS = {f"+ {V}(0), mental(0)": ["y0", "y0a", "m0", "m0a"]}      # multidimensional types only
     MODEL = "model posterior from the first row"
@@ -242,7 +240,7 @@ def main() -> int:
     for tag, lab in TYPOLOGIES:
         if tag not in frames:
             continue
-        df = frames[tag].dropna(subset=["y0", "income_rank_mean"]).reset_index(drop=True)
+        df = frames[tag].dropna(subset=["y0", "y1", "income_rank_mean"]).reset_index(drop=True)
         df["y0a"] = df["y0"] * df["a0"]
         if "y1" in df:
             df["y1a"] = df["y1"] * df["a0"]
@@ -282,7 +280,7 @@ def main() -> int:
     with open(TAB / f"tab_type_from_initial{SFX}.tex", "w") as f:
         f.write("\\begin{tabular}{l" + "rr" * len(have) + "}\n\\toprule\n")
         SHORT = {"kmeans": "K-means", "base": "indep. residuals", "ssm": 'AR(1) + "spike"', "ssm-cohort": "+ cohort shifts",
-                 "md": "multidim" + (" (1 row)" if MD_KHELD != KHELD else "")}       # short headers so five typologies fit
+                 "md": "multidim"}       # short headers so five typologies fit
         f.write("predictors at the first rows & " + " & ".join(f"\\multicolumn{{2}}{{c}}{{{SHORT[tag]}}}" for tag, _ in have) + " \\\\\n")
         f.write(" ".join(f"\\cmidrule(lr){{{2 + 2 * i}-{3 + 2 * i}}}" for i in range(len(have))) + "\n & " + " & ".join(["accuracy & AUC"] * len(have)) + " \\\\\n\\midrule\n")
         f.write("majority type & " + " & ".join(f"{t[t['typology'] == tag]['majority'].iloc[0]:.3f} & " for tag, _ in have) + " \\\\\n")
@@ -314,14 +312,13 @@ def main() -> int:
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, fontsize=7.5, loc="lower center", ncol=len(have), bbox_to_anchor=(0.5, -0.02), frameon=False)
     n = len(frames[have[0][0]]); n_md = len(frames["md"]) if "md" in frames else 0
-    held = "first row" if KHELD == 1 else "first two rows"
+    held = "first two rows"
     footer = (f"Health contract people with at least {MIN_ROWS} rows ({n:,}), on {V}; every typology is fitted without each person's {held} (K-means on the remaining rows; the mixtures with the {held} held out, "
              "type = modal class of the posterior from the fitted window)."
              + (f" The multidimensional fit (theta + mental GRM + mortality) is on the multidim contract's people with at least {MD_KHELD + 3} rows ({n_md:,}), "
-                + ("its first row held out (a placeholder until the two-row fit lands), " if MD_KHELD != KHELD else "")
                 + "its posterior from both channels and survival through the fitted window." if n_md else "")
-             + f"\nEvery predictor set is on top of a quadratic in age at the first row: education (three groups), income rank, the three observables together, {V} at the first row "
-             "(with its age interaction), and the reading plus the observables; multinomial logit, people split 70/30 by a hash of pidp, fitted on the 70, scored on the 30.\n\"Model posterior\": the class posterior the fitted mixture itself implies "
+             + f"\nEvery predictor set is on top of a quadratic in age at the first row: education (three groups), income rank, the three observables together, and with region and ethnic group, {V} at the second held row (t-1) or the first (t-2) "
+             "(with its age interaction), both readings, and the first reading plus the observables; multinomial logit, people split 70/30 by a hash of pidp, fitted on the 70, scored on the 30.\n\"Model posterior\": the class posterior the fitted mixture itself implies "
              "from the single first observation (class prior times the marginal density at that age; stationary variance plus \"spike\" under AR(1) + \"spike\"), no regression. "
              "AUC is the macro one-vs-rest AUC over the three types." + (" The multidimensional model's posterior uses both first-row scores." if n_md else "")
              + (" The posterior from both held rows is the Kalman likelihood of the two rows from the stationary state." if KHELD == 2 else ""))

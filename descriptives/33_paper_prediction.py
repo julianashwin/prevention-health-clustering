@@ -24,6 +24,7 @@ the panel alive) is written to paper_prediction_death_heldout.csv for
 version. Predictors at t, each set carrying a quadratic in age:
   age                    age only
   + observables          education (4 groups), income rank, sex
+  + observables, region, ethnicity   and the region (12) and ethnic group (5)
   + iid class            posterior class probabilities, independent residuals
   + AR(1)+"spike" class  posterior class probabilities, AR(1) plus "spike"
   + multidim class       posterior class probabilities, multidimensional fit
@@ -61,7 +62,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import CONTRACT, DESC, FIG, TAB, load_measure, write_table  # noqa: E402
+from _paper_common import CONTRACT, DESC, FIG, TAB, load_measure, region_ethnicity, write_table  # noqa: E402
 from _style import CLUSTER, GREEN, INK2, ORANGE, PURPLE, VERM, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
@@ -302,6 +303,7 @@ def outcomes(v: str, at: pd.DataFrame, k: int) -> pd.DataFrame:
     d["female"] = d["pidp"].map(panel.groupby("pidp")["sex"].first()).eq(2).astype(float)
     for g in EDUC:
         d[f"educ_{g}"] = (d["educ_group"] == g).astype(float)
+    d = d.join(region_ethnicity(d["pidp"].unique()), on="pidp")
     d["a"] = (d["age"] - 55) / 10
     return d
 
@@ -313,7 +315,7 @@ def score_sets(s: pd.DataFrame, oc: str, kind: str, SETS: dict, extra: dict | No
     out = []
     for name, cols in {**SETS, **(extra or {})}.items():
         s2, t2, y2 = s, test, y
-        need = [c for c in cols if c in ("y_lag", "md_c1", "md_c2", "md_fc", "mdc_c1", "mdc_c2", "mdc_fc", "emp_t", "km_1", "km_2", "km_fc")]
+        need = [c for c in cols if c in ("y_lag", "md_c1", "md_c2", "md_fc", "mdc_c1", "mdc_c2", "mdc_fc", "emp_t", "km_1", "km_2", "km_fc", *[c for c in cols if c.startswith(("region_", "ethnic_"))])]
         if need:
             keep = s[need].notna().all(axis=1).to_numpy()
             s2, t2, y2 = s[keep], test[keep], y[keep]
@@ -363,9 +365,11 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
         f["km_fc"] = kmeans_forecast(f, km[1], target) if km is not None else np.nan
         frames[k] = outcomes(v, f, k)
     obs = ["income_rank_mean", "female"] + [f"educ_{g}" for g in EDUC]
+    regeth = [c for c in frames[1].columns if c.startswith(("region_", "ethnic_"))]
     SETS = {
         "age": [],
         "+ observables": obs,
+        "+ observables, region, ethnicity": obs + regeth,
         "+ iid class": ["base_c1", "base_c2"],
         '+ AR(1)+"spike" class': ["ssm_c1", "ssm_c2"],
         "+ multidim class": ["md_c1", "md_c2"],
@@ -445,7 +449,7 @@ def main() -> int:
         fig, axes = plt.subplots(len(VSEL), len(OUT), figsize=(12.5, 5.2 * len(VSEL)), sharey="row", squeeze=False)
         COHORT_COL = "#6a51a3"
         KM_COL = "#b8860b"
-        cols = [INK2, CLUSTER[2], CLUSTER[1], CLUSTER[0], COHORT_COL, KM_COL, ORANGE, ORANGE, VERM, VERM, COHORT_COL, KM_COL, PURPLE, PURPLE, GREEN]
+        cols = [INK2, INK2, CLUSTER[2], CLUSTER[1], CLUSTER[0], COHORT_COL, KM_COL, ORANGE, ORANGE, VERM, VERM, COHORT_COL, KM_COL, PURPLE, PURPLE, GREEN]
         for r, v in enumerate(VSEL):
             tv = tabs[v]; sets = metas[v]["sets"]; names = sets[1:]
             for ax, (oc, olab, kind, horizons) in zip(axes[r], metas[v]["out"]):

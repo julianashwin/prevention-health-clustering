@@ -404,3 +404,31 @@ def bayes_fit(fit_dir, v: str, Kc: int = K, chains=None, contract: Path | None =
     comp = pd.DataFrame(w[person], columns=cols).assign(age=long["age"].to_numpy()).groupby("age").mean()
     return {"theta": theta, "coef": coef, "sigma": sigma, "mom": mom, "post": post, "comp": comp,
             "rhat": rhat, "chains": chains, "K": Kc, "obs_rows": obs_rows, **cohort, **extra}
+
+
+# Region and ethnicity, person-level, for the prediction exercises' wider observables set.
+# Region: the first valid government office region (gor_dv, 12 regions; London the reference).
+# Ethnicity: the first valid racel_dv in five groups (white the reference).
+REGION_REF, ETHNIC_REF = 7, "white"
+ETHNIC_GROUPS = ["mixed", "asian", "black", "other"]
+_REGETH: dict = {}
+
+
+def region_ethnicity(pids) -> pd.DataFrame:
+    """Dummies for region and ethnic group, one row per pidp, from the first valid wave."""
+    if "panel" not in _REGETH:
+        _REGETH["panel"] = pd.read_csv(PROCESSED_DATA_DIR / "ukhls_indresp_processed.csv", usecols=["pidp", "wave", "racel_dv", "gor_dv"])
+    panel = _REGETH["panel"]
+    panel = panel[panel["pidp"].isin(pids)].sort_values(["pidp", "wave"])
+    first = lambda s: s.where(s > 0).dropna().iloc[0] if (s > 0).any() else np.nan  # noqa: E731
+    per = panel.groupby("pidp").agg(gor=("gor_dv", first), racel=("racel_dv", first))
+    rc = per["racel"]
+    per["ethnic"] = np.select([rc <= 4, rc <= 8, rc <= 13, rc <= 16, rc.notna()], ["white", "mixed", "asian", "black", "other"], None)
+    out = pd.DataFrame(index=per.index)
+    for g in sorted(per["gor"].dropna().unique()):
+        if g != REGION_REF:
+            out[f"region_{int(g)}"] = (per["gor"] == g).astype(float)
+    for g in ETHNIC_GROUPS:
+        out[f"ethnic_{g}"] = (per["ethnic"] == g).astype(float)
+    out[per["gor"].isna() | per["ethnic"].isna()] = np.nan
+    return out
