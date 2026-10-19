@@ -48,7 +48,9 @@ samples. A multidimensional fit that has not finished leaves its rows blank.
 Outputs: paper/figures/fig_prediction.png, paper/tables/tab_prediction.tex (theta),
          paper/figures/fig_prediction_h.png, paper/tables/tab_prediction_h.tex (h, appendix),
          artifacts/descriptives/paper_prediction.csv,
-         artifacts/descriptives/paper_prediction_death_heldout.csv
+         artifacts/descriptives/paper_prediction_death_heldout.csv,
+         artifacts/descriptives/paper_prediction_by_age.csv (R-squared and its gain over age
+         alone within age bands at t, for a few sets, on the people with a lag observed)
 """
 
 from __future__ import annotations
@@ -334,6 +336,30 @@ def score_sets(s: pd.DataFrame, oc: str, kind: str, SETS: dict, extra: dict | No
     return out
 
 
+AGE_BANDS = [(20, 34), (35, 49), (50, 64), (65, 90)]
+BY_AGE_SETS = ["age", "+ observables", "+ {v}(t)", "+ {v}(t), {v}(t-1)", '+ AR(1)+"spike" forecast']
+
+
+def scores_by_age(s: pd.DataFrame, oc: str, SETS: dict, names: list[str]) -> list[dict]:
+    """R-squared within age bands at t, on the test 30%, of each named set fitted on the
+    whole 70% (the same fits as score_sets), and its gain over age alone in the band."""
+    test = ((pd.util.hash_pandas_object(s["pidp"], index=False) % 10) >= 7).to_numpy()
+    y = s[oc].to_numpy(float); out = []
+    preds = {}
+    for name in names:
+        cols = SETS[name]
+        X = np.column_stack([np.ones(len(s)), s["a"], s["a"] ** 2] + [s[c].to_numpy(float) for c in cols])
+        b = np.linalg.lstsq(X[~test], y[~test], rcond=None)[0]; preds[name] = X @ b
+    for lo, hi in AGE_BANDS:
+        sel = test & s["age"].between(lo, hi).to_numpy()
+        yb = y[sel]; ss = ((yb - yb.mean()) ** 2).sum()
+        base = 1 - ((yb - preds["age"][sel]) ** 2).sum() / ss
+        for name in names:
+            r2 = 1 - ((yb - preds[name][sel]) ** 2).sum() / ss
+            out.append({"predictors": name, "band": f"{lo}-{hi}", "n_test": int(sel.sum()), "score": float(r2), "gain": float(r2 - base)})
+    return out
+
+
 def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
     long = pd.read_csv(CONTRACT / "long.csv"); n = long.groupby("pidp")["age"].transform("size")
     sub = long[n >= MIN_OBS].sort_values(["pidp", "age"]).reset_index(drop=True)
@@ -389,7 +415,7 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
     OUT = [("y_next", f"health, ${VL[v]}$", "r2", (1, 2)), ("cost_next", "cost proxy (£)", "r2", (1, 2)),
            ("emp_next", f"employed, ages 20-{EMP_MAX_AGE}", "auc", (1, 2))]
     base_cols = ["a", v] + obs + ["base_c1", "ssm_c1", "ssm_fc"]
-    rows, info = [], {}
+    rows, info, by_age = [], {}, []
     for oc, olab, kind, horizons in OUT:
         for k in horizons:
             s = frames[k].dropna(subset=[oc] + base_cols)
@@ -399,6 +425,9 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
             info[(oc, k)] = {"n": len(s), "rate": float(y.mean()) if kind == "auc" else np.nan}
             for r in score_sets(s, oc, kind, SETS, extra):
                 rows.append({"variant": v, "outcome": oc, "outcome_label": olab, "horizon": k, "metric": kind, **r})
+            if kind == "r2":
+                names = [n.format(v=v) for n in BY_AGE_SETS]
+                by_age += [{"variant": v, "outcome": oc, "horizon": k, **r} for r in scores_by_age(s.dropna(subset=["y_lag"]), oc, SETS, names)]
             print(f"{v} {oc} t+{k}: {len(s):,} people" + (f", event rate {y.mean():.3%}" if kind == "auc" else ""))
     # held-out death, for 41_paper_mortality_prediction.py
     s = frames[3].dropna(subset=["died_next"] + base_cols)
@@ -406,20 +435,33 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
     print(f"{v} died_next after the last interview: {len(s):,} people, event rate {s['died_next'].mean():.3%}")
     t = pd.DataFrame(rows)
     t["gain"] = t["score"] - t.groupby(["outcome", "horizon"])["score"].transform("first")
-    return t, {"sets": list(SETS), "out": OUT, "have_md": have_md, "info": info, "death": death}
+    return t, {"sets": list(SETS), "out": OUT, "have_md": have_md, "info": info, "death": death, "by_age": pd.DataFrame(by_age)}
 
 
 def main() -> int:
     apply_style()
     md_long = pd.read_csv(MD_CONTRACT / "long.csv", usecols=["pidp", "age"])
     md_people = md_long.groupby("pidp").size().pipe(lambda s: s[s >= MIN_OBS]).index.to_numpy()
+    # --stage v runs one variant and caches it; --assemble writes the outputs from the cached
+    # variants (for machines where one run of both is too long); neither flag runs both in turn
+    import pickle
+    cache = DESC / ".cache_33"
+    if "--stage" in sys.argv:
+        v = sys.argv[sys.argv.index("--stage") + 1]
+        cache.mkdir(exist_ok=True)
+        pickle.dump(run_variant(v, md_people), open(cache / f"{v}.pkl", "wb"))
+        print(f"staged {v}"); return 0
     tabs, metas = {}, {}
     for v in VARIANTS:
-        tabs[v], metas[v] = run_variant(v, md_people)
+        if "--assemble" in sys.argv:
+            tabs[v], metas[v] = pickle.load(open(cache / f"{v}.pkl", "rb"))
+        else:
+            tabs[v], metas[v] = run_variant(v, md_people)
     t = pd.concat(tabs.values()); t.to_csv(DESC / "paper_prediction.csv", index=False)
     death = pd.concat([metas[v]["death"] for v in VARIANTS])
     death["gain"] = death["score"] - death.groupby("variant")["score"].transform("first")
     death.to_csv(DESC / "paper_prediction_death_heldout.csv", index=False)
+    pd.concat([metas[v]["by_age"] for v in VARIANTS]).to_csv(DESC / "paper_prediction_by_age.csv", index=False)
     OUT = metas["h"]["out"]
     colkeys = [(oc, k) for oc, _, _, hz in OUT for k in hz]
     # the paper's figure and table are theta; the h versions go to the appendix
