@@ -23,8 +23,8 @@ Multinomial logit on the modal type, people split 70/30 by a hash of pidp, fitte
 mean per-type recall, 1/3 by chance) and the macro one-vs-rest AUC. For the mixtures also
 the model's own answer: the class posterior implied by the first observation alone
 under the fitted parameters, and from both held rows (the Kalman likelihood of the two
-rows from the stationary state). The by-age split of the first-reading accuracy goes to
-a csv.
+rows from the stationary state). The by-age split of the accuracy of each single reading (by the age
+it was taken) goes to a csv.
 
 The first-row-only variant (fits with one row held out) is retired; its fits and outputs
 are in artifacts/archive/firstho/.
@@ -276,12 +276,15 @@ def main() -> int:
             r = score(df, [], test, probs=df[[f"model2_p{k}" for k in range(K)]].to_numpy()); r.pop("probs")
             rows.append({"typology": tag, "label": lab, "predictors": MODEL2, "n": len(df), "n_test": int(test.sum()), "majority": majority, **r})
             print(f"  {MODEL2:36s} accuracy {r['accuracy']:.3f}  macro AUC {r['auc']:.3f}")
-        pred = probs_by_set[HEALTH].argmax(axis=1)
-        for lo, hi in AGE_BANDS:
-            sel = test & df["age0"].between(lo, hi).to_numpy()
-            yb = df.loc[sel, "type"].to_numpy()
-            by_age.append({"typology": tag, "label": lab, "band": f"{lo}-{hi}", "n_test": int(sel.sum()),
-                           "accuracy": float((pred[sel] == yb).mean()), "majority": float(pd.Series(yb).value_counts(normalize=True).max())})
+        for set_name, age_col in ((HEALTH, "age0"), (f"+ {V}(1)", "age1")):     # each reading by the age it was taken
+            pred = probs_by_set[set_name].argmax(axis=1)
+            for lo, hi in AGE_BANDS:
+                sel = test & df[age_col].between(lo, hi).to_numpy()
+                yb = df.loc[sel, "type"].to_numpy(); pb = pred[sel]
+                by_age.append({"typology": tag, "label": lab, "predictors": set_name, "band": f"{lo}-{hi}", "n_test": int(sel.sum()),
+                               "accuracy": float((pb == yb).mean()),
+                               "balanced_accuracy": float(np.mean([(pb[yb == k] == k).mean() for k in np.unique(yb)])),
+                               "majority": float(pd.Series(yb).value_counts(normalize=True).max())})
     t = pd.DataFrame(rows); t.to_csv(DESC / f"paper_type_from_initial{SFX}.csv", index=False)
     ba = pd.DataFrame(by_age); ba.to_csv(DESC / f"paper_type_from_initial_by_age{SFX}.csv", index=False)
     have = [(tag, lab) for tag, lab in TYPOLOGIES if tag in frames]
