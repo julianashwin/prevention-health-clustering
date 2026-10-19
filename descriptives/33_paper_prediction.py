@@ -6,7 +6,9 @@ least five rows on the health contract): the single-channel K = 3 fits on the
 paper's measure under independent residuals (iid) and under AR(1) plus a
 one-period "spike" (artifacts/health-next/health-{v}-{base,ssm}-ho), and the
 multidimensional fit, physical + mental GRM + Gompertz-Makeham mortality,
-under AR(1) plus "spike" (artifacts/multidim-health/{v}-ssm-mort-ho). Class
+under AR(1) plus "spike" (artifacts/multidim-health/{v}-ssm-mort-ho); and partial
+K-means on the same fitted windows (22_paper_kmeans.py --last-held, variants
+{v}_last2held). Class
 posteriors and the models' own one-step forecasts are computed from the
 fitted window alone, at the posterior mean, so nothing at t+1 informs them.
 
@@ -25,12 +27,15 @@ version. Predictors at t, each set carrying a quadratic in age:
   + iid class            posterior class probabilities, independent residuals
   + AR(1)+"spike" class  posterior class probabilities, AR(1) plus "spike"
   + multidim class       posterior class probabilities, multidimensional fit
+  + K-means type         the partial K-means type of the fitted window (dummies)
   + v(t)                 the measure at t
   + v(t), v(t-1)         and its lag (people with a lag observed)
   + AR(1)+"spike" forecast   the model's own forecast of v at the outcome's
                          age: the class-weighted path plus the filtered
                          state carried forward from t
   + multidim forecast    the same from the multidimensional fit
+  + K-means forecast     the K-means type's mean of the measure at the outcome's
+                         age (the type's centroid profile; no person-level state)
   + AR(1)+"spike" class, v(t)
   + multidim class, v(t)
   + all                  AR(1)+"spike" class, v(t), observables
@@ -231,6 +236,32 @@ def multidim(v: str, fit: str = "ssm-mort-ho", tag: str = "md"):
                   "s": mom[ch[0]]["sd"], "pidp": pids, "age_fe": window_ages(d, sub)[0], "offset": offset}
 
 
+def kmeans_last_held(v: str):
+    """Partial K-means types on the fitted windows (each person's last two rows held out) and
+    the types' mean profiles by age, from 22_paper_kmeans.py --last-held; None until that has run."""
+    var = f"{v}_last2held"
+    lab = pd.read_parquet(DESC / "paper_kmeans_labels.parquet")
+    lab = lab[lab["variant"] == var]
+    if lab.empty:
+        return None
+    traj = pd.read_csv(DESC / "paper_kmeans_trajectories.csv")
+    traj = traj[(traj["variant"] == var) & (traj["lo"] == 20) & (traj["hi"] == 90)]
+    prof = traj.pivot(index="age", columns="cluster", values="mean").reindex(range(20, 90)).interpolate(limit_direction="both")
+    post = lab[["pidp", "cluster"]].rename(columns={"cluster": "km_type"})
+    for c in range(K - 1):
+        post[f"km_{c + 1}"] = (post["km_type"] == c).astype(float)
+    return post, prof
+
+
+def kmeans_forecast(at: pd.DataFrame, prof: pd.DataFrame, target_age: np.ndarray) -> np.ndarray:
+    """The person's K-means type's mean of the measure at ``target_age`` (integer age, 20-89)."""
+    a = np.clip(np.floor(np.asarray(target_age, float)), 20, 89)
+    out = np.full(len(at), np.nan); ok = at["km_type"].notna().to_numpy() & ~np.isnan(a)
+    vals = prof.to_numpy()
+    out[ok] = vals[(a[ok] - 20).astype(int), at["km_type"].to_numpy()[ok].astype(int)]
+    return out
+
+
 def add_forecasts(at: pd.DataFrame, specs: list[dict], target_age: np.ndarray) -> pd.DataFrame:
     """The models' forecasts of the measure at ``target_age`` for the people in ``at``."""
     for sp in specs:
@@ -282,7 +313,7 @@ def score_sets(s: pd.DataFrame, oc: str, kind: str, SETS: dict, extra: dict | No
     out = []
     for name, cols in {**SETS, **(extra or {})}.items():
         s2, t2, y2 = s, test, y
-        need = [c for c in cols if c in ("y_lag", "md_c1", "md_c2", "md_fc", "mdc_c1", "mdc_c2", "mdc_fc", "emp_t")]
+        need = [c for c in cols if c in ("y_lag", "md_c1", "md_c2", "md_fc", "mdc_c1", "mdc_c2", "mdc_fc", "emp_t", "km_1", "km_2", "km_fc")]
         if need:
             keep = s[need].notna().all(axis=1).to_numpy()
             s2, t2, y2 = s[keep], test[keep], y[keep]
@@ -320,6 +351,8 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
         at = at.merge(post, on="pidp")
     at = at.merge(md[0], on="pidp", how="left") if have_md else at.assign(md_c1=np.nan, md_c2=np.nan)
     at = at.merge(mdc[0], on="pidp", how="left") if have_mdc else at.assign(mdc_c1=np.nan, mdc_c2=np.nan)
+    km = kmeans_last_held(v)
+    at = at.merge(km[0], on="pidp", how="left") if km is not None else at.assign(km_type=np.nan, km_1=np.nan, km_2=np.nan)
     frames = {}
     for k, target in ((1, at["age_hs"].to_numpy()), (2, at["age_he"].to_numpy()), (3, at["age_he"].to_numpy() + 1.0)):
         f = add_forecasts(at.copy(), specs, target)
@@ -327,6 +360,7 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
             f["md_fc"] = np.nan
         if not have_mdc:
             f["mdc_fc"] = np.nan
+        f["km_fc"] = kmeans_forecast(f, km[1], target) if km is not None else np.nan
         frames[k] = outcomes(v, f, k)
     obs = ["income_rank_mean", "female"] + [f"educ_{g}" for g in EDUC]
     SETS = {
@@ -336,11 +370,13 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
         '+ AR(1)+"spike" class': ["ssm_c1", "ssm_c2"],
         "+ multidim class": ["md_c1", "md_c2"],
         "+ multidim cohort class": ["mdc_c1", "mdc_c2"],
+        "+ K-means type": ["km_1", "km_2"],
         f"+ {v}(t)": [v],
         f"+ {v}(t), {v}(t-1)": [v, "y_lag"],
         '+ AR(1)+"spike" forecast': ["ssm_fc"],
         "+ multidim forecast": ["md_fc"],
         "+ multidim cohort forecast": ["mdc_fc"],
+        "+ K-means forecast": ["km_fc"],
         f'+ AR(1)+"spike" class, {v}(t)': ["ssm_c1", "ssm_c2", v],
         f"+ multidim class, {v}(t)": ["md_c1", "md_c2", v],
         "+ all": ["ssm_c1", "ssm_c2", v] + obs,
@@ -397,7 +433,7 @@ def main() -> int:
         groups = [(olab.replace(f"${VL['h']}$", "measure"), "AUC" if kind == "auc" else "$R^2$", len(hz)) for oc, olab, kind, hz in OUT]
         with open(TAB / f"tab_prediction{sfx}.tex", "w") as f:
             f.write("\\begin{tabular}{l" + "r" * len(colkeys) + "}\n\\toprule\n")
-            f.write("predictors at $t$ & " + " & ".join(f"\\multicolumn{{{n}}}{{c}}{{{g.replace('£', '\\pounds')} ({m})}}" for g, m, n in groups) + " \\\\\n")
+            f.write("predictors at $t$ & " + " & ".join(f"\\multicolumn{{{n}}}{{c}}{{{g} ({m})}}" for g, m, n in [(g.replace("£", "\\pounds"), m, n) for g, m, n in groups]) + " \\\\\n")
             start, cm = 2, []
             for _, _, n in groups:
                 cm.append(f"\\cmidrule(lr){{{start}-{start + n - 1}}}"); start += n
@@ -408,7 +444,8 @@ def main() -> int:
         # figure: gain over age, one row per measure, one panel per outcome, paired bars for the horizons
         fig, axes = plt.subplots(len(VSEL), len(OUT), figsize=(12.5, 5.2 * len(VSEL)), sharey="row", squeeze=False)
         COHORT_COL = "#6a51a3"
-        cols = [INK2, CLUSTER[2], CLUSTER[1], CLUSTER[0], COHORT_COL, ORANGE, ORANGE, VERM, VERM, COHORT_COL, PURPLE, PURPLE, GREEN]
+        KM_COL = "#b8860b"
+        cols = [INK2, CLUSTER[2], CLUSTER[1], CLUSTER[0], COHORT_COL, KM_COL, ORANGE, ORANGE, VERM, VERM, COHORT_COL, KM_COL, PURPLE, PURPLE, GREEN]
         for r, v in enumerate(VSEL):
             tv = tabs[v]; sets = metas[v]["sets"]; names = sets[1:]
             for ax, (oc, olab, kind, horizons) in zip(axes[r], metas[v]["out"]):

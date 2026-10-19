@@ -21,7 +21,8 @@ A fourth lifecycle run clusters each person's predicted cost, the pooled cost cu
 on h evaluated at every contract row (_paper_common.load_predicted_cost_rows): the
 cost-anchored cardinalisation of the measure, for the appendix comparison.
 
---full-only runs the lifecycle fits; --windows-only the windows; --variants h,cost
+--last-held runs theta and h with each person's last two rows held out, for the forecasts of
+33_paper_prediction.py. --full-only runs the lifecycle fits; --windows-only the windows; --variants h,cost
 restricts either to the named variants. --frailty runs only the lifecycle fits on the
 comparison measures, the 31-deficit frailty index and log(frailty + 1/31) (contract columns
 ``frailty``, ``logfrailty``; higher = frailer, so type 1 is the highest), and adds
@@ -60,6 +61,11 @@ FRAILTY = ["frailty", "logfrailty"]   # comparison measures, --frailty only
 # "theta_firstheld", "h_firstheld", "theta_first2held", "h_first2held" for 43_paper_type_from_initial.py
 FIRSTHELD = {"theta_firstheld": ("theta", 1), "h_firstheld": ("h", 1),
              "theta_first2held": ("theta", 2), "h_first2held": ("h", 2)}
+# --last-held: theta and h with each person's last two rows (by age) dropped, people with at least
+# five rows, the rows of the last-rows-held-out Bayesian fits (artifacts/health-next/*-ho) that
+# 33_paper_prediction.py forecasts from; stored as variants "theta_last2held", "h_last2held"
+LASTHELD = {"theta_last2held": ("theta", 2), "h_last2held": ("h", 2)}
+LASTHELD_MIN_OBS = 5
 # --denoise: theta with the one-period "spike" taken out before clustering, the K-means analogue of
 # reading the covariance matrix off the diagonal (29_paper_moments.py). Two versions, stored as variants:
 #   theta_nbr  each observed row replaced by the mean of the person's adjacent observed rows (the one
@@ -113,6 +119,12 @@ def panel(which: str = "health") -> pd.DataFrame:
                             usecols=["pidp", "age", v]).sort_values(["pidp", "age"])
             n = p.groupby("pidp")["age"].transform("size")
             p = p[(n >= k + 3) & (p.groupby("pidp").cumcount() >= k)].rename(columns={v: which})
+        elif which in LASTHELD:
+            v, k = LASTHELD[which]
+            p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
+                            usecols=["pidp", "age", v]).sort_values(["pidp", "age"])
+            n = p.groupby("pidp")["age"].transform("size")
+            p = p[(n >= LASTHELD_MIN_OBS) & (p.groupby("pidp").cumcount() < n - k)].rename(columns={v: which})
         else:
             p = pd.read_csv(PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1" / "long.csv",
                             usecols=["pidp", "age", *VARIANTS, *FRAILTY])
@@ -125,7 +137,7 @@ def run(task: tuple[str, int, int]):
     t0 = time.time()
     kv = KVAR.match(variant)
     col, k = (kv.group(1), int(kv.group(2))) if kv else (variant, K)
-    p = load_predicted_cost_rows("h") if variant == "predcost" else panel(variant if variant == "mental" or variant in FIRSTHELD or variant in DENOISE else "health")
+    p = load_predicted_cost_rows("h") if variant == "predcost" else panel(variant if variant == "mental" or variant in FIRSTHELD or variant in LASTHELD or variant in DENOISE else "health")
     p = p[p["age"].between(lo, hi)]
     if kv:
         p = p.rename(columns={col: variant})
@@ -170,9 +182,11 @@ def main() -> int:
         nxt = sys.argv[sys.argv.index("--first-held") + 1:]
         k = int(nxt[0]) if nxt and nxt[0].isdigit() else 1
         tasks = [(f"{v}_first{'' if k == 1 else k}held", *FULL) for v in ("theta", "h") if only is None or v in only]
+    elif "--last-held" in sys.argv:
+        tasks = [(f"{v}_last2held", *FULL) for v in ("theta", "h") if only is None or v in only]
     elif "--windows-only" not in sys.argv:
         tasks += [(v, *FULL) for v in VARIANTS + EXTRA if only is None or v in only]
-    if "--full-only" not in sys.argv and not any(f in sys.argv for f in ("--frailty", "--mental", "--first-held", "--denoise", "--k")):
+    if "--full-only" not in sys.argv and not any(f in sys.argv for f in ("--frailty", "--mental", "--first-held", "--last-held", "--denoise", "--k")):
         tasks += [(v, lo, hi) for v in ("h", "theta") if only is None or v in only for lo, hi in dict.fromkeys(SLIDING + BACKWARD)]
     print(f"{len(tasks)} runs", flush=True)
     with Pool(int(os.environ.get("KMEANS_PROCS", "3"))) as pool:
