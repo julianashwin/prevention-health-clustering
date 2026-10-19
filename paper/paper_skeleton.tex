@@ -590,6 +590,18 @@ Small robustness exercise:
 		\item The population line weights the classes by their posterior composition among the people observed at each age, so it carries the selection of Figure~\ref{fig:multidim}. Its healthy life expectancy at 65 ($13.5$ years) is above the ONS healthy life expectancy, which uses the same self-rated definition, because the panel's survivors at each age are healthier than the population's; the mortality calibration corrects the length of life but not the health of those observed. \todo{Decide whether to calibrate the healthy share as well, against the ONS health state life expectancies.}
 	\end{itemize}
 
+	\paragraph{Predicting death.}
+	\begin{itemize}
+		\item Can the classes predict death, rather than only describe survival by class? The held-out design of Section~\ref{subsec:pred} cannot answer this at a fixed horizon: everyone at $t$ has two more rows, and $t+2$ is by construction everyone's last interview. So mortality is shown two ways (Figure~\ref{fig:predmort}, \code{descriptives/41\_paper\_mortality\_prediction.py}). On the full-sample fits, death before the next wave at every person-wave at risk (308,949 person-waves, 1,267 deaths): the single-channel classes never saw the death record, and the multidimensional class is taken from the physical and mental channels only, with the full-likelihood version, which has seen the decedent's event, shown as an upper bound. On the held-out fits, death after the last interview against leaving the panel alive, predicted from $t$ (13,516 people, 7\% deaths), with the multidimensional posterior from survival through the fitted window only.
+		\item \textbf{Death is the outcome health predicts least beyond age.} On $\theta$, at every person-wave, age alone gives AUC $0.85$; any class adds about $0.03$ ($0.88$), the current score $0.05$ ($0.90$), and the classes add nothing on top of the score. The multidimensional class from the health channels alone does as well as the single-channel classes, and so does its own class-weighted Gompertz--Makeham hazard, one number per person; letting the class see the death record buys about $0.01$. On the held-out comparison the ordering is the same, from $0.80$ for age to $0.83$ for the classes or the score. Utilisation is the opposite case (Section~\ref{subsec:pred}): health does nearly all the work there, so prevention targeted on these measures should expect to move costs far more readily than mortality.
+	\end{itemize}
+	
+	\begin{figure}[H]\centering
+		\includegraphics[width=0.62\linewidth]{fig_prediction_mortality.png}
+		\caption{Predicting death, AUC gain over an age-only quadratic. (a, c) Every person-wave at risk on the full-sample fits: death before the next wave. (b, d) The held-out fits: death after the last interview against leaving the panel alive, predicted from the last fitted row. The cohort rows use the multidimensional fit with birth-decade shifts. On $\theta$; the same figure on $h$ is in Appendix~\ref{app:measures}.}
+		\label{fig:predmort}
+	\end{figure}
+
 	\subsection{(C) Types against observables}
 	\label{sec:observables}
 	
@@ -609,7 +621,7 @@ Small robustness exercise:
 	
 	
 	
-	\subsection{Predictive value}
+	\subsection{Predictive value} \label{subsec:pred}
 	
 	Broadly two types of exercise here - hold out the last two observed rows, or hold out the first two observed rows. The first tells us how valuable/accurate these clusters are at predicting future developments, and the second tells us how easy cluster membership is to predict based on health and other observables. 
 	
@@ -634,17 +646,6 @@ Small robustness exercise:
 		\label{tab:pred}
 	\end{table}
 	
-	\paragraph{Predicting death.}
-	\begin{itemize}
-		\item The held-out design cannot predict death at a fixed horizon: everyone at $t$ has two more rows, and $t+2$ is by construction everyone's last interview. So mortality is shown two ways (Figure~\ref{fig:predmort}, \code{descriptives/41\_paper\_mortality\_prediction.py}). On the full-sample fits, death before the next wave at every person-wave at risk (308,949 person-waves, 1,267 deaths): the single-channel classes never saw the death record, and the multidimensional class is taken from the physical and mental channels only, with the full-likelihood version, which has seen the decedent's event, shown as an upper bound. On the held-out fits, death after the last interview against leaving the panel alive, predicted from $t$ (13,516 people, 7\% deaths), with the multidimensional posterior from survival through the fitted window only.
-		\item \textbf{Death is the outcome health predicts least beyond age.} On $\theta$, at every person-wave, age alone gives AUC $0.85$; any class adds about $0.03$ ($0.88$), the current score $0.05$ ($0.90$), and the classes add nothing on top of the score. The multidimensional class from the health channels alone does as well as the single-channel classes, and so does its own class-weighted Gompertz--Makeham hazard, one number per person; letting the class see the death record buys about $0.01$. On the held-out comparison the ordering is the same, from $0.80$ for age to $0.83$ for the classes or the score. Utilisation is the opposite case: health does nearly all the work there, so prevention targeted on these measures should expect to move costs far more readily than mortality.
-	\end{itemize}
-	
-	\begin{figure}[H]\centering
-		\includegraphics[width=0.62\linewidth]{fig_prediction_mortality.png}
-		\caption{Predicting death, AUC gain over an age-only quadratic. (a, c) Every person-wave at risk on the full-sample fits: death before the next wave. (b, d) The held-out fits: death after the last interview against leaving the panel alive, predicted from the last fitted row. The cohort rows use the multidimensional fit with birth-decade shifts. On $\theta$; the same figure on $h$ is in Appendix~\ref{app:measures}.}
-		\label{fig:predmort}
-	\end{figure}
 
 	\begin{figure}[H]\centering
 		\includegraphics[width=0.95\linewidth]{fig_type_from_initial_first2.png}
