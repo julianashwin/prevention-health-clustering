@@ -70,8 +70,12 @@ VL = {"theta": r"$\theta$", "h": "$h$"}[V]
 FH = ARTIFACTS_DIR / "health-firstheld"
 MD_DIR = ARTIFACTS_DIR / "multidim-health"
 MD = MD_DIR / f"theta-ssm-mort-{HO}"
+# the birth-decade-shift twin replaces it once it has finished
+MD_COHORT = MD_DIR / f"theta-ssm-mort-cohort-{HO}"
+if (MD_COHORT / "run_summary.json").exists():
+    MD = MD_COHORT
 MD_KHELD = KHELD
-MD_LABEL = "multidimensional"
+MD_LABEL = "multidimensional" + (", cohort shifts" if MD == MD_COHORT else "")
 EDUC = ["GCSE", "A-level", "degree or higher"]
 AGE_BANDS = [(20, 34), (35, 49), (50, 64), (65, 90)]
 TYPOLOGIES = [("kmeans", "K-means"), ("base", "independent residuals"), ("ssm", 'AR(1) + "spike"'),
@@ -168,6 +172,13 @@ def multidim_types(sub: pd.DataFrame, first: pd.DataFrame):
     sm = [p[f"sigma_meas[{c}]"]["mean"] for c in (1, 2)]
     mort = (np.array([p[f"log_b[{k}]"]["mean"] for k in range(1, K + 1)]),
             np.array([p[f"gomp_slope[{k}]"]["mean"] for k in range(1, K + 1)]), p["makeham[1]"]["mean"])
+    n_coh = d.get("N_cohort", 1)
+    if n_coh > 1:   # net every score of its decade shift, as Stan computed the likelihood
+        ce = np.zeros((2, n_coh))
+        for c in range(2):
+            ce[c, 1:] = [p[f"cohort_effect[{c + 1},{j}]"]["mean"] for j in range(2, n_coh + 1)]
+        cid = np.asarray(d["cohort_id"]) - 1
+        Ys = [Ys[c] - ce[c, cid] for c in range(2)]
     w, _ = M33.posterior_and_forecast(d, Ys, coefs, sigmas, sm, rhos, theta, mort=mort)
     fs, hs, he = (np.asarray(d[k]) for k in ("fit_start", "hold_start", "hold_end"))
     assert (he + 1 == fs).all() and (he - hs + 1 == MD_KHELD).all(), "the held rows are not the rows before the fitted window"
