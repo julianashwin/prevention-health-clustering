@@ -565,7 +565,7 @@ Small robustness exercise:
 	
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_windows_bayes.png}
-		\caption{The $K=3$ AR(1) plus ``spike'' classes on $\theta$ refitted on sliding twenty-year windows (a) and on windows expanding backwards from 90 (b), each on the people observed at least three times inside it, against the lifecycle classes in grey; (c) the co-assignment correlation with the lifecycle classes: over pairs of people in both fits, the correlation between the probability that the window fit puts the pair in the same class and the probability that the lifecycle fit does, which needs no correspondence between the two sets of labels and is 1 whenever the two posteriors coincide. Lower row: the worst class's posterior share of the person-waves observed at each age, for the sliding (d) and backward (e) windows, against the lifecycle fit in grey; (f) the worst class's share of each window's people. The partial K-means version is Figure~\ref{fig:windows_kmeans} in Appendix~\ref{app:kmeans}, and K-means on $h$ is in Appendix~\ref{app:measures}.}
+		\caption{The $K=3$ AR(1) plus ``spike'' classes on $\theta$ refitted on sliding twenty-year windows (a) and on windows expanding backwards from 90 (b), each on the people observed at least three times inside it, against the lifecycle classes in grey; (c) the co-assignment correlation with the lifecycle classes: over pairs of people in both fits, the correlation between the probability that the window fit puts the pair in the same class and the probability that the lifecycle fit does, which needs no correspondence between the two sets of labels and is 1 whenever the two posteriors coincide. Lower row: the worst class's posterior share of the person-waves observed at each age, for the sliding (d) and backward (e) windows, against the lifecycle fit in grey; (f) the worst class's share of each window's people. The partial K-means version is Figure~\ref{fig:windows_kmeans} in Appendix~\ref{app:kmeans}, K-means on $h$ is in Appendix~\ref{app:measures}, and the $K=4$ twin is Figure~\ref{fig:windows_k4}.}
 		\label{fig:windows}
 	\end{figure}
 	
@@ -981,7 +981,7 @@ Small robustness exercise:
 
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_frailty_by_K.png}
-		\caption{The frailty index and log frailty under AR(1) plus ``spike'' by number of classes: class paths and the posterior class composition by age at $K=3$ and $K=4$ ($K=5$ when fitted), class 1 the frailest. On the frailty index $K=4$ splits the $K=3$ middle class into a steeper riser (30\%, persistence $0.87$) and a flatter one (28\%, $0.57$); the frailest class keeps its path and shrinks from 27\% to 20\%, and the healthiest stays at the floor with a persistence of $0.22$. The frailest class's share of the person-waves peaks around 60 and falls after, the mortality selection the index sees. The $K=4$ fit is read over the three chains that share its mode.}
+		\caption{The frailty index and log frailty under AR(1) plus ``spike'' by number of classes: class paths and the posterior class composition by age at $K=3$ and $K=4$ ($K=5$ when fitted), class 1 the frailest. On the frailty index $K=4$ splits the $K=3$ middle class into a steeper riser (30\%, persistence $0.87$) and a flatter one (28\%, $0.57$); the frailest class keeps its path and shrinks from 27\% to 20\%, and the healthiest stays at the floor with a persistence of $0.22$. The frailest class's share of the person-waves peaks around 60 and falls after, the mortality selection the index sees. On log frailty $K=4$ splits the healthy end instead: the frailest class shrinks from 37\% to 27\% and the middle from 53\% to 47\%, a new class (19\%, persistence $0.83$) rises late from near the floor, and the floor class falls from 10\% to 7\% (persistence $0.36$). The frailty $K=4$ fit is read over the three chains that share its mode; the log-frailty $K=4$ fit has all four chains at one mode.}
 		\label{fig:frailty_by_K}
 	\end{figure}
 	
@@ -1166,6 +1166,15 @@ Small robustness exercise:
 		\item \textbf{The number of classes refines who is in the worst type and tightens it, but leaves its mean shape alone.} Under K-means the worst type halves from 18\% to 9\% by $K=5$, keeping 63\% and then 48\% of the $K=3$ members, its within-type sd falls from $0.66$ to $0.55$, and its path keeps the same shape shifted down by a quarter to a third of a unit. Under the mixture the worst class moves from 18\% to 14\% by modal label, keeps 84\% and 76\% of its $K=3$ members, and its path, persistence and within-class spread barely move; the added classes split the middle and the healthy. The two methods converge on the same core: the $K=5$ K-means worst type is almost entirely inside the mixture's worst class.
 	\end{itemize}
 	
+	\subsection{The windows at four classes}
+	\label{app:windows_k4}
+
+	\begin{figure}[H]\centering
+		\includegraphics[width=\linewidth]{fig_windows_bayes_k4.png}
+		\caption{As Figure~\ref{fig:windows}, at $K=4$: the AR(1) plus ``spike'' mixture with four classes refitted on each window, against the $K=4$ lifecycle fit in grey (worst class 22\%). Agreement with the lifecycle classes is lower than at $K=3$ once the window starts late: the backward windows' co-assignment correlation is $0.43$ from 70, $0.48$ from 60, $0.80$ from 50, $0.77$ from 40 and $0.99$ from 30, the sliding windows $0.43$--$0.86$. The windows starting at 50 or later find a small, very low class (8--17\%, near $-1.5$ to $-2$ in $\theta$) that sits below the lifecycle worst class, and the 40--60 window again has the largest worst class (31\%). The 70--90 fit split into two modes and is read over the two chains with the higher log posterior; in the 60--90 fit one chain had two classes swapped and is left out.}
+		\label{fig:windows_k4}
+	\end{figure}
+
 	\subsection{Birth-decade cohort effects}
 	\label{app:cohort}
 	\begin{figure}[H]\centering
@@ -1182,7 +1191,7 @@ Small robustness exercise:
 
 	\begin{figure}[H]\centering
 		\includegraphics[width=\linewidth]{fig_multidim_trajectories_by_K_cohort.png}
-		\caption{The multidimensional $K=4$ fit without and with the birth-decade shifts, and the $K=5$ fit without them (its shifted twin is running and joins the figure when it lands), columns as in Figure~\ref{fig:multidim}. With the shifts the four classes are the same as without (11, 26, 41 and 23\% against 11, 26, 42 and 21\%), with the same shapes on both channels and the same hazard ordering; the shifts on the physical channel run from $+0.49$ for the 1920s cohort to $-0.45$ for the 2000s relative to the 1950s, so the paths drawn at the 1950s sit higher at young ages. The shifted fit has two modes of identical log posterior; the one drawn reproduces the no-shift classes, the other puts 36\% in the steep decliner and 14\% in the healthy class. Each fit is read over the chains that share its mode.}
+		\caption{The multidimensional $K=4$ and $K=5$ fits without and with the birth-decade shifts, columns as in Figure~\ref{fig:multidim}. With the shifts the four classes are the same as without (11, 26, 41 and 23\% against 11, 26, 42 and 21\%), with the same shapes on both channels and the same hazard ordering; the shifts on the physical channel run from $+0.49$ for the 1920s cohort to $-0.45$ for the 2000s relative to the 1950s, so the paths drawn at the 1950s sit higher at young ages. The shifted fit has two modes of identical log posterior; the one drawn reproduces the no-shift classes, the other puts 36\% in the steep decliner and 14\% in the healthy class. At $K=5$ the shifted fit's two best chains agree (chains 2 and 3, about 170 log-posterior units above the next) and reproduce the no-shift classes read from its single best chain: 8, 9, 20, 40 and 22\% against 9, 8, 22, 40 and 21\%, with the same shapes and hazard ordering (worst-to-best hazard ratio at 55 of 16.9 against 13.8). Each fit is read over the chains that share its mode.}
 		\label{fig:multidim_k4_cohort}
 	\end{figure}
 	

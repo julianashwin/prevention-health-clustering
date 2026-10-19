@@ -66,7 +66,7 @@ FITS_K = [("theta-ssm-mort", "theta", 'AR(1) + "spike", K = 3', None, 3),
 FITS_K_COHORT = [("theta-ssm-mort-k4", "theta", 'K = 4, no shifts', [1, 3, 4], 4),
                  ("theta-ssm-mort-cohort-k4", "theta", 'K = 4, birth-decade shifts', [2, 3], 4),   # two modes of identical lp; 2, 3 reproduce the no-shift classes
                  ("theta-ssm-mort-k5", "theta", 'K = 5, no shifts', [1], 5),
-                 ("theta-ssm-mort-cohort-k5", "theta", 'K = 5, birth-decade shifts', None, 5)]
+                 ("theta-ssm-mort-cohort-k5", "theta", 'K = 5, birth-decade shifts', [2, 3], 5)]   # chains 2, 3 agree (lp -646,097); 1 and 4 sit 167 and 785 lower
 PALETTE = {3: CLUSTER, 4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
            5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}     # worst -> best, as 36_paper_trajectories.py
 # h-ssm-mort: chains 1-3 agree to three decimals; chain 4 sits in the mode with the
@@ -281,7 +281,7 @@ def main() -> int:
              "The Makeham constant is below 0.0001 in every fit. Each column has one vertical scale across its rows."
              + (" Class paths and observed class means are at the 1950s birth decade, every score net of its estimated decade shift." if COHORT else "")
              + (" Rows: K = 4 and 5 under AR(1) + \"spike\" without and with one level shift per birth decade common to the classes (paths at the 1950s, scores net of the shift); "
-                "classes ordered worst to best; each fit read over the chains that share its better mode (K = 4: chains 1, 3, 4 without shifts, 2, 3 with; K = 5: chain 1 without shifts)." if KCOHORT
+                "classes ordered worst to best; each fit read over the chains that share its better mode (K = 4: chains 1, 3, 4 without shifts, 2, 3 with; K = 5: chain 1 without shifts, 2, 3 with)." if KCOHORT
                 else " Rows: the class count K = 3, 4 and 5 under AR(1) + \"spike\"; classes ordered worst to best." if KMODE else "")
              + (" h + AR(1) + \"spike\" is read over the three chains that share a mode; the fourth sat in the mode "
              "with the class 2 and 3 intercepts pressed together on the ordering constraint, about 2,950 log-posterior units lower." if V_ONLY == "h" else ""),

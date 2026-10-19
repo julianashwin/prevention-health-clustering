@@ -22,7 +22,10 @@ separates a different grouping from a blurred one.
 Outputs: paper/figures/fig_windows_bayes.png, artifacts/descriptives/paper_windows_bayes.csv
 (per window) and paper_windows_bayes_composition.csv (the worst class's share by age per window).
 
-    PYTHONPATH=src .venv/bin/python descriptives/50_paper_windows_bayes.py
+--k 4: the K = 4 twin, on the K = 4 window fits (theta-ssm-k4-{lo}-{hi}, windows_queue.py --k 4)
+against the K = 4 lifecycle fit (health-k45/health-theta-ssm-k4); outputs carry a _k4 suffix.
+
+    PYTHONPATH=src .venv/bin/python descriptives/50_paper_windows_bayes.py [--k 4]
 """
 
 from __future__ import annotations
@@ -47,25 +50,34 @@ SLIDING = [(20, 40), (30, 50), (40, 60), (50, 70), (60, 80), (70, 90)]
 BACKWARD = [(70, 90), (60, 90), (50, 90), (40, 90), (30, 90), (20, 90)]
 WIN = ARTIFACTS_DIR / "health-windows"
 V = "theta"
+KW = int(sys.argv[sys.argv.index("--k") + 1]) if "--k" in sys.argv else K
+SFX = "" if KW == K else f"_k{KW}"
+TAG = f"{V}-ssm-" if KW == K else f"{V}-ssm-k{KW}-"
+LIFE = ARTIFACTS_DIR / "health-ssm" / f"health-{V}-ssm" if KW == K else ARTIFACTS_DIR / "health-k45" / f"health-{V}-ssm-k{KW}"
+PAL = CLUSTER if KW == K else {4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
+                               5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}[KW]   # worst -> best, as 39
+# windows whose chains split: read over the chains that share the better mode
+WINDOW_CHAINS = {"theta-ssm-k4-60-90": [1, 2, 3],   # chain 4 has classes 3 and 4 swapped, otherwise identical
+                 "theta-ssm-k4-70-90": [1, 4]}      # two modes; 1, 4 at lp -44,565, 2, 3 at -44,573 / -44,576
 
 
 def window_fit(lo: int, hi: int) -> dict:
     """bayes_fit on the window's contract, classes re-ordered worst to best by the mean path over the window."""
     if (lo, hi) == (MIN_AGE, MAX_AGE):
-        r = bayes_fit(ARTIFACTS_DIR / "health-ssm" / f"health-{V}-ssm", V, K); contract = CONTRACT
+        r = bayes_fit(LIFE, V, KW); contract = CONTRACT
     else:
         contract = PROCESSED_DATA_DIR / "contracts" / f"health_window_{lo}_{hi}_v1"
-        r = bayes_fit(WIN / f"{V}-ssm-{lo}-{hi}", V, K, contract=contract)
+        r = bayes_fit(WIN / f"{TAG}{lo}-{hi}", V, KW, chains=WINDOW_CHAINS.get(f"{TAG}{lo}-{hi}"), contract=contract)
     ages = np.arange(lo, hi + 1); A = (ages - 55) / 10
     paths = np.vstack([r["mom"]["mean"] + r["mom"]["sd"] * (c[0] + c[1] * A + c[2] * A ** 2) for c in r["coef"]])
     order = np.argsort(paths.mean(axis=1))                      # worst (lowest theta) first
-    cols = [f"class{k + 1}" for k in range(K)]
+    cols = [f"class{k + 1}" for k in range(KW)]
     post = r["post"][cols].to_numpy()[:, order]
     comp = r["comp"][cols].to_numpy()[:, order]
-    summ = json.load(open((ARTIFACTS_DIR / "health-ssm" / f"health-{V}-ssm" if (lo, hi) == (MIN_AGE, MAX_AGE) else WIN / f"{V}-ssm-{lo}-{hi}") / "run_summary.json"))
+    summ = json.load(open((LIFE if (lo, hi) == (MIN_AGE, MAX_AGE) else WIN / f"{TAG}{lo}-{hi}") / "run_summary.json"))
     return {"lo": lo, "hi": hi, "ages": ages, "paths": paths[order], "share": r["theta"][order], "rho": r["rho"][order],
             "post": pd.DataFrame(post, columns=cols, index=r["post"]["pidp"].to_numpy()),
-            "comp": pd.DataFrame(comp, columns=cols, index=r["comp"].index), "rhat": summ["max_structural_rhat"],
+            "comp": pd.DataFrame(comp, columns=cols, index=r["comp"].index), "rhat": r["rhat"], "chains": r["chains"],
             "n": len(r["post"]), "wall": summ.get("wall_hours")}
 
 
@@ -77,20 +89,20 @@ def main() -> int:
     for w, f in fits.items():
         print(f"{w[0]}-{w[1]}: {f['n']:,} people, rhat {f['rhat']:.3f}, shares {np.round(f['share'], 3)}, rho {np.round(f['rho'], 2)}, wall {f['wall']}")
     fig, axes = plt.subplots(2, 3, figsize=(12.5, 7.9), gridspec_kw={"wspace": 0.25, "hspace": 0.45}, squeeze=False)
-    fig.suptitle("$\\theta$, K = 3 AR(1) + \"spike\" classes refitted on age windows", x=0.125, ha="left", fontsize=11, fontweight="bold", y=0.96)
+    fig.suptitle(f"$\\theta$, K = {KW} AR(1) + \"spike\" classes refitted on age windows", x=0.125, ha="left", fontsize=11, fontweight="bold", y=0.96)
     cmap = plt.get_cmap("viridis")
     rows = []
     for col, (wins, name) in enumerate([(SLIDING, "sliding twenty-year windows"), (BACKWARD, "windows expanding backwards from 90")]):
         ax = axes[0, col]
-        for k in range(K):
+        for k in range(KW):
             ax.plot(full["ages"], full["paths"][k], color=INK3, lw=3.0, alpha=0.35, zorder=1)
         for lo, hi in wins:
             if (lo, hi) == (MIN_AGE, MAX_AGE):
                 continue
             f = fits[(lo, hi)]
-            for k in range(K):
-                ax.plot(f["ages"], f["paths"][k], color=CLUSTER[k], lw=1.0 + 2.5 * f["share"][k], zorder=2)
-                ax.plot([lo], [f["paths"][k][0]], color=CLUSTER[k], marker="|", ms=7)
+            for k in range(KW):
+                ax.plot(f["ages"], f["paths"][k], color=PAL[k], lw=1.0 + 2.5 * f["share"][k], zorder=2)
+                ax.plot([lo], [f["paths"][k][0]], color=PAL[k], marker="|", ms=7)
             modal = pd.Series(f["post"].to_numpy().argmax(axis=1), index=f["post"].index)
             both = modal.index.intersection(full_modal.index)
             rows.append({"kind": "sliding" if col == 0 else "backward", "lo": lo, "hi": hi, "people": f["n"], "shared": len(both),
@@ -98,7 +110,8 @@ def main() -> int:
                          "coassign_corr": coassignment_corr(f["post"], full["post"]),
                          "same_vs_full": float((modal.loc[both] == full_modal.loc[both]).mean()),
                          "worst_share": float(f["share"][0]), "worst_modal_share": float((modal == 0).mean()), "rhat": f["rhat"],
-                         "rho_worst": f["rho"][0], "rho_mid": f["rho"][1], "rho_best": f["rho"][2]})
+                         "rho_worst": f["rho"][0], "rho_mid": f["rho"][1], "rho_best": f["rho"][-1],
+                         "chains": "all" if f["chains"] is None else ",".join(map(str, f["chains"]))})
         ax.set_title(f"({'ab'[col]}) {'sliding twenty-year windows' if col == 0 else 'windows expanding backwards from 90'}", loc="left", fontsize=9.5)
         ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_xlabel("age")
     r = pd.DataFrame(rows)
@@ -128,18 +141,20 @@ def main() -> int:
     ax.set_ylim(0, 0.6); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
     ax.set_title("(f) worst class's share per window", loc="left", fontsize=9.5); ax.legend(loc="upper left", fontsize=7.5); ax.set_xlabel("age")
     share_ylim([axes[0, 0], axes[0, 1]])
-    footer = ("Each window refits the K = 3 AR(1) + \"spike\" mixture on theta on the people observed at least three times inside it (its own contract and fit). Coloured lines: the window's class paths at the posterior "
+    split = [f"{lo}-{hi} over chains {','.join(map(str, f['chains']))}" for (lo, hi), f in fits.items() if f.get("chains") is not None]
+    footer = (f"Each window refits the K = {KW} AR(1) + \"spike\" mixture on theta on the people observed at least three times inside it (its own contract and fit). Coloured lines: the window's class paths at the posterior "
               "mean over its own age range (tick at the start; line width proportional to the class share); grey: the lifecycle 20-90 fit. Panel (c): over pairs of people in both fits (a random 3,000), the correlation between the probability that the window fit puts the pair in the same class "
               "and the probability that the lifecycle fit does, sum_k p_ik p_jk under each; it needs no correspondence between the two sets of labels and is 1 whenever the two posteriors coincide "
               "(the adjusted Rand index of the modal classes is in the csv). Panels (d), (e): the worst class's posterior share of the person-waves observed at each age (five-year rolling mean), one line per window, "
-              "against the lifecycle fit in grey; (f) the worst class's share of each window's people. Classes ordered worst to best by the class path's mean over the window.")
+              "against the lifecycle fit in grey; (f) the worst class's share of each window's people. Classes ordered worst to best by the class path's mean over the window."
+              + (f" Windows whose chains split into modes are read over the chains that share the better mode: {'; '.join(split)}." if split else ""))
     fig.text(0.01, -0.01, "\n".join(textwrap.wrap(footer, 185)), fontsize=7.4, color=INK2, va="top")
-    fig.savefig(FIG / "fig_windows_bayes.png", bbox_inches="tight")
-    r.to_csv(DESC / "paper_windows_bayes.csv", index=False)
+    fig.savefig(FIG / f"fig_windows_bayes{SFX}.png", bbox_inches="tight")
+    r.to_csv(DESC / f"paper_windows_bayes{SFX}.csv", index=False)
     comp_rows = [{"lo": w[0], "hi": w[1], "age": int(a), "worst_share": float(v)} for w, f in fits.items() for a, v in f["comp"]["class1"].items()]
-    pd.DataFrame(comp_rows).to_csv(DESC / "paper_windows_bayes_composition.csv", index=False)
+    pd.DataFrame(comp_rows).to_csv(DESC / f"paper_windows_bayes_composition{SFX}.csv", index=False)
     print(r.round(3).to_string(index=False))
-    print(f"wrote fig_windows_bayes.png to {FIG}")
+    print(f"wrote fig_windows_bayes{SFX}.png to {FIG}")
     return 0
 
 
