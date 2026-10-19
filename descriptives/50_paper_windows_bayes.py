@@ -57,8 +57,8 @@ LIFE = ARTIFACTS_DIR / "health-ssm" / f"health-{V}-ssm" if KW == K else ARTIFACT
 PAL = CLUSTER if KW == K else {4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
                                5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}[KW]   # worst -> best, as 39
 # windows whose chains split: read over the chains that share the better mode
-WINDOW_CHAINS = {"theta-ssm-k4-60-90": [1, 2, 3],   # chain 4 has classes 3 and 4 swapped, otherwise identical
-                 "theta-ssm-k4-70-90": [1, 4]}      # two modes; 1, 4 at lp -44,565, 2, 3 at -44,573 / -44,576
+WINDOW_CHAINS = {"theta-ssm-k4-60-90": [1, 2, 3],   # chain 4: nearby mode 12 lower in lp, the two small classes' shares and rho exchanged
+                 "theta-ssm-k4-70-90": [1, 4]}      # three modes; 1, 4 at lp -44,565, 2 at -44,573, 3 at -44,576
 
 
 def window_fit(lo: int, hi: int) -> dict:
