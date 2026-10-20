@@ -6,9 +6,9 @@ for the measure, from the observables (education, income rank, sex,
 region, ethnic group), theta(t), theta(t) and its lag, and the forecasts of partial K-means,
 the AR(1) plus "spike" mixture and the multidimensional fit with birth-decade shifts, each on
 top of a quadratic in age. Every fit behind them held out each person's last two rows.
-(c) The same gain within age bands at t (paper_prediction_by_age.csv), for theta(t) and the
-AR(1) plus "spike" forecast, on the people with a lag observed. The cost-proxy version of
-(a) is a separate appendix figure, fig_prediction_cost.png.
+(c) The same gain at t+1 within age bands at t (paper_prediction_by_age.csv), for theta(t) and
+the AR(1) plus "spike" forecast, on the people with a lag observed. The cost-proxy versions of
+(a) and (c) are a separate appendix figure, fig_prediction_cost.png.
 
 Right column, predicting the type (from 43_paper_type_from_initial.py,
 paper_type_from_initial_first2.csv): (b) balanced accuracy (the mean per-type recall; 1/3 by
@@ -93,25 +93,26 @@ def main() -> int:
                   labels=["$t+1$", "$t+2$"], fontsize=8, frameon=False, loc="upper right")
 
     ahead(axes[0, 0], "y_next", r"(a) Predicting health ahead, $\theta$")
-    # ---- (c) predicting ahead by age at t
-    ax = axes[1, 0]
+    # ---- (c) predicting ahead by age at t, one wave ahead
     ba = pd.read_csv(DESC / "paper_prediction_by_age.csv")
-    ba = ba[(ba["variant"] == "theta") & (ba["outcome"] == "y_next")]
-    bands = list(dict.fromkeys(ba["band"]))
+    ba = ba[(ba["variant"] == "theta") & (ba["horizon"] == 1)]
     SER = [(r"$\theta_t$", "+ theta(t)", "#1f6fb4"), ('AR(1)+"spike" forecast', '+ AR(1)+"spike" forecast', SSM_COL)]
-    bw = 0.2; x = np.arange(len(bands))
-    for j, (lab, pr, c) in enumerate(SER):
-        for k, alpha in ((1, 1.0), (2, 0.4)):
-            g = ba[(ba["predictors"] == pr) & (ba["horizon"] == k)].set_index("band").reindex(bands)["gain"]
-            xs = x + (2 * j + (k - 1) - 1.5) * bw
-            ax.bar(xs, g, width=bw * 0.92, color=c, alpha=alpha, label=f"{lab}, $t+{k}$")
+    def byage(ax, oc, title):
+        b = ba[ba["outcome"] == oc]
+        bands = list(dict.fromkeys(b["band"]))
+        bw = 0.34; x = np.arange(len(bands))
+        for j, (lab, pr, c) in enumerate(SER):
+            g = b[b["predictors"] == pr].set_index("band").reindex(bands)["gain"]
+            xs = x + (j - 0.5) * bw
+            ax.bar(xs, g, width=bw * 0.92, color=c, label=f"{lab}, $t+1$")
             for xx, gg in zip(xs, g):
-                ax.text(xx, gg + 0.005, f"{gg:.2f}", ha="center", va="bottom", fontsize=6.5, color=INK2)
-    ax.set_xticks(x, [f"{b.replace('-', '–')}" for b in bands]); ax.set_xlabel("age at $t$", fontsize=9)
-    ax.set_ylabel("gain in out-of-sample $R^2$ over age alone", fontsize=9)
-    ax.legend(fontsize=7.5, frameon=False, loc="upper left", ncol=2)
-    ax.set_ylim(0, ba[ba["predictors"].isin([pr for _, pr, _ in SER])]["gain"].max() * 1.25)
-    ax.set_title(r"(c) Predicting health ahead, by age", loc="left", fontsize=10)
+                ax.text(xx, gg + 0.005 * g.max() / 0.7, f"{gg:.2f}", ha="center", va="bottom", fontsize=7, color=INK2)
+        ax.set_xticks(x, [f"{bb.replace('-', '–')}" for bb in bands]); ax.set_xlabel("age at $t$", fontsize=9)
+        ax.set_ylabel("gain in out-of-sample $R^2$ over age alone", fontsize=9)
+        ax.legend(fontsize=8, frameon=False, loc="upper left")
+        ax.set_ylim(0, b[b["predictors"].isin([pr for _, pr, _ in SER])]["gain"].max() * 1.22)
+        ax.set_title(title, loc="left", fontsize=10)
+    byage(axes[1, 0], "y_next", r"(c) Predicting health ahead, by age")
     # ---- (b) predicting the type, balanced accuracy
     ax = axes[0, 1]
     TYP = [("kmeans", "K-means", KM_COL), ("ssm", 'AR(1)+"spike"', SSM_COL), ("md", "Multidimensional", MD_COL)]
@@ -163,8 +164,9 @@ def main() -> int:
     fig.tight_layout()
     fig.savefig(FIG / "fig_prediction_summary.png")
     # the cost-proxy twin of (a), for the appendix
-    figc, axc = plt.subplots(figsize=(6.2, 4.3))
-    ahead(axc, "cost_next", "Predicting the cost proxy ahead")
+    figc, axc = plt.subplots(1, 2, figsize=(12, 4.3))
+    ahead(axc[0], "cost_next", "(a) Predicting the cost proxy ahead")
+    byage(axc[1], "cost_next", "(b) Predicting the cost proxy ahead, by age")
     figc.tight_layout(); figc.savefig(FIG / "fig_prediction_cost.png")
     print("wrote fig_prediction_summary.png, fig_prediction_cost.png")
     print("ssm types", len(t), "shares", shares.round(3).tolist())
