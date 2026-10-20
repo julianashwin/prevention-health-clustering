@@ -1,4 +1,4 @@
-"""Figure 9: predicting next wave's outcomes from what is known at t, on held-out fits.
+"""Predicting ahead: the outcomes at t+1 and t+2 from what is known at t, on held-out fits.
 
 The whole pipeline is out of sample in time. Every Bayesian fit used here was
 refitted with each person's last two observed rows held out (people with at
@@ -13,10 +13,9 @@ posteriors and the models' own one-step forecasts are computed from the
 fitted window alone, at the posterior mean, so nothing at t+1 informs them.
 
 One prediction per person and horizon: t is the last fitted row and the
-outcomes are at the two held rows, t+1 and t+2. Outcomes: the measure; the
+outcomes are at the two held rows, t+1 and t+2. Outcomes: the measure and the
 cost proxy in pounds (the flat-cost index, capped at its 99th percentile,
-waves 7-15 only); and employment (employed or self-employed, jbstat 1 or 2),
-for people aged 20-64 at t. Death cannot occur before t+2, since everyone at t
+waves 7-15 only). Death cannot occur before t+2, since everyone at t
 has two more rows, and t+2 is by construction everyone's last interview; the
 held-out death comparison (death after the last interview against leaving
 the panel alive) is written to paper_prediction_death_heldout.csv for
@@ -41,13 +40,13 @@ version. Predictors at t, each set carrying a quadratic in age:
   + multidim class, v(t)
   + all                  AR(1)+"spike" class, v(t), observables
 People are split 70/30 on a fixed hash; models fitted on the 70, scored on
-the 30; binary outcomes report AUC, continuous ones R-squared. Both measures (h
+the 30; R-squared (AUC for held-out death). Both measures (h
 and theta) are run on the same people, the intersection of the held-out
 samples. A multidimensional fit that has not finished leaves its rows blank.
 
-Outputs: paper/figures/fig_prediction.png, paper/tables/tab_prediction.tex (theta),
-         paper/figures/fig_prediction_h.png, paper/tables/tab_prediction_h.tex (h, appendix),
-         artifacts/descriptives/paper_prediction.csv,
+The paper's figures are drawn from these csvs by 56_paper_prediction_summary.py.
+
+Outputs: artifacts/descriptives/paper_prediction.csv,
          artifacts/descriptives/paper_prediction_death_heldout.csv,
          artifacts/descriptives/paper_prediction_by_age.csv (R-squared and its gain over age
          alone within age bands at t, for a few sets, on the people with a lag observed)
@@ -59,13 +58,11 @@ import json
 import sys
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import CONTRACT, DESC, FIG, TAB, load_measure, region_ethnicity, write_table  # noqa: E402
-from _style import CLUSTER, GREEN, INK2, ORANGE, PURPLE, VERM, apply_style  # noqa: E402
+from _paper_common import CONTRACT, DESC, load_measure, region_ethnicity  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
 
@@ -78,7 +75,6 @@ MD = ARTIFACTS_DIR / "multidim-health"
 MD_CONTRACT = PROCESSED_DATA_DIR / "contracts" / "multidim_health_20_89_minobs3_v1"
 MIN_OBS = 5
 COST_CAP = 0.99
-EMP_MAX_AGE = 64
 
 
 def logistic_fit(X, y, iters=60, ridge=1e-4):
@@ -288,13 +284,7 @@ def outcomes(v: str, at: pd.DataFrame, k: int) -> pd.DataFrame:
     cost["cost_next"] = cost["flat_cost_total"].clip(upper=cost["flat_cost_total"].quantile(COST_CAP))
     cost = cost.groupby(["pidp", "wave"], as_index=False)["cost_next"].mean(); cost["wave"] = cost["wave"] - k
     d = d.merge(cost, on=["pidp", "wave"], how="left")
-    panel = pd.read_csv(PROCESSED_DATA_DIR / "ukhls_indresp_processed.csv", usecols=["pidp", "wave", "dcsedw_dv", "sex", "jbstat"])
-    emp = panel[["pidp", "wave", "jbstat"]].dropna().drop_duplicates(["pidp", "wave"])
-    emp["emp_next"] = emp["jbstat"].isin([1, 2]).astype(float)
-    emp_t = emp[["pidp", "wave", "emp_next"]].rename(columns={"emp_next": "emp_t"})
-    emp_n = emp[["pidp", "wave", "emp_next"]].copy(); emp_n["wave"] = emp_n["wave"] - k
-    d = d.merge(emp_n, on=["pidp", "wave"], how="left").merge(emp_t, on=["pidp", "wave"], how="left")
-    d.loc[d["age"] > EMP_MAX_AGE, "emp_next"] = np.nan
+    panel = pd.read_csv(PROCESSED_DATA_DIR / "ukhls_indresp_processed.csv", usecols=["pidp", "wave", "dcsedw_dv", "sex"])
     death_wave = panel.groupby("pidp")["dcsedw_dv"].max() - 18
     d = d.merge(death_wave.rename("death_wave"), left_on="pidp", right_index=True, how="left")
     # death before the wave after the last held row, among those at risk there
@@ -310,14 +300,14 @@ def outcomes(v: str, at: pd.DataFrame, k: int) -> pd.DataFrame:
     return d
 
 
-def score_sets(s: pd.DataFrame, oc: str, kind: str, SETS: dict, extra: dict | None = None) -> list[dict]:
+def score_sets(s: pd.DataFrame, oc: str, kind: str, SETS: dict) -> list[dict]:
     """Fit every predictor set on the 70% and score it on the 30%."""
     test = ((pd.util.hash_pandas_object(s["pidp"], index=False) % 10) >= 7).to_numpy()
     y = s[oc].to_numpy(float)
     out = []
-    for name, cols in {**SETS, **(extra or {})}.items():
+    for name, cols in SETS.items():
         s2, t2, y2 = s, test, y
-        need = [c for c in cols if c in ("y_lag", "md_c1", "md_c2", "md_fc", "mdc_c1", "mdc_c2", "mdc_fc", "emp_t", "km_1", "km_2", "km_fc", *[c for c in cols if c.startswith(("region_", "ethnic_"))])]
+        need = [c for c in cols if c in ("y_lag", "md_c1", "md_c2", "md_fc", "mdc_c1", "mdc_c2", "mdc_fc", "km_1", "km_2", "km_fc", *[c for c in cols if c.startswith(("region_", "ethnic_"))])]
         if need:
             keep = s[need].notna().all(axis=1).to_numpy()
             s2, t2, y2 = s[keep], test[keep], y[keep]
@@ -409,21 +399,18 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
         "+ K-means forecast": ["km_fc"],
         f'+ AR(1)+"spike" class, {v}(t)': ["ssm_c1", "ssm_c2", v],
         f"+ multidim class, {v}(t)": ["md_c1", "md_c2", v],
-        "+ all": ["ssm_c1", "ssm_c2", v] + obs,
+        "+ all": ["ssm_c1", "ssm_c2", v] + obs,            # these three are drawn in 41's mortality figure
     }
     # (outcome column, label, metric, horizons)
-    OUT = [("y_next", f"health, ${VL[v]}$", "r2", (1, 2)), ("cost_next", "cost proxy (£)", "r2", (1, 2)),
-           ("emp_next", f"employed, ages 20-{EMP_MAX_AGE}", "auc", (1, 2))]
+    OUT = [("y_next", f"health, ${VL[v]}$", "r2", (1, 2)), ("cost_next", "cost proxy (£)", "r2", (1, 2))]
     base_cols = ["a", v] + obs + ["base_c1", "ssm_c1", "ssm_fc"]
     rows, info, by_age = [], {}, []
     for oc, olab, kind, horizons in OUT:
         for k in horizons:
             s = frames[k].dropna(subset=[oc] + base_cols)
             y = s[oc].to_numpy(float)
-            # employment's own benchmark: age plus employment at t, not one of the common sets
-            extra = {"age + employed(t) [benchmark]": ["emp_t"]} if oc == "emp_next" else None
             info[(oc, k)] = {"n": len(s), "rate": float(y.mean()) if kind == "auc" else np.nan}
-            for r in score_sets(s, oc, kind, SETS, extra):
+            for r in score_sets(s, oc, kind, SETS):
                 rows.append({"variant": v, "outcome": oc, "outcome_label": olab, "horizon": k, "metric": kind, **r})
             if kind == "r2":
                 names = [n.format(v=v) for n in BY_AGE_SETS]
@@ -439,7 +426,6 @@ def run_variant(v: str, md_people: np.ndarray) -> tuple[pd.DataFrame, dict]:
 
 
 def main() -> int:
-    apply_style()
     md_long = pd.read_csv(MD_CONTRACT / "long.csv", usecols=["pidp", "age"])
     md_people = md_long.groupby("pidp").size().pipe(lambda s: s[s >= MIN_OBS]).index.to_numpy()
     # --stage v runs one variant and caches it; --assemble writes the outputs from the cached
@@ -462,69 +448,7 @@ def main() -> int:
     death["gain"] = death["score"] - death.groupby("variant")["score"].transform("first")
     death.to_csv(DESC / "paper_prediction_death_heldout.csv", index=False)
     pd.concat([metas[v]["by_age"] for v in VARIANTS]).to_csv(DESC / "paper_prediction_by_age.csv", index=False)
-    OUT = metas["h"]["out"]
-    colkeys = [(oc, k) for oc, _, _, hz in OUT for k in hz]
-    # the paper's figure and table are theta; the h versions go to the appendix
-    for VSEL, sfx in ((['theta'], ''), (['h'], '_h')):
-        rows = []
-        for v in VSEL:
-            tv = tabs[v][~tabs[v]["predictors"].str.contains("benchmark")]
-            piv = tv.pivot(index="predictors", columns=["outcome", "horizon"], values="score").reindex(metas[v]["sets"])
-            rows.append([f"\\multicolumn{{{len(colkeys) + 1}}}{{l}}{{\\emph{{on ${VL[v]}$}}}}"])
-            for nm in piv.index:
-                rows.append([nm.replace('"spike"', "``spike''")] + [("" if np.isnan(piv.loc[nm, ck]) else f"{piv.loc[nm, ck]:.3f}") for ck in colkeys])
-            bench = tabs[v][tabs[v]["predictors"].str.contains("benchmark")].set_index("horizon")["score"]
-            rows.append(["\\quad benchmark: age, employed($t$)"] + ["" for ck in colkeys if ck[0] != "emp_next"] + [f"{bench.loc[k]:.3f}" for k in (1, 2)])
-            print(f"\n{v}:\n" + piv.round(3).to_string() + f"\n  employment benchmark (age + employed(t)): {bench.round(3).to_dict()}")
-        groups = [(olab.replace(f"${VL['h']}$", "measure"), "AUC" if kind == "auc" else "$R^2$", len(hz)) for oc, olab, kind, hz in OUT]
-        with open(TAB / f"tab_prediction{sfx}.tex", "w") as f:
-            f.write("\\begin{tabular}{l" + "r" * len(colkeys) + "}\n\\toprule\n")
-            f.write("predictors at $t$ & " + " & ".join(f"\\multicolumn{{{n}}}{{c}}{{{g} ({m})}}" for g, m, n in [(g.replace("£", "\\pounds"), m, n) for g, m, n in groups]) + " \\\\\n")
-            start, cm = 2, []
-            for _, _, n in groups:
-                cm.append(f"\\cmidrule(lr){{{start}-{start + n - 1}}}"); start += n
-            f.write(" ".join(cm) + "\n & " + " & ".join(f"$t+{k}$" for _, k in colkeys) + " \\\\\n\\midrule\n")
-            for r in rows:
-                f.write(" & ".join(r) + " \\\\\n")
-            f.write("\\bottomrule\n\\end{tabular}\n")
-        # figure: gain over age, one row per measure, one panel per outcome, paired bars for the horizons
-        fig, axes = plt.subplots(len(VSEL), len(OUT), figsize=(12.5, 5.2 * len(VSEL)), sharey="row", squeeze=False)
-        COHORT_COL = "#6a51a3"
-        KM_COL = "#b8860b"
-        cols = [INK2, INK2, CLUSTER[2], CLUSTER[1], CLUSTER[0], COHORT_COL, KM_COL, ORANGE, ORANGE, VERM, VERM, COHORT_COL, KM_COL, PURPLE, PURPLE, GREEN]
-        for r, v in enumerate(VSEL):
-            tv = tabs[v]; sets = metas[v]["sets"]; names = sets[1:]
-            for ax, (oc, olab, kind, horizons) in zip(axes[r], metas[v]["out"]):
-                width = 0.8 / len(horizons); bases = []
-                for j, k in enumerate(horizons):
-                    q = tv[(tv["outcome"] == oc) & (tv["horizon"] == k)].set_index("predictors")
-                    base = q.loc["age", "score"]; bases.append(base)
-                    g = q.reindex(names)["gain"]
-                    ypos = np.arange(len(names)) + (j - (len(horizons) - 1) / 2) * width
-                    ax.barh(ypos, g.fillna(0), height=width * 0.92, color=cols[: len(names)], alpha=1.0 if j == 0 else 0.45,
-                            label=f"$t+{k}$ (age only {base:.2f})")
-                    if oc == "emp_next":
-                        bm = q.loc["age + employed(t) [benchmark]", "score"] - base
-                        ax.axvline(bm, color=INK2, lw=1.0, ls=(0, (4, 2)) if j == 0 else ":", alpha=0.9)
-                    for i, gval in enumerate(g):
-                        if np.isnan(gval) and j == 0:
-                            ax.text(0.002, i, "no cohort fit on h" if "cohort" in names[i] else "fit running", va="center", fontsize=7, color=INK2)
-                ax.set_yticks(np.arange(len(names)))
-                ax.set_yticklabels([n.replace(f"{v}(t)", f"${VL[v]}(t)$").replace(f"{v}(t-1)", f"${VL[v]}(t-1)$") for n in names], fontsize=8)
-                ax.invert_yaxis(); ax.axvline(0, color=INK2, lw=0.8); ax.grid(True, axis="x")
-                ax.set_title(f"{olab}\n{'AUC' if kind == 'auc' else '$R^2$'} gain over age only", fontsize=9)
-                ax.legend(fontsize=7, loc="lower right")
-            axes[r, 0].set_ylabel(f"on ${VL[v]}$", fontsize=10)
-        n1 = metas["h"]["info"][("y_next", 1)]["n"]
-        fig.text(0.01, -0.02,
-                 f"One prediction per person and horizon ({n1:,} people with at least five rows in both held-out samples): t is the last row of the fitted window, the outcomes are at the two held rows t+1 and t+2.\n"
-                 "Every class posterior and forecast comes from a fit with each person's last two rows held out, computed from the fitted window alone and carried to the outcome's age. "
-                 "People split 70/30, fitted on the 70, scored on the 30.\n"
-                 f"Cost proxy: the flat-cost index in pounds, capped at its 99th percentile, waves 7-15. Employment: employed or self-employed, people aged 20-{EMP_MAX_AGE} at t; "
-                 "the dashed (t+1) and dotted (t+2) lines mark the benchmark of age plus employment at t. The lag row is on people with a lag observed.",
-                 fontsize=7.4, color=INK2, va="top")
-        fig.tight_layout(); fig.savefig(FIG / f"fig_prediction{sfx}.png")
-    print("wrote fig_prediction{,_h}.png, tab_prediction{,_h}.tex, paper_prediction_death_heldout.csv")
+    print("wrote paper_prediction.csv, paper_prediction_by_age.csv, paper_prediction_death_heldout.csv")
     return 0
 
 

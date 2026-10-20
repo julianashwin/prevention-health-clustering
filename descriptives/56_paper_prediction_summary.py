@@ -8,7 +8,8 @@ the AR(1) plus "spike" mixture and the multidimensional fit with birth-decade sh
 top of a quadratic in age. Every fit behind them held out each person's last two rows.
 (c) The same gain at t+1 within age bands at t (paper_prediction_by_age.csv), for theta(t) and
 the AR(1) plus "spike" forecast, on the people with a lag observed. The cost-proxy versions of
-(a) and (c) are a separate appendix figure, fig_prediction_cost.png.
+(a) and (c) are a separate appendix figure, fig_prediction_cost.png, and (a), (c) and (b) on h
+(single-channel typologies only) are fig_prediction_summary_h.png.
 
 Right column, predicting the type (from 43_paper_type_from_initial.py,
 paper_type_from_initial_first2.csv): (b) balanced accuracy (the mean per-type recall; 1/3 by
@@ -24,6 +25,7 @@ The multidimensional typology in (b) is 43's: the fit with birth-decade shifts
 Rerun 43 and then this script with --recompute when it lands.
 
 Outputs: paper/figures/fig_prediction_summary.png, paper/figures/fig_prediction_cost.png,
+         paper/figures/fig_prediction_summary_h.png,
          artifacts/descriptives/paper_prediction_summary_types.csv
 """
 
@@ -66,19 +68,23 @@ def person_types() -> pd.DataFrame:
 
 def main() -> int:
     apply_style()
-    p = pd.read_csv(DESC / "paper_prediction.csv"); p = p[p["variant"] == "theta"]
+    P = pd.read_csv(DESC / "paper_prediction.csv")
     q = pd.read_csv(DESC / "paper_type_from_initial_first2.csv")
     types = person_types()
     OBS_AHEAD, OBS_TYPE = "+ observables, region, ethnicity", "+ education, income, sex, region, ethnicity"
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 8.6))
     # ---- left: predicting ahead, gain over age alone
-    LEFT = [("Observables", OBS_AHEAD, INK2), (r"$\theta_t$", "+ theta(t)", "#1f6fb4"),
-            (r"$\theta_t,\ \theta_{t-1}$", "+ theta(t), theta(t-1)", "#1f6fb4"),
-            ("K-means forecast", "+ K-means forecast", KM_COL), ('AR(1)+"spike" forecast', '+ AR(1)+"spike" forecast', SSM_COL),
-            ("Multidimensional forecast\n(cohort shifts)", "+ multidim cohort forecast", MD_COL)]
-    def ahead(ax, oc, title):
-        s = p[p["outcome"] == oc].set_index(["predictors", "horizon"])["gain"]
+    def left_rows(v):
+        sym = {"theta": r"\theta", "h": "h"}[v]
+        rows = [("Observables", OBS_AHEAD, INK2), (f"${sym}_t$", f"+ {v}(t)", "#1f6fb4"),
+                (f"${sym}_t,\\ {sym}_{{t-1}}$", f"+ {v}(t), {v}(t-1)", "#1f6fb4"),
+                ("K-means forecast", "+ K-means forecast", KM_COL), ('AR(1)+"spike" forecast', '+ AR(1)+"spike" forecast', SSM_COL)]
+        # the multidimensional model is fitted on theta, not h
+        return rows + ([("Multidimensional forecast\n(cohort shifts)", "+ multidim cohort forecast", MD_COL)] if v == "theta" else [])
+    def ahead(ax, oc, title, v="theta"):
+        LEFT = left_rows(v)
+        s = P[(P["variant"] == v) & (P["outcome"] == oc)].set_index(["predictors", "horizon"])["gain"]
         y = np.arange(len(LEFT))[::-1].astype(float); h = 0.38
         xmax = max(s.loc[(pr, k)] for _, pr, _ in LEFT for k in (1, 2)) * 1.14
         for yi, (lab, pr, c) in zip(y, LEFT):
@@ -95,10 +101,11 @@ def main() -> int:
     ahead(axes[0, 0], "y_next", r"(a) Predicting health ahead, $\theta$")
     # ---- (c) predicting ahead by age at t, one wave ahead
     ba = pd.read_csv(DESC / "paper_prediction_by_age.csv")
-    ba = ba[(ba["variant"] == "theta") & (ba["horizon"] == 1)]
-    SER = [(r"$\theta_t$", "+ theta(t)", "#1f6fb4"), ('AR(1)+"spike" forecast', '+ AR(1)+"spike" forecast', SSM_COL)]
-    def byage(ax, oc, title):
-        b = ba[ba["outcome"] == oc]
+    ba = ba[ba["horizon"] == 1]
+    def byage(ax, oc, title, v="theta"):
+        sym = {"theta": r"\theta", "h": "h"}[v]
+        SER = [(f"${sym}_t$", f"+ {v}(t)", "#1f6fb4"), ('AR(1)+"spike" forecast', '+ AR(1)+"spike" forecast', SSM_COL)]
+        b = ba[(ba["variant"] == v) & (ba["outcome"] == oc)]
         bands = list(dict.fromkeys(b["band"]))
         bw = 0.34; x = np.arange(len(bands))
         for j, (lab, pr, c) in enumerate(SER):
@@ -114,21 +121,23 @@ def main() -> int:
         ax.set_title(title, loc="left", fontsize=10)
     byage(axes[1, 0], "y_next", r"(c) Predicting health ahead, by age")
     # ---- (b) predicting the type, balanced accuracy
-    ax = axes[0, 1]
-    TYP = [("kmeans", "K-means", KM_COL), ("ssm", 'AR(1)+"spike"', SSM_COL), ("md", "Multidimensional", MD_COL)]
-    INFO = [("Observables", OBS_TYPE), (r"$\theta_{t-1}$", "+ theta(1)"), (r"$\theta_{t-1},\ \theta_{t-2}$", "+ theta(0), theta(1)")]
-    w, gap = 0.26, 0.5
-    centres = np.arange(len(INFO))[::-1] * (len(TYP) * w + gap)
-    for k, (tag, lab, c) in enumerate(TYP):
-        qs = q[q["typology"] == tag].set_index("predictors")["balanced_accuracy"]
-        yk = centres + (1 - k) * w
-        ax.barh(yk, [qs.loc[pr] for _, pr in INFO], height=w * 0.92, color=c, label=lab)
-        for yy, (_, pr) in zip(yk, INFO):
-            ax.text(qs.loc[pr] + 0.004, yy, f"{qs.loc[pr]:.2f}", va="center", fontsize=7.5, color=INK2)
-    ax.set_yticks(centres, [l for l, _ in INFO]); ax.set_xlim(0, 0.8)
-    ax.set_xlabel("balanced accuracy for the type (mean per-type recall; 1/3 by chance)", fontsize=9)
-    ax.legend(fontsize=8, frameon=False, loc="upper right")
-    ax.set_title("(b) Predicting the type from the two rows before the window", loc="left", fontsize=10)
+    def typeacc(ax, q, title, v="theta"):
+        sym = {"theta": r"\theta", "h": "h"}[v]
+        TYP = [("kmeans", "K-means", KM_COL), ("ssm", 'AR(1)+"spike"', SSM_COL)] + ([("md", "Multidimensional", MD_COL)] if v == "theta" else [])
+        INFO = [("Observables", OBS_TYPE), (f"${sym}_{{t-1}}$", f"+ {v}(1)"), (f"${sym}_{{t-1}},\\ {sym}_{{t-2}}$", f"+ {v}(0), {v}(1)")]
+        w, gap = 0.26, 0.5
+        centres = np.arange(len(INFO))[::-1] * (len(TYP) * w + gap)
+        for k, (tag, lab, c) in enumerate(TYP):
+            qs = q[q["typology"] == tag].set_index("predictors")["balanced_accuracy"]
+            yk = centres + ((len(TYP) - 1) / 2 - k) * w
+            ax.barh(yk, [qs.loc[pr] for _, pr in INFO], height=w * 0.92, color=c, label=lab)
+            for yy, (_, pr) in zip(yk, INFO):
+                ax.text(qs.loc[pr] + 0.004, yy, f"{qs.loc[pr]:.2f}", va="center", fontsize=7.5, color=INK2)
+        ax.set_yticks(centres, [l for l, _ in INFO]); ax.set_xlim(0, 0.8)
+        ax.set_xlabel("balanced accuracy for the type (mean per-type recall; 1/3 by chance)", fontsize=9)
+        ax.legend(fontsize=8, frameon=False, loc="upper right")
+        ax.set_title(title, loc="left", fontsize=10)
+    typeacc(axes[0, 1], q, "(b) Predicting the type from the two rows before the window")
     # ---- (d) who is in each AR(1) + "spike" type
     ax = axes[1, 1]
     t = types[types["typology"] == "ssm"].dropna(subset=["educ_group", "income_rank_mean"]).copy()
@@ -168,7 +177,13 @@ def main() -> int:
     ahead(axc[0], "cost_next", "(a) Predicting the cost proxy ahead")
     byage(axc[1], "cost_next", "(b) Predicting the cost proxy ahead, by age")
     figc.tight_layout(); figc.savefig(FIG / "fig_prediction_cost.png")
-    print("wrote fig_prediction_summary.png, fig_prediction_cost.png")
+    # the same on h, for the appendix: (a), (c) and (b) without the multidimensional rows
+    figh, axh = plt.subplots(1, 3, figsize=(17, 4.6))
+    ahead(axh[0], "y_next", "(a) Predicting health ahead, $h$", v="h")
+    byage(axh[1], "y_next", "(b) Predicting health ahead, by age", v="h")
+    typeacc(axh[2], pd.read_csv(DESC / "paper_type_from_initial_first2_h.csv"), "(c) Predicting the type from the two earlier rows", v="h")
+    figh.tight_layout(); figh.savefig(FIG / "fig_prediction_summary_h.png")
+    print("wrote fig_prediction_summary.png, fig_prediction_cost.png, fig_prediction_summary_h.png")
     print("ssm types", len(t), "shares", shares.round(3).tolist())
     return 0
 

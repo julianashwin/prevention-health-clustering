@@ -30,8 +30,8 @@ The first-row-only variant (fits with one row held out) is retired; its fits and
 are in artifacts/archive/firstho/.
 
 --h runs the same on h (no multidimensional typology). Outputs:
-fig_type_from_initial_first2{,_h}.png, tab_type_from_initial_first2{,_h}.tex,
-paper_type_from_initial_first2{,_h}.csv and paper_type_from_initial_by_age_first2{,_h}.csv.
+paper_type_from_initial_first2{,_h}.csv and paper_type_from_initial_by_age_first2{,_h}.csv;
+the paper's figures are drawn from them by 56_paper_prediction_summary.py.
 
     PYTHONPATH=src .venv/bin/python descriptives/43_paper_type_from_initial.py [--h]
 """
@@ -41,18 +41,15 @@ from __future__ import annotations
 import importlib
 import json
 import sys
-import textwrap
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import CONTRACT, DESC, FIG, MENTAL_COL, MULTIDIM_CONTRACT, TAB, load_labels, region_ethnicity  # noqa: E402
-from _style import CLUSTER, GREEN, INK2, ORANGE, PURPLE, apply_style  # noqa: E402
+from _paper_common import CONTRACT, DESC, MENTAL_COL, MULTIDIM_CONTRACT, load_labels, region_ethnicity  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
 
@@ -216,7 +213,6 @@ def score(df: pd.DataFrame, cols: list[str], test: np.ndarray, probs: np.ndarray
 
 
 def main() -> int:
-    apply_style()
     sub, first = first_rows()
     frames = {}
     L = load_labels(f"{V}_first{'2' if KHELD == 2 else ''}held")
@@ -287,58 +283,7 @@ def main() -> int:
                                "majority": float(pd.Series(yb).value_counts(normalize=True).max())})
     t = pd.DataFrame(rows); t.to_csv(DESC / f"paper_type_from_initial{SFX}.csv", index=False)
     ba = pd.DataFrame(by_age); ba.to_csv(DESC / f"paper_type_from_initial_by_age{SFX}.csv", index=False)
-    have = [(tag, lab) for tag, lab in TYPOLOGIES if tag in frames]
-
-    # ---- table
-    sets = list(SETS) + (list(MD_SETS) if "md" in frames else []) + [MODEL] + ([MODEL2] if KHELD == 2 else [])
-    with open(TAB / f"tab_type_from_initial{SFX}.tex", "w") as f:
-        f.write("\\begin{tabular}{l" + "rr" * len(have) + "}\n\\toprule\n")
-        SHORT = {"kmeans": "K-means", "base": "indep. residuals", "ssm": 'AR(1) + "spike"', "ssm-cohort": "+ cohort shifts",
-                 "md": "multidim"}       # short headers so five typologies fit
-        f.write("predictors at the first rows & " + " & ".join(f"\\multicolumn{{2}}{{c}}{{{SHORT[tag]}}}" for tag, _ in have) + " \\\\\n")
-        f.write(" ".join(f"\\cmidrule(lr){{{2 + 2 * i}-{3 + 2 * i}}}" for i in range(len(have))) + "\n & " + " & ".join(["accuracy & AUC"] * len(have)) + " \\\\\n\\midrule\n")
-        f.write("majority type & " + " & ".join(f"{t[t['typology'] == tag]['majority'].iloc[0]:.3f} & " for tag, _ in have) + " \\\\\n")
-        for name in sets:
-            cells = []
-            for tag, _ in have:
-                q = t[(t["typology"] == tag) & (t["predictors"] == name)]
-                cells.append(f"{q['accuracy'].iloc[0]:.3f} & {q['auc'].iloc[0]:.3f}" if len(q) else " & ")
-            f.write(name.replace("mental", "mental $\\theta$").replace(V + "(", VL + "(").replace(" x ", " $\\times$ ") + " & " + " & ".join(cells) + " \\\\\n")
-        f.write("\\bottomrule\n\\end{tabular}\n")
-
-    # ---- figure: accuracy and macro AUC by predictor set, the observables against the health reading
-    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8), gridspec_kw={"wspace": 0.08}, sharey=True)
-    cols = {"kmeans": INK2, "base": CLUSTER[2], "ssm": CLUSTER[0], "ssm-cohort": "#6a51a3", "md": PURPLE}
-    width = 0.8 / len(have)
-    for ax, metric, title in ((axes[0], "accuracy", "(a) accuracy on the test 30%\n(dashed: the majority-type rate)"),
-                              (axes[1], "auc", "(b) macro one-vs-rest AUC on the test 30%")):
-        for i, (tag, lab) in enumerate(have):
-            q = t[t["typology"] == tag].set_index("predictors").reindex(sets)
-            ypos = np.arange(len(sets)) + (i - (len(have) - 1) / 2) * width
-            ax.barh(ypos, q[metric].fillna(0), height=width * 0.92, color=cols[tag], label=lab)
-            if metric == "accuracy":
-                ax.axvline(q["majority"].dropna().iloc[0], color=cols[tag], lw=1.0, ls="--")
-        ax.set_xlim(0.3 if metric == "accuracy" else 0.45, max(0.75, t[metric].max() + 0.05)); ax.grid(True, axis="x")
-        ax.set_title(title, fontsize=9, loc="left")
-    axes[0].set_yticks(np.arange(len(sets)))
-    axes[0].set_yticklabels([n.replace("mental", r"mental $\theta$").replace(V + "(", VL + "(") for n in sets], fontsize=8)
-    axes[0].invert_yaxis()
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, fontsize=7.5, loc="lower center", ncol=len(have), bbox_to_anchor=(0.5, -0.02), frameon=False)
-    n = len(frames[have[0][0]]); n_md = len(frames["md"]) if "md" in frames else 0
-    held = "first two rows"
-    footer = (f"Health contract people with at least {MIN_ROWS} rows ({n:,}), on {V}; every typology is fitted without each person's {held} (K-means on the remaining rows; the mixtures with the {held} held out, "
-             "type = modal class of the posterior from the fitted window)."
-             + (f" The multidimensional fit (theta + mental GRM + mortality) is on the multidim contract's people with at least {MD_KHELD + 3} rows ({n_md:,}), "
-                + "its posterior from both channels and survival through the fitted window." if n_md else "")
-             + f"\nEvery predictor set is on top of a quadratic in age at the first row: education (three groups), income rank, the three observables together, and with region and ethnic group, {V} at the second held row (t-1) or the first (t-2) "
-             "(with its age interaction), both readings, and the first reading plus the observables; multinomial logit, people split 70/30 by a hash of pidp, fitted on the 70, scored on the 30.\n\"Model posterior\": the class posterior the fitted mixture itself implies "
-             "from the single first observation (class prior times the marginal density at that age; stationary variance plus \"spike\" under AR(1) + \"spike\"), no regression. "
-             "AUC is the macro one-vs-rest AUC over the three types." + (" The multidimensional model's posterior uses both first-row scores." if n_md else "")
-             + (" The posterior from both held rows is the Kalman likelihood of the two rows from the stationary state." if KHELD == 2 else ""))
-    fig.text(0.01, -0.09, "\n".join(textwrap.wrap(footer.replace("\n", " "), 200)), fontsize=7.2, color=INK2, va="top")
-    fig.savefig(FIG / f"fig_type_from_initial{SFX}.png", bbox_inches="tight")
-    print(f"wrote fig_type_from_initial{SFX}.png and tab_type_from_initial{SFX}.tex ({', '.join(lab for _, lab in have)})")
+    print(f"wrote paper_type_from_initial{SFX}.csv and paper_type_from_initial_by_age{SFX}.csv")
     return 0
 
 
