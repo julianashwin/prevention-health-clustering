@@ -163,6 +163,8 @@ def main() -> int:
             cost_ax[j].errorbar(g["x"], g["mean"], yerr=1.96 * g["se"], fmt="o-", ms=3.5, lw=1.1, color=col,
                                 elinewidth=0.7, capsize=0, label=f"ages {name}")
             rows += [{"panel": "cost", "variant": v, "band": name, **r} for r in g.reset_index(drop=True).to_dict("records")]
+            if lo < 45:          # too few deaths before 45 to pin down the band's mortality curve
+                continue
             s = m[m["age"].between(lo, hi) & m[v].notna()].assign(bin=lambda x: pd.cut(x[v], EDGES_MORT[v]))
             g = s.groupby("bin", observed=True).agg(x=(v, "mean"), k=("died", "sum"), n=("died", "size"))
             g = g[g["k"] >= 10]
