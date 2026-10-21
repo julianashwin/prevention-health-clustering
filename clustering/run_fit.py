@@ -27,6 +27,7 @@ from scipy.special import logsumexp
 from prevention_health_clustering.models.registry import get_model
 from prevention_health_clustering.runner.fit import (
     assignment_inits,
+    build_inits,
     build_payload,
     fit_model,
 )
@@ -57,6 +58,10 @@ def main(argv=None) -> int:
                         help="Chains to run at once; 0 means all of them. "
                              "Use to cap the CPU footprint on a shared machine.")
     parser.add_argument("--init-jitter", type=float, default=0.15)
+    parser.add_argument("--init", choices=["partition", "dispersed"], default="partition",
+                        help="partition: every chain from one k-means partition (assignment_inits); "
+                             "dispersed: per-chain intercept ladders with their own jitter (build_inits)")
+    parser.add_argument("--init-seed", type=int, default=None)
     parser.add_argument("--holdout-last-k", type=int, default=None)
     parser.add_argument("--holdout-first-k", type=int, default=None,
                         help="hold out each person's FIRST k rows (type-from-initial-value exercise)")
@@ -83,9 +88,14 @@ def main(argv=None) -> int:
           f"ar_mode={d['ar_mode']}, held-out rows {n_held:,}, "
           f"dropped {d.get('_dropped_no_history', 0):,}", flush=True)
 
-    inits = assignment_inits(spec, payload, jitter=args.init_jitter)
-    print(f"  partition init theta {[round(v, 3) for v in inits[0]['theta']]}",
-          flush=True)
+    if args.init == "dispersed":
+        inits = build_inits(spec, payload, seed=args.init_seed)
+        print(f"  dispersed init intercepts {[[round(v, 2) for v in i['anchor_intercept']] for i in inits]}",
+              flush=True)
+    else:
+        inits = assignment_inits(spec, payload, jitter=args.init_jitter, seed=args.init_seed)
+        print(f"  partition init theta {[round(v, 3) for v in inits[0]['theta']]}",
+              flush=True)
     fit = fit_model(
         spec, payload, inits=inits, output_dir=args.output,
         chains=args.chains, iter_warmup=args.warmup,
