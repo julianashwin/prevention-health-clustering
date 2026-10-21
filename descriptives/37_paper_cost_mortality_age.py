@@ -40,6 +40,7 @@ Outputs: paper/figures/fig_cost_mortality_age.png (theta), fig_cost_mortality_ag
 
 from __future__ import annotations
 
+import importlib
 import sys
 from pathlib import Path
 
@@ -181,6 +182,12 @@ def main() -> int:
                 mort_ax[j].plot(xs, 1 / (1 + np.exp(-(b[0] + b[1] * (xs - mu) / sd + b[2] * am + b[3] * am ** 2))), color=col, lw=1.4)
             rows += [{"panel": "mortality", "variant": v, "band": name, "x": x, "rate": r, "deaths": k, "n": n_}
                      for x, r, k, n_ in zip(g["x"], rate, g["k"], g["n"])]
+        # the pooled cost curve Section 5 prices with (31's fit_cost_curve, as 42), drawn over the binned range only
+        sv = c[c[v].notna()]
+        coef, _, deg = importlib.import_module("31_paper_appendix_extras").fit_cost_curve(sv[v].to_numpy(float), sv["cost"].to_numpy(float))
+        xs = np.linspace(max(EDGES_COST[v][0], sv[v].min()), min(EDGES_COST[v][-1], sv[v].max()), 200)
+        cost_ax[j].plot(xs, np.polynomial.polynomial.polyval(xs, coef), color=VERM, lw=1.8, zorder=5,
+                        label=f"pooled {'cubic' if deg == 3 else 'quadratic'} (Section 5)")
         cost_ax[j].set_title(f"({cost_let[j]}) annual cost against {LAB[v]}, by age band", loc="left")
         cost_ax[j].set_ylabel(f"mean {cost_lab}".replace("uncapped", "capped at p99" if cap_ab else "uncapped"))
         cost_ax[j].set_ylim(bottom=0)
