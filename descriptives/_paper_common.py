@@ -114,7 +114,9 @@ def load_labels(variant: str, lo: int = MIN_AGE, hi: int = MAX_AGE) -> pd.Series
 # posterior mean and R-hat are then over that subset): health-h-ssm-k5, chains 1, 2, 4 agree to
 # three decimals and chain 3 sits about 310 log-posterior units lower; health-frailty-ssm-k4,
 # chains 1-3 agree and chain 4 sits about 950 lower.
-MODE_CHAINS = {"health-h-ssm-k5": [1, 2, 4], "health-frailty-ssm-k4": [1, 2, 3]}
+MODE_CHAINS = {"health-h-ssm-k5": [1, 2, 4], "health-frailty-ssm-k4": [1, 2, 3],
+               "health-frailty-ssm-k5": [1],      # four chains, three modes; chain 1 is 530 higher in lp
+               "health-logfrailty-ssm-k5": [4]}   # four chains, three modes; chain 4 is 30 higher in lp than 1, 2
 
 
 def ssm_fit(v: str, Kc: int = K) -> dict:
