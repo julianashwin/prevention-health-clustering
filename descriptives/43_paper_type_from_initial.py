@@ -6,8 +6,8 @@ remaining rows (22_paper_kmeans.py --first-held, variant theta_first2held), and 
 independent-residuals and AR(1) plus "spike" mixtures, the latter also with birth-decade
 shifts, with the first two rows held out (artifacts/health-firstheld/*-first2ho), and the
 multidimensional AR(1) plus "spike" fit with mortality and the first two rows held out
-(artifacts/multidim-health/theta-ssm-mort-first2ho, on the multidim contract; it has no
-decade shifts). The Bayesian type is the modal class of the posterior computed from the
+(artifacts/multidim-health/theta-ssm-mort-cohort-first2ho, with birth-decade shifts, on
+the multidim contract; theta-ssm-mort-first2ho, without them, if that has not been fitted). The Bayesian type is the modal class of the posterior computed from the
 fitted window alone (for the multidimensional fit: both channels plus survival through
 the fitted window). This mirrors 33_paper_prediction.py, which holds out the last two
 rows: here the window starts at t and the held rows are t-1 (the second row, closest to
@@ -33,7 +33,9 @@ are in artifacts/archive/firstho/.
 paper_type_from_initial_first2{,_h}.csv and paper_type_from_initial_by_age_first2{,_h}.csv;
 the paper's figures are drawn from them by 56_paper_prediction_summary.py.
 
-    PYTHONPATH=src .venv/bin/python descriptives/43_paper_type_from_initial.py [--h]
+    PYTHONPATH=src .venv/bin/python descriptives/43_paper_type_from_initial.py [--h] [--only md,ssm,...]
+
+--only recomputes just the listed typologies and replaces their rows in the csvs.
 """
 
 from __future__ import annotations
@@ -213,17 +215,24 @@ def score(df: pd.DataFrame, cols: list[str], test: np.ndarray, probs: np.ndarray
 
 
 def main() -> int:
+    # --only md (or a comma list of typology tags) recomputes just those typologies and
+    # replaces their rows in the existing csvs, for when one fit has been updated
+    only = set(sys.argv[sys.argv.index("--only") + 1].split(",")) if "--only" in sys.argv else None
+    want = lambda tag: only is None or tag in only
     sub, first = first_rows()
     frames = {}
     L = load_labels(f"{V}_first{'2' if KHELD == 2 else ''}held")
-    frames["kmeans"] = first.merge(pd.DataFrame({"pidp": L.index, "type": L.to_numpy()}), on="pidp")
+    if want("kmeans"):
+        frames["kmeans"] = first.merge(pd.DataFrame({"pidp": L.index, "type": L.to_numpy()}), on="pidp")
     for tag in ("base", "ssm") + (("ssm-cohort",) if KHELD == 2 else ()):
+        if not want(tag):
+            continue
         f = bayes_types(tag, sub, first)
         if f is None:
             print(f"{tag}: first-two-rows-held-out fit not finished, skipped")
         else:
             frames[tag] = f
-    if V == "theta":
+    if V == "theta" and want("md"):
         sub_md, first_md = first_rows(MULTIDIM_CONTRACT, extra=(MENTAL_COL,), kheld=MD_KHELD)
         f = multidim_types(sub_md, first_md.rename(columns={MENTAL_COL: "m0"}))
         if f is None:
@@ -281,8 +290,18 @@ def main() -> int:
                                "accuracy": float((pb == yb).mean()),
                                "balanced_accuracy": float(np.mean([(pb[yb == k] == k).mean() for k in np.unique(yb)])),
                                "majority": float(pd.Series(yb).value_counts(normalize=True).max())})
-    t = pd.DataFrame(rows); t.to_csv(DESC / f"paper_type_from_initial{SFX}.csv", index=False)
-    ba = pd.DataFrame(by_age); ba.to_csv(DESC / f"paper_type_from_initial_by_age{SFX}.csv", index=False)
+    t, ba = pd.DataFrame(rows), pd.DataFrame(by_age)
+    if only is not None:
+        def keep(f):
+            g = pd.read_csv(f) if f.exists() else pd.DataFrame(columns=["typology", "predictors"])
+            return g[~g["typology"].isin(only)] if "predictors" in g else g.iloc[:0]     # an old-format csv is dropped
+        t = pd.concat([keep(DESC / f"paper_type_from_initial{SFX}.csv"), t])
+        ba = pd.concat([keep(DESC / f"paper_type_from_initial_by_age{SFX}.csv"), ba])
+        order = [tag for tag, _ in TYPOLOGIES]
+        t = t.sort_values("typology", key=lambda c: c.map(order.index), kind="stable")
+        ba = ba.sort_values("typology", key=lambda c: c.map(order.index), kind="stable")
+    t.to_csv(DESC / f"paper_type_from_initial{SFX}.csv", index=False)
+    ba.to_csv(DESC / f"paper_type_from_initial_by_age{SFX}.csv", index=False)
     print(f"wrote paper_type_from_initial{SFX}.csv and paper_type_from_initial_by_age{SFX}.csv")
     return 0
 

@@ -20,9 +20,8 @@ the distribution of education, income third and sex within each of the three typ
 per-person types are recomputed with 43's own functions and cached to
 paper_prediction_summary_types.csv (--recompute to refresh).
 
-The multidimensional typology in (b) is 43's: the fit with birth-decade shifts
-(theta-ssm-mort-cohort-first2ho) once it has finished, the fit without them until then.
-Rerun 43 and then this script with --recompute when it lands.
+The multidimensional typology in (b) is 43's, the fit with birth-decade shifts
+(theta-ssm-mort-cohort-first2ho). Rerun 43 and then this script with --recompute when a fit changes.
 
 Outputs: paper/figures/fig_prediction_summary.png, paper/figures/fig_prediction_cost.png,
          paper/figures/fig_prediction_summary_h.png,
