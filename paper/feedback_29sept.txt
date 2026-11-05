@@ -2,17 +2,19 @@ DONE: Extra prediction exercise - predict health type based on some initial obse
 
 Relabel "spike" as "episodic". 
 
-Is there an overall takeaway that the C_{Hd} reversal is driven by a small proportion of the population who are the very ill. 
+DONE: Is there an overall takeaway that the C_{Hd} reversal is driven by a small proportion of the population who are the very ill. 
 
-Result 2 - focus on main result which is *by type* -> 2 \sum_a (a - hbar_{ja})(hbar_{j,r-1} - hbar_{ja}). Why we want the evolution of the mean 
+DONE: Result 2 - fovus on main result which is *by type* -> 2 \sum_a (a - hbar_{ja})(hbar_{j,r-1} - hbar_{ja}). This motivates why we want the evolution of the mean for each type
 
-Figure 5 - can we smooth this out a little better (e.g. use the same age windows as Exhibit 2)?
+If we focus more on Result 2 - does this change the identification as well?
+
+DONE: Figure 5 - can we smooth this out a little better (e.g. use the same age windows as Exhibit 2)?
 
 DONE: K=5 plots and the like -> make sure we use the same vertical axis scale across panels wherever appropriate. 
 
-As we add more clusters and as we add the stochastic framework, are we getting more discrimination in the unhealthy type?
+DONE: As we add more clusters and as we add the stochastic framework, are we getting more discrimination in the unhealthy type?
 
-Is the narrative around the clusters that there is always a bad group driving things - and more structure makes things stronger. Very noisy process is difficult for the K means, so it understates the importance/size/decline of this bad group?
+DONE: Is the narrative around the clusters that there is always a bad group driving things - and more structure makes things stronger. Very noisy process is difficult for the K means, so it understates the importance/size/decline of this bad group?
 
 DONE: Can we express the differences across types in terms of LE and HLE?
 
@@ -25,6 +27,6 @@ DONE: Figure 13 (returns to prevention by type) - we should show this with targe
 
 DONE Rather than contrasting with "treatment", we can think of treatment as the cost that we are trying to prevent. SO prevention is about avoiding treatment...
 
-Also on Figure 13, we should look at when the cost savings come. There is an interesting economic question here around the costs coming at a different time to the benefits - we pay for prevention now but we'll only get the benefits of the lower costs far into the future. 
+DONE: Also on Figure 13, we should look at when the cost savings come. There is an interesting economic question here around the costs coming at a different time to the benefits - we pay for prevention now but we'll only get the benefits of the lower costs far into the future. 
 
-We should also look at the health/lifespan inequality and life expectancy effects of prevention. 
+DONE: We should also look at the health/lifespan inequality and life expectancy effects of prevention. 

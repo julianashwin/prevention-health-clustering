@@ -15,7 +15,9 @@ Measures: the health measure on theta and on h (04_build_health.py, carried by
 the cost index), and the 31-deficit frailty index and log(frailty + 1/31)
 (04b_build_frailty.py), both negated so higher is healthier on every measure.
 Then the sensitivities the plan set out, all on theta:
-spell rule, maternity, winsorising, condition weights and the top band.
+two-part pricing of stays (a fixed cost per stay plus a cheaper night, the
+same price for the average long stay), spell rule, maternity, winsorising,
+condition weights and the top band.
 
 Outputs: measuring_health/figures/fig_cost_convexity.png and the same file in paper/figures/,
          artifacts/descriptives/cost_convexity.csv,
@@ -104,10 +106,15 @@ def main() -> int:
     # ---- 2. sensitivity, on the headline measure ---------------------------
     z0 = ((d["theta"] - d["theta"].mean()) / d["theta"].std()).to_numpy()
     w = d["cond_weight_filled"] if "cond_weight_filled" in d else None
+    # the two-part check: £350 a night plus a fixed cost per stay that keeps
+    # the NCC average of £5,449 for the average long stay (5,449 / 791 nights)
+    base = UnitCosts()
+    two_part = UnitCosts(bed_day=350.0,
+                         stay_fixed=5449.0 - 350.0 * 5449.0 / base.bed_day)
     variants = [
-        ("base: one spell, no maternity, flat", dict()),
-        ("spells: two if stay > 5 nights", dict(spell_rule="two")),
-        ("spells: one per 5 nights", dict(spell_rule="per_los")),
+        ("base: every night at the bed-day cost, no maternity, flat", dict()),
+        ("two-part: fixed cost per stay + £350 a night", dict(costs=two_part)),
+        ("two-part, one stay per 5 nights", dict(costs=two_part, spell_rule="per_los")),
         ("maternity included", dict(exclude_maternity=False)),
         ("condition-weighted spells", dict(condition_weights=w)),
         ("top band = 30 contacts", dict(top_band=30.0)),

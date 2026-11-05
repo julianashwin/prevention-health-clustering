@@ -11,18 +11,23 @@ Three tiers, all banded or counted per person-wave over waves 7-15:
     hl2hop   out-patient         band 0-4
     hosp     any in-patient stay, with hospd nights and hospch a maternity flag
 
-UNIT COSTS are national averages from the NHS National Cost Collection,
-which publishes free annual figures at aggregate and HRG level. The values
-below are indicative and are deliberately kept in one editable table: they
-should be replaced with the exact figures for a chosen price year before any
-result is published, and every function takes the table as an argument so
-that swapping it is a one-line change.
+UNIT COSTS are national averages in 2024/25 prices, kept in one editable
+table that every function takes as an argument. The hospital rates come from
+NHS England's National Cost Collection 2024/25 (published November 2025):
+a stay of 0-1 nights is priced at the non-elective short-stay average per
+episode, and a stay of 2+ nights at the non-elective long-stay cost per bed
+day for every night. The 2024/25 collection no longer reports excess bed days
+separately. The GP rate is PSSRU's Unit Costs of Health and Social Care 2025,
+Table 9.4.2. None of the rates varies with age: NHS currencies separate
+children from adults but have no older-age bands, and they rise with severity
+(the HRG's complication and comorbidity score), which a flat index cannot see.
 
 THE SPELL PROBLEM. UKHLS records total nights but not the number of
-admissions, and twenty nights as one spell or four differ in cost by about
-threefold. ``spell_rule`` selects an assumption and exists so that the
-sensitivity can be reported rather than hidden: "one" treats the year as a
-single spell, "per_los" assumes one spell per ``included_los`` nights.
+admissions. Under per-night pricing this matters only through ``stay_fixed``,
+the fixed cost per stay in the two-part check (zero in the main index).
+``spell_rule`` selects an assumption so that the sensitivity can be reported
+rather than hidden: "one" treats the year as a single spell, "per_los" assumes
+one spell per ``included_los`` nights.
 """
 
 from __future__ import annotations
@@ -42,15 +47,25 @@ BAND_MIDPOINTS = np.array([0.0, 1.5, 4.0, 8.0, 15.0])
 class UnitCosts:
     """National average unit costs, in pounds of a single price year."""
 
-    spell: float = 1590.0          # non-elective in-patient episode
-    excess_bed_day: float = 313.0  # each night beyond the included stay
-    outpatient: float = 120.0      # one out-patient attendance
-    gp: float = 42.0               # one GP consultation
-    maternity_spell: float = 2000.0
-    included_los: float = 5.0      # nights already inside the spell price
-    price_year: str = "indicative"
-    # multipliers on the spell price by condition group; 1.0 is the average
-    # non-elective admission. Indicative, and varied in sensitivity analysis.
+    # NCC 2024/25, non-elective short stay (NES), average per episode
+    short_stay: float = 826.0
+    # NCC 2024/25 patient-level costs, non-elective long stay, per bed day
+    # (written answer 100046, 22 Dec 2025); NEL averages £5,449 per episode
+    bed_day: float = 791.0
+    # fixed cost per stay of 2+ nights on top of its bed days; 0 in the main
+    # index, positive only in the two-part check
+    stay_fixed: float = 0.0
+    short_stay_nights: float = 1.0  # stays up to this long take short_stay
+    # NCC 2024/25, consultant-led and non-consultant-led attendances and
+    # out-patient procedures, average per attendance
+    outpatient: float = 191.0
+    # PSSRU 2025 Table 9.4.2: surgery consultation of 10 minutes, including
+    # direct care staff, excluding qualification costs (£48 with them)
+    gp: float = 40.0
+    included_los: float = 5.0       # nights per spell for the "per_los" and "two" rules
+    price_year: str = "2024/25"
+    # multipliers on the in-patient cost by condition group; 1.0 is the
+    # average admission. Indicative, and varied in sensitivity analysis.
     condition_weight: dict[str, float] = field(default_factory=lambda: {
         "cvd": 1.35, "resp": 1.10, "cancer": 1.45, "msk": 1.25,
         "metab": 0.95, "neuro": 1.50, "renal": 1.40, "mental": 0.85,
@@ -107,7 +122,8 @@ def inpatient_cost(frame: pd.DataFrame, costs: UnitCosts, *,
                    spell_rule: str = "one",
                    weights: pd.Series | None = None,
                    exclude_maternity: bool = True) -> pd.Series:
-    """Spell price (optionally condition-weighted) plus excess bed days."""
+    """Short-stay price, or bed days plus any fixed cost per stay, times an
+    optional condition weight."""
     admitted = (frame["hosp"] == 1).to_numpy()
     nights = frame["hospd"].fillna(0).to_numpy(float)
     birth = (frame.get("hospch", pd.Series(np.nan, index=frame.index)) == 1).to_numpy()
@@ -116,9 +132,9 @@ def inpatient_cost(frame: pd.DataFrame, costs: UnitCosts, *,
         nights = np.where(birth, 0.0, nights)
     spells = n_spells(nights, admitted, spell_rule, costs.included_los)
     w = np.ones(len(frame)) if weights is None else weights.to_numpy(float)
-    base = spells * costs.spell * w
-    excess = np.maximum(nights - spells * costs.included_los, 0.0)
-    return pd.Series(base + excess * costs.excess_bed_day, index=frame.index)
+    stay = np.where(nights <= costs.short_stay_nights, costs.short_stay,
+                    spells * costs.stay_fixed + nights * costs.bed_day)
+    return pd.Series(np.where(admitted, stay * w, 0.0), index=frame.index)
 
 
 def build_cost_index(frame: pd.DataFrame, costs: UnitCosts | None = None, *,

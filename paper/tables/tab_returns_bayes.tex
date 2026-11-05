@@ -1,12 +1,20 @@
 \begin{tabular}{lrrrrrrrrrr}
 \toprule
-classes & $r$ & $C(r)$ & within & $P(r)$ & $P/C$ & between & $P_1$ & $P_2$ & $P_3$ & gain \\
+classes & $r$ & $C(r)$ & within & uniform & $\div C$ & between & class 1 & class 2 & class 3 & gain \\
 \midrule
-AR(1) + ``spike'' classes & 30 & 37,834 & 16\% & 34,542 & 0.91 & +35\% & 71,536 & 32,653 & 5,580 & 1.07 \\
-AR(1) + ``spike'' classes & 50 & 30,005 & 15\% & 19,953 & 0.66 & +25\% & 26,356 & 24,866 & 6,314 & 0.32 \\
-AR(1) + ``spike'' classes & 70 & 18,339 & 13\% & 7,111 & 0.39 & +7\% & 4,828 & 10,650 & 3,265 & 0.50 \\
-independent-residuals classes & 30 & 37,834 & 11\% & 25,840 & 0.68 & +13\% & 64,804 & 28,832 & 8,076 & 1.51 \\
-independent-residuals classes & 50 & 30,005 & 10\% & 13,972 & 0.47 & -8\% & 20,869 & 18,613 & 6,443 & 0.49 \\
-independent-residuals classes & 70 & 18,339 & 9\% & 4,679 & 0.26 & -42\% & 2,872 & 7,001 & 2,879 & 0.50 \\
+\multicolumn{11}{l}{\textit{(a) First order: $P(r)$ and $P_j(r)$, per unit of $\mu$}} \\
+AR(1) + ``spike'' classes & 25 & 67,510 & 21\% & 79,224 & 1.17 & +40\% & 184,418 & 66,868 & 8,370 & 1.33 \\
+AR(1) + ``spike'' classes & 50 & 52,563 & 19\% & 41,060 & 0.78 & +25\% & 56,623 & 50,845 & 11,461 & 0.38 \\
+AR(1) + ``spike'' classes & 70 & 32,668 & 17\% & 14,689 & 0.45 & +7\% & 10,418 & 22,192 & 6,042 & 0.51 \\
+independent-residuals classes & 25 & 67,510 & 14\% & 59,581 & 0.88 & +20\% & 174,493 & 61,618 & 14,434 & 1.93 \\
+independent-residuals classes & 50 & 52,563 & 13\% & 28,318 & 0.54 & -8\% & 45,634 & 37,834 & 11,691 & 0.61 \\
+independent-residuals classes & 70 & 32,668 & 12\% & 9,487 & 0.29 & -44\% & 6,311 & 14,480 & 5,348 & 0.53 \\
+\midrule\multicolumn{11}{l}{\textit{(b) Exact, at $\mu=1$: $S(r)$ and $S_j(r)$}} \\
+AR(1) + ``spike'' classes & 25 & 67,510 &  & 43,729 & 0.65 &  & 102,742 & 35,979 & 5,329 & 1.35 \\
+AR(1) + ``spike'' classes & 50 & 52,563 &  & 27,231 & 0.52 &  & 44,621 & 30,091 & 7,447 & 0.64 \\
+AR(1) + ``spike'' classes & 70 & 32,668 &  & 11,282 & 0.35 &  & 9,629 & 16,305 & 4,444 & 0.45 \\
+independent-residuals classes & 25 & 67,510 &  & 37,791 & 0.56 &  & 117,271 & 36,695 & 9,237 & 2.10 \\
+independent-residuals classes & 50 & 52,563 &  & 20,579 & 0.39 &  & 39,697 & 25,873 & 7,782 & 0.93 \\
+independent-residuals classes & 70 & 32,668 &  & 7,759 & 0.24 &  & 6,103 & 11,740 & 4,131 & 0.51 \\
 \bottomrule
 \end{tabular}

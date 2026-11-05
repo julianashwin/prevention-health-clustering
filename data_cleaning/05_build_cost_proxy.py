@@ -1,8 +1,9 @@
 """Build the UKHLS cost index (plan stages 1 and 2).
 
-Stage 1 is the flat-rate index: every admission priced at the average
-non-elective spell plus excess bed days, out-patient and GP contacts at
-their national average unit costs, maternity separated.
+Stage 1 is the flat-rate index at 2024/25 national averages: an admission
+of 0-1 nights at the non-elective short-stay price, a longer one at the
+non-elective long-stay cost per bed day for every night, out-patient and GP
+contacts at their unit costs, maternity separated (measures/cost.py).
 
 Stage 2 weights each admission by the cost group of the condition it was
 attributed to, where UKHLS records one. Attribution covers about a third of
@@ -116,7 +117,8 @@ def main() -> int:
     att = load_attribution()
     print(f"\nattribution: {len(att):,} condition-nights records; "
           f"{att.groupby(['pidp','wave']).ngroups:,} person-waves with any")
-    # a person-wave's weight is its nights-weighted average group multiplier
+    # a person-wave's weight is its nights-weighted average group multiplier;
+    # it does not depend on the prices, only on the condition multipliers
     att["w"] = att["group"].map(costs.condition_weight).fillna(1.0)
     agg = att.groupby(["pidp", "wave"]).apply(
         lambda g: np.average(g["w"], weights=g["nights"]), include_groups=False)

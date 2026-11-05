@@ -8,9 +8,13 @@ Prevention is priced as the future treatment cost it avoids. The framework's obj
   P_j(r) = sum_{a>=r} E[ -c'(h_a) | j ] (hbar_{j,r-1} - hbar_{j,a})    prevention, class j: treatment avoided per unit mu
   P(r)   = sum_j pi_j P_j(r) = mean channel + between-class channel
   P(r)/C(r): the share of the remaining bill a unit of prevention avoids; class targeting: max_j P_j(r) - P(r)
+  S_j(r; mu) = sum_{a>=r} E[ c(h_a) - c(h_a + mu d_{j,a}) | j ],  d_{j,a} = hbar_{j,r-1} - hbar_{j,a}
+             = mu P_j(r) - mu^2/2 sum_a c''(E[h_a | j]) d_{j,a}^2 - mu^3/6 c''' sum_a d_{j,a}^3
+             the exact saving at intensity mu: c is a polynomial of degree at most 3, so the expansion
+             stops at the third term and E[c''(h) | j] = c''(E[h | j]); reported at mu = 1 (S, S/C, S_j)
 with c(.) the cost curve estimated in pounds on the measure (a cubic in the score on the cost
-index, made monotone; fit_cost_curve in 31_paper_appendix_extras.py), on the uncapped index by
-default (--capped to cap it at the 99th percentile). On the frailty indices, where higher is
+index, made monotone; fit_cost_curve in 31_paper_appendix_extras.py), on the cost index as it is
+by default (--capped to cap it at the 99th percentile). On the frailty indices, where higher is
 frailer, the decline is a rise and -c' becomes +c'. Class shares pi_j and paths hbar_{j,a} are
 the fitted typology (quadratics in age at the posterior mean for the mixtures; smoothed type
 means for the K-means); E[-c'(h) | j] at each age is the posterior-weighted mean over the
@@ -58,7 +62,7 @@ from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DI
 
 M31 = importlib.import_module("31_paper_appendix_extras")
 R_GRID = np.arange(25, 86)
-R_TABLE = [30, 50, 70]
+R_TABLE = [25, 50, 70]                  # the start ages reported; R_GRID starts at 25, as the other figures
 COST = "flat_cost_total"
 CONTRACT = PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1"
 AGE_BANDS = [(20, 34), (35, 44), (45, 54), (55, 64), (65, 74), (75, 90)]
@@ -90,8 +94,9 @@ def cost_curve(v: str, uncapped: bool = True):
     cs = d.merge(cost[["pidp", "wave", "y", "raw"]], on=["pidp", "wave"]).dropna(subset=[v])
     coef, dcoef, deg = M31.fit_cost_curve(cs[v].to_numpy(float), cs["y"].to_numpy(float))
     cprime = lambda z: np.polynomial.polynomial.polyval(z, dcoef)  # noqa: E731
+    cprime.coef = np.asarray(dcoef, float)                          # c'(.)'s coefficients, for c'' and c''' in the exact saving
     cfun = lambda z: np.maximum(np.polynomial.polynomial.polyval(z, coef), 0.0)  # noqa: E731
-    print(f"cost curve on {v}: degree {deg}, {'uncapped' if uncapped else f'capped at p99 (£{cap:,.0f})'}, {len(cs):,} person-waves")
+    print(f"cost curve on {v}: degree {deg}, {'the cost index' if uncapped else f'capped at p99 (£{cap:,.0f})'}, {len(cs):,} person-waves")
     return cfun, cprime, deg, cs, cap
 
 
@@ -119,38 +124,58 @@ def returns(rows: pd.DataFrame, v: str, W: np.ndarray, paths: np.ndarray, pi: np
     c_mean = cfun(hbar)
     c_between = (S * cfun(M)).sum(axis=0) - c_mean
     c_within = c_a - c_mean - c_between
+    # the exact saving: c(h) - c(h + delta) = -c'(h) delta - c''(h) delta^2 / 2 - c''' delta^3 / 6 for a polynomial of
+    # degree <= 3, and c'' is linear, so E[c''(h) | j, a] = c''(M_j(a)); delta = sign mu d, d the decline held back
+    d2 = np.polynomial.polynomial.polyder(cprime.coef)
+    c2 = np.polynomial.polynomial.polyval(M, d2)                    # c''(E[h | j, a]), K x ages
+    c3 = float(np.polynomial.polynomial.polyder(d2)[0]) if len(d2) > 1 else 0.0
     recs = []
     for r in R_GRID:
         idx = slice(r - MIN_AGE, MAX_AGE - MIN_AGE + 1)
         prevd = sign * (paths[:, r - 1 - MIN_AGE][:, None] - paths[:, idx])
         Pj = (G[:, idx] * prevd).sum(axis=1)
         P = float(pi @ Pj)
+        Q2 = 0.5 * (c2[:, idx] * prevd ** 2).sum(axis=1)             # S_j(mu) = mu P_j - mu^2 Q2_j + mu^3 Q3_j
+        Q3 = -sign * c3 / 6.0 * (prevd ** 3).sum(axis=1)
+        Sj = Pj - Q2 + Q3
+        Sx = float(pi @ Sj)
         mean_ch = float((g_a[idx] * sign * (hbar[r - 1 - MIN_AGE] - hbar[idx])).sum())
+        dbar = sign * (hbar[r - 1 - MIN_AGE] - hbar[idx])            # the population's mean decline, held back in full
+        S_mean = float((g_a[idx] * dbar - 0.5 * np.polynomial.polynomial.polyval(hbar[idx], d2) * dbar ** 2 - sign * c3 / 6.0 * dbar ** 3).sum())
         C = float(c_a[idx].sum()); C_mean = float(c_mean[idx].sum()); C_between = float(c_between[idx].sum()); C_within = float(c_within[idx].sum())
         recs.append({"r": r, "C": C, "C_mean": C_mean, "C_between": C_between, "C_within": C_within,
                      "within_share": C_within / C, "between_share_C": C_between / C,
                      "P": P, "P_over_C": P / C, "mean_channel": mean_ch, "cov_channel": P - mean_ch,
                      "cov_share": (P - mean_ch) / P, "P_max_class": Pj.max(), "best_class": int(Pj.argmax()) + 1,
-                     "type_gain": (Pj.max() - P) / P, **{f"P_{c + 1}": Pj[c] for c in range(kc)}})
+                     "type_gain": (Pj.max() - P) / P, **{f"P_{c + 1}": Pj[c] for c in range(kc)},
+                     "S": Sx, "S_over_C": Sx / C, "S_gain": (Sj.max() - Sx) / Sx, "S_best_class": int(Sj.argmax()) + 1,
+                     "S_q2": float(pi @ Q2), "S_q3": float(pi @ Q3), **{f"S_{c + 1}": Sj[c] for c in range(kc)},
+                     "S_mean_channel": S_mean, **{f"Q2_{c + 1}": Q2[c] for c in range(kc)}, **{f"Q3_{c + 1}": Q3[c] for c in range(kc)}})
     return pd.DataFrame(recs).set_index("r")
 
 
-def savings(rows: pd.DataFrame, v: str, W: np.ndarray, paths: np.ndarray, pi: np.ndarray, cprime) -> dict:
+def savings(rows: pd.DataFrame, v: str, W: np.ndarray, paths: np.ndarray, pi: np.ndarray, cprime, mu: float | None = None) -> dict:
     """When the saving arrives: the per-age contributions to P_j(r), s_j(a | r) = E[-c'(h_a) | j] (hbar_{j,r-1} - hbar_{j,a}),
-    for every start age r on R_GRID and age a >= r, by class and for the uniform policy (pi-weighted).
-    Returns arrays [K, len(R_GRID), len(AGES)] and [len(R_GRID), len(AGES)], zero before r."""
+    for every start age r on R_GRID and age a >= r, by class and for the uniform policy (pi-weighted). With ``mu``,
+    the exact saving in year a at that intensity instead, in pounds: mu s_j(a | r) - mu^2/2 c2(E[h_a | j]) d^2 - mu^3/6 c3 d^3, c2 and c3 the second and third derivatives
+    (its sum over a is S_j(r; mu)). Returns arrays [K, len(R_GRID), len(AGES)] and [len(R_GRID), len(AGES)], zero before r."""
     sign = 1.0 if HEALTHIER_HIGH.get(v, True) else -1.0
     x = rows[v].to_numpy(float); cp = -sign * cprime(x); age = rows["age"].to_numpy()
     kc = W.shape[1]
-    G = []
+    G, M = [], []
     for k in range(kc):
         wk = W[:, k]; den = pd.Series(wk).groupby(age).sum()
         G.append(smooth(pd.Series(wk * cp).groupby(age).sum() / den, den, min_n=25))
-    G = np.vstack(G)
+        M.append(smooth(pd.Series(wk * x).groupby(age).sum() / den, den, min_n=25))
+    G, M = np.vstack(G), np.vstack(M)
+    d2 = np.polynomial.polynomial.polyder(cprime.coef)
+    c2 = np.polynomial.polynomial.polyval(M, d2)
+    c3 = float(np.polynomial.polynomial.polyder(d2)[0]) if len(d2) > 1 else 0.0
     S = np.zeros((kc, len(R_GRID), len(AGES)))
     for i, r in enumerate(R_GRID):
         idx = slice(r - MIN_AGE, MAX_AGE - MIN_AGE + 1)
-        S[:, i, idx] = G[:, idx] * sign * (paths[:, r - 1 - MIN_AGE][:, None] - paths[:, idx])
+        d = sign * (paths[:, r - 1 - MIN_AGE][:, None] - paths[:, idx])
+        S[:, i, idx] = G[:, idx] * d if mu is None else mu * G[:, idx] * d - 0.5 * mu ** 2 * c2[:, idx] * d ** 2 - sign * mu ** 3 / 6.0 * c3 * d ** 3
     U = np.einsum("k,kra->ra", pi, S)
     return {"S": S, "U": U}
 
@@ -168,23 +193,33 @@ def timing_stats(S: np.ndarray, r: int, rate: float = 0.035) -> dict:
             "within10": float(cum[min(10, len(cum) - 1)]), "pv_share": float((prof * disc).sum() / total)}
 
 
-def draw_timing_profiles(ax, sv: dict, cs: dict, r_list=(30, 50, 70), letter: str = "e") -> None:
-    """Panel: the yearly saving by age for the uniform policy (thick) and each class (thin), for a few start ages."""
+def draw_timing_profiles(ax, sv: dict, cs: dict, r_list=tuple(R_TABLE), letter: str = "e", uniform: bool = True, mu: float | None = None) -> None:
+    """Panel: the yearly saving by age for the uniform policy (thick) and each class (thin), for a few start ages;
+    ``uniform=False`` drops the uniform lines, ``mu`` labels a profile from savings(..., mu=mu) as the exact saving in pounds."""
     kc = len(cs["shares"]); pal = PALETTE[kc]
     styles = ["-", "--", ":"]
     for r, ls in zip(r_list, styles):
         i = int(np.where(R_GRID == r)[0][0])
-        ax.plot(AGES[r - MIN_AGE:], sv["U"][i, r - MIN_AGE:], color=INK2, lw=2.2, ls=ls, label=f"uniform, start {r}")
+        if uniform:
+            ax.plot(AGES[r - MIN_AGE:], sv["U"][i, r - MIN_AGE:], color=INK2, lw=2.2, ls=ls, label=f"uniform, start {r}")
         for k in range(kc):
             ax.plot(AGES[r - MIN_AGE:], sv["S"][k, i, r - MIN_AGE:], color=pal[k], lw=0.9 + 2.0 * cs["shares"][k], ls=ls, alpha=0.9,
                     label=f"{cs['kind']} {k + 1}" if r == r_list[0] else None)
+    if not uniform:                # the line styles, keyed once
+        for r, ls in zip(r_list, styles):
+            ax.plot([], [], color=INK2, lw=1.4, ls=ls, label=f"start at {r}")
     ax.axhline(0, color=INK2, lw=0.6)
-    ax.set_title(f"({letter}) when the saving arrives: £ per year of age, by start age", loc="left", fontsize=9.5)
-    ax.set_xlabel("age $a$"); ax.set_ylabel("saving in year $a$ per unit of $\\mu$, £"); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE + 5, MAX_AGE)
+    if mu is None:
+        ax.set_title(f"({letter}) when the saving arrives: £ per year of age, by start age", loc="left", fontsize=9.5)
+        ax.set_ylabel("saving in year $a$ per unit of $\\mu$, £")
+    else:
+        ax.set_title(f"({letter}) when the saving arrives at $\\mu = {mu:g}$: £ per year of age", loc="left", fontsize=9.5)
+        ax.set_ylabel("saving in year $a$, £")
+    ax.set_xlabel("age $a$"); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE + 5, MAX_AGE)
     ax.legend(fontsize=6.8, ncols=2)
 
 
-def draw_timing_cumulative(ax, sv: dict, cs: dict, r_list=(30, 50, 70), letter: str = "f", rate: float = 0.035) -> None:
+def draw_timing_cumulative(ax, sv: dict, cs: dict, r_list=tuple(R_TABLE), letter: str = "f", rate: float = 0.035) -> None:
     """Panel: the share of the return collected by age, uniform (thick) and by class (thin), with the half-way ages."""
     kc = len(cs["shares"]); pal = PALETTE[kc]
     styles = ["-", "--", ":"]
@@ -261,18 +296,44 @@ def draw_pj(ax, R: pd.DataFrame, cs: dict, v: str, letter: str, title: str | Non
     ax.legend(fontsize=7.5, ncols=2 if kc > 3 else 1); ax.grid(True, axis="y"); ax.set_xlim(R_GRID[0], R_GRID[-1])
 
 
-def draw_bill(ax, R: pd.DataFrame, cs: dict, letter: str) -> None:
-    """Panel (c): the bill stacked into its three parts, with the uniform return over it."""
+def draw_saving_mu(ax, R: pd.DataFrame, cs: dict, mu: float, letter: str, scale: float = 1.0, ylabel: str | None = None) -> None:
+    """Panel (a) at intensity ``mu``: the exact saving by class and uniform, S_j(r; mu) = mu P_j - mu^2 Q2_j + mu^3 Q3_j,
+    in pounds divided by ``scale``."""
+    kc = len(cs["shares"]); pal = PALETTE[kc]
+    Sj = [(mu * R[f"P_{c + 1}"] - mu ** 2 * R[f"Q2_{c + 1}"] + mu ** 3 * R[f"Q3_{c + 1}"]) / scale for c in range(kc)]
+    for c in range(kc):
+        ax.plot(R.index, Sj[c], color=pal[c], lw=1.0 + 3.5 * cs["shares"][c], label=f"{cs['kind']} {c + 1} ({cs['shares'][c]:.0%})")
+    ax.plot(R.index, sum(cs["shares"][c] * Sj[c] for c in range(kc)), color=INK2, lw=1.4, ls="--", label="uniform")
+    ax.axhline(0, color=INK2, lw=0.6)
+    ax.set_title(f"({letter}) the saving from prevention at $\\mu = {mu:g}$ by class{', £' if scale == 1 else ''}", loc="left", fontsize=9.5)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    ax.legend(fontsize=7.5); ax.grid(True, axis="y"); ax.set_xlim(R_GRID[0], R_GRID[-1])
+
+
+def draw_bill(ax, R: pd.DataFrame, cs: dict, letter: str, exact: bool = False, mean_channel: bool = True,
+              scale: float = 1.0, ylabel: str | None = None) -> None:
+    """Panel (c): the bill stacked into its three parts, with the uniform return over it, in pounds divided by ``scale``."""
+    R = R / scale if scale != 1 else R
     ax.stackplot(R.index, R["C_mean"], R["C_between"], R["C_within"], colors=[INK2, CLUSTER[1], "#d9d9d9"], alpha=0.85,
                  labels=["$C(r)$: cost at the mean path", f"+ {cs['kind']} differences (between)", "+ realised deviations (within)"])
-    ax.plot(R.index, R["P"], color=VERM, lw=2.0, label="uniform prevention $P(r)$: treatment avoided")
-    ax.plot(R.index, R["mean_channel"], color=VERM, lw=1.0, ls=":", label="its mean channel")
-    ax.set_title(f"({letter}) the bill $C(r)$ and what prevention avoids, £", loc="left", fontsize=9.5)
+    if exact:                      # the exact saving from holding back the whole decline, and the part the mean path carries
+        ax.plot(R.index, R["S"], color=VERM, lw=2.0, label="uniform prevention at $\\mu = 1$: treatment avoided")
+        if mean_channel:
+            ax.plot(R.index, R["S_mean_channel"], color=VERM, lw=1.0, ls=":", label="its mean channel")
+    else:
+        ax.plot(R.index, R["P"], color=VERM, lw=2.0, label="uniform prevention $P(r)$: treatment avoided")
+        ax.plot(R.index, R["mean_channel"], color=VERM, lw=1.0, ls=":", label="its mean channel")
+        ax.plot(R.index, R["S"], color=VERM, lw=1.6, ls="--", label="exact saving at $\\mu = 1$")
+    ax.set_title(f"({letter}) the bill $C(r)$ and what prevention avoids{', £' if scale == 1 else ''}", loc="left", fontsize=9.5)
+    if ylabel:
+        ax.set_ylabel(ylabel)
     ax.legend(fontsize=7.0); ax.grid(True, axis="y"); ax.set_xlim(R_GRID[0], R_GRID[-1])
 
 
 def draw_ratios(ax, R: pd.DataFrame, cs: dict, letter: str) -> None:
-    ax.plot(R.index, R["P_over_C"], color=ORANGE, lw=1.8, label="$P(r)/C(r)$: share of the bill avoided")
+    ax.plot(R.index, R["P_over_C"], color=ORANGE, lw=1.8, label="$P(r)/C(r)$: first order, per unit of $\\mu$")
+    ax.plot(R.index, R["S_over_C"], color=ORANGE, lw=1.4, ls="--", label="$S(r)/C(r)$: exact, $\\mu = 1$")
     ax.plot(R.index, R["type_gain"], color=CLUSTER[0], lw=1.8, label=r"$(\max_j P_j - P)/P$")
     ax.plot(R.index, R["cov_share"], color=CLUSTER[2], lw=1.4, ls="--", label=f"between-{cs['kind']} share of $P(r)$")
     ax.axhline(0, color=INK2, lw=0.6)
@@ -281,16 +342,17 @@ def draw_ratios(ax, R: pd.DataFrame, cs: dict, letter: str) -> None:
 
 
 def footer_text(v: str, deg: int, uncapped: bool, kmeans: bool) -> str:
-    return (f"Returns on the K = 3 {'partial K-means types' if kmeans else 'mixture classes'} on {v}, with the cost curve estimated in pounds on {v} (a degree-{deg} polynomial on the cost index, "
-            f"{'uncapped' if uncapped else 'capped at the 99th percentile'}, waves 7-15). C(r) is the expected treatment cost from r to 90 on the observed cross-section, "
+    return (f"Returns on the K = 3 {'partial K-means types' if kmeans else 'mixture classes'} on {v}, with the cost curve estimated in pounds on {v} (a degree-{deg} polynomial on the cost index"
+            f"{'' if uncapped else ' capped at the 99th percentile'}, waves 7-15). C(r) is the expected treatment cost from r to 90 on the observed cross-section, "
             "split into the cost at the mean path, what the type differences add and what realised deviations add (the part prevention cannot reach); "
-            "prevention scales each class's future decline by (1 - mu) and P(r) is the treatment cost that avoids, to first order, per unit of mu. Pounds to 90; no survival weighting, no discounting. "
+            "prevention scales each class's future decline by (1 - mu) and P(r) is the treatment cost that avoids, to first order, per unit of mu; S(r) is the exact saving at mu = 1 "
+            "(the cost curve is a polynomial of degree at most 3, so the expansion in mu stops at the cube). Pounds to 90; no survival weighting, no discounting. "
             + ("Type shares and smoothed type means; E[-c'(h) | type] from the members observed at each age." if kmeans else
                "Class shares and quadratic paths at the posterior mean; E[-c'(h) | class] from the person-waves observed at each age, weighted by the posterior class probabilities."))
 
 
 def curve_figure(v: str, cs: pd.DataFrame, cap: float) -> None:
-    """The estimated cost curve on the measure: the pooled uncapped cubic, the same fit within six age
+    """The estimated cost curve on the measure: the pooled cubic on the cost index, the same fit within six age
     bands (the age-invariance check the pricing rests on), and the capped fit, with twentieth-bin means."""
     vl = MEASURE_LABEL[v]
     x = cs[v].to_numpy(float); yraw = cs["raw"].to_numpy(float)
@@ -309,19 +371,19 @@ def curve_figure(v: str, cs: pd.DataFrame, cap: float) -> None:
         rows.append({"band": f"{blo}-{bhi}", "mean_ratio_to_pooled": float(np.mean(yb / pooled))})
     ax.plot(grid, pooled, color="black", lw=2.0, ls="--", label="pooled")
     ax.set_title(f"(a) cost curve on {vl}, refitted within age bands", loc="left", fontsize=9.5)
-    ax.set_xlabel(f"{vl} (right = healthier)"); ax.set_ylabel("expected annual cost, £ (uncapped)"); ax.legend(fontsize=7.5, ncols=2); ax.grid(True, axis="y")
+    ax.set_xlabel(f"{vl} (right = healthier)"); ax.set_ylabel("expected annual cost, £"); ax.legend(fontsize=7.5, ncols=2); ax.grid(True, axis="y")
     ax = axes[1]
     b = pd.qcut(cs[v], 20, labels=False, duplicates="drop")
     g = cs.assign(b=b).groupby("b").agg(x=(v, "mean"), y=("raw", "mean"), yc=("raw", lambda z: np.minimum(z, cap).mean()))
-    ax.plot(grid, pooled, color=VERM, lw=1.8, label=f"uncapped fit (degree {deg})")
+    ax.plot(grid, pooled, color=VERM, lw=1.8, label=f"fit (degree {deg})")
     ax.plot(grid, np.polynomial.polynomial.polyval(grid, coef_c), color=BLUE, lw=1.8, label=f"capped at p99 (degree {deg_c})")
-    ax.plot(g["x"], g["y"], "o", color=VERM, ms=3.5, mfc="none", label="twentieths, uncapped")
+    ax.plot(g["x"], g["y"], "o", color=VERM, ms=3.5, mfc="none", label="twentieths")
     ax.plot(g["x"], g["yc"], "o", color=BLUE, ms=3.5, mfc="none", label="twentieths, capped")
     ax.set_title("(b) the pooled fit against twentieths", loc="left", fontsize=9.5)
     ax.set_xlabel(f"{vl} (right = healthier)"); ax.legend(fontsize=7.5); ax.grid(True, axis="y")
     fig.text(0.01, -0.03, "\n".join(textwrap.wrap(
         f"The cost index in pounds, waves 7-15, {len(cs):,} person-waves, against {v}: a polynomial (cubic unless that is not monotone on the 1st-99th percentile range), "
-        f"fitted pooled and within each age band, over the 1st-99th percentile range of {v}. Panel (b): the pooled fits on uncapped costs and on costs capped at the "
+        f"fitted pooled and within each age band, over the 1st-99th percentile range of {v}. Panel (b): the pooled fit, and the same fit on costs capped at the "
         f"99th percentile (£{cap:,.0f}), with the mean cost in twentieths of {v}.", 190)), fontsize=7.2, color=INK2, va="top")
     sfx = "" if v == "theta" else f"_{v}"
     fig.savefig(FIG / f"fig_cost_curve{sfx}.png", bbox_inches="tight"); plt.close(fig)
@@ -347,7 +409,7 @@ def main() -> int:
             R, cs = compute("theta", fs, True, curve)
             draw_pj(ax, R, cs, "theta", letter, title=f"({letter}) {cs['name']}")
             recs.append(R.assign(set=fs).reset_index())
-            print(f"{fs}: shares {np.round(cs['shares'], 3)}; P(30) {R.loc[30, 'P']:,.0f}, P_j(30) " + " / ".join(f"{R.loc[30, f'P_{c + 1}']:,.0f}" for c in range(K)))
+            print(f"{fs}: shares {np.round(cs['shares'], 3)}; P({R_TABLE[0]}) {R.loc[R_TABLE[0], 'P']:,.0f}, P_j({R_TABLE[0]}) " + " / ".join(f"{R.loc[R_TABLE[0], f'P_{c + 1}']:,.0f}" for c in range(K)))
         for ax in axes[1]:
             ax.set_xlabel("start age $r$")
         share_ylim(list(axes.ravel()))
@@ -365,7 +427,7 @@ def main() -> int:
         cfun, cprime, deg, _, _ = cost_curve("theta", True)
         cs = class_set("ssm", "theta")
         sv = savings(cs["rows"], "theta", cs["W"], cs["paths"], cs["shares"], cprime)
-        r_list = (30, 50, 70)
+        r_list = tuple(R_TABLE)
         fig, axes = plt.subplots(2, K, figsize=(15, 8), gridspec_kw={"hspace": 0.4, "wspace": 0.25})
         recs = []
         for k in range(K):
@@ -394,7 +456,7 @@ def main() -> int:
         print(t.round(3).to_string(index=False))
         fig.text(0.01, -0.02, "\n".join(textwrap.wrap(
             "The K = 3 AR(1) + \"spike\" classes on theta with the cost curve in pounds. Top: the saving in each year of age a from prevention started at r, s_j(a | r) = E[-c'(h_a) | j] (hbar_{j,r-1} - hbar_{j,a}), "
-            "the per-age terms whose sum over a >= r is the class return P_j(r); for starts at 30, 50 and 70. Bottom: the cumulative share of P_j(r) collected by age a, with the ages by which half and 90% has arrived "
+            "the per-age terms whose sum over a >= r is the class return P_j(r); for starts at 25, 50 and 70. Bottom: the cumulative share of P_j(r) collected by age a, with the ages by which half and 90% has arrived "
             "and the present value at 3.5% a year (the Green Book rate) as a share of the undiscounted return. Pounds per unit of mu; no survival weighting.", 210)), fontsize=7.2, color=INK2, va="top")
         fig.savefig(FIG / "fig_prevention_timing.png", bbox_inches="tight")
         print(f"wrote fig_prevention_timing.png to {FIG}")
@@ -423,11 +485,11 @@ def main() -> int:
                 if i == len(KS) - 1:
                     ax.set_xlabel("start age $r$")
                 recs.append(R.assign(measure=m, K=kc).reset_index())
-                print(f"{m} K={kc}: shares {np.round(cs['shares'], 3)}; P(30) {R.loc[30, 'P']:,.0f}, P_j(30) " + " / ".join(f"{R.loc[30, f'P_{c + 1}']:,.0f}" for c in range(kc)))
+                print(f"{m} K={kc}: shares {np.round(cs['shares'], 3)}; P({R_TABLE[0]}) {R.loc[R_TABLE[0], 'P']:,.0f}, P_j({R_TABLE[0]}) " + " / ".join(f"{R.loc[R_TABLE[0], f'P_{c + 1}']:,.0f}" for c in range(kc)))
         share_ylim(drawn)
         pd.concat(recs).to_csv(DESC / "paper_returns_by_measure.csv", index=False)
         fig.text(0.01, -0.02, "\n".join(textwrap.wrap(
-            "The return to prevention by class, P_j(r), under the AR(1) + \"spike\" mixture on each measure (columns) at K = 3, 4 and 5 (rows), each measure with its own cost curve in pounds (a cubic in the measure on the cost index, uncapped). "
+            "The return to prevention by class, P_j(r), under the AR(1) + \"spike\" mixture on each measure (columns) at K = 3, 4 and 5 (rows), each measure with its own cost curve in pounds (a cubic in the measure on the cost index). "
             "On the frailty indices higher is frailer, so the preventable decline is the class's rise in frailty and the classes are relabelled with class 1 the frailest. Line width is proportional to the class share; "
             "dashed, the uniform return. One vertical scale for all panels." + (f" Not fitted: {', '.join(missing)}." if missing else "")
             + " The h fit at K = 5 is read over the three chains that share a mode.", 230)), fontsize=7.2, color=INK2, va="top")
@@ -440,20 +502,27 @@ def main() -> int:
     sfx = ("" if v == "theta" else "_h") + ("" if uncapped else "_capped") + ("_kmeans" if kmeans else "")
     sets = ["kmeans"] if kmeans else ["ssm", "base"]
     curve = cost_curve(v, uncapped)
-    out, tabrows = {}, []
+    out, first, exact = {}, [], []
     for fs in sets:
         R, cs = compute(v, fs, uncapped, curve)
         out[fs] = (R, cs)
         R.assign(variant=v, set=fs, degree=cs["deg"]).reset_index().to_csv(DESC / f"paper_returns_bayes{sfx}_{fs}.csv", index=False)
+        name = cs["name"].replace('"spike"', "``spike''")
         for r in R_TABLE:
             q = R.loc[r]
-            tabrows.append([cs["name"].replace('"spike"', "``spike''"), f"{r}", f"{q['C']:,.0f}", f"{100 * q['within_share']:.0f}\\%", f"{q['P']:,.0f}", f"{q['P_over_C']:.2f}",
-                            f"{100 * q['cov_share']:+.0f}\\%", *[f"{q[f'P_{c + 1}']:,.0f}" for c in range(K)], f"{q['type_gain']:.2f}"])
+            first.append([name, f"{r}", f"{q['C']:,.0f}", f"{100 * q['within_share']:.0f}\\%", f"{q['P']:,.0f}", f"{q['P_over_C']:.2f}",
+                          f"{100 * q['cov_share']:+.0f}\\%", *[f"{q[f'P_{c + 1}']:,.0f}" for c in range(K)], f"{q['type_gain']:.2f}"])
+            exact.append([name, f"{r}", f"{q['C']:,.0f}", "", f"{q['S']:,.0f}", f"{q['S_over_C']:.2f}",
+                          "", *[f"{q[f'S_{c + 1}']:,.0f}" for c in range(K)], f"{q['S_gain']:.2f}"])
         print(f"{fs}: shares {np.round(cs['shares'], 3)}")
         print(R.loc[R_TABLE, ["C", "C_mean", "C_between", "C_within", "within_share", "P", "P_over_C", "cov_share", "P_1", "P_2", "P_3", "best_class", "type_gain"]].round(3).to_string())
+        print(R.loc[R_TABLE, ["S", "S_over_C", "S_1", "S_2", "S_3", "S_best_class", "S_gain", "S_q2", "S_q3"]].round(3).to_string())
+    ncol = 8 + K
     write_table(TAB / f"tab_returns_bayes{sfx}.tex",
-                ["classes", "$r$", "$C(r)$", "within", "$P(r)$", "$P/C$", "between", "$P_1$", "$P_2$", "$P_3$", "gain"],
-                tabrows, colspec="lrrrrrrrrrr")
+                ["classes", "$r$", "$C(r)$", "within", "uniform", "$\\div C$", "between", *[f"{cs['kind']} {c + 1}" for c in range(K)], "gain"],
+                [[f"\\multicolumn{{{ncol}}}{{l}}{{\\textit{{(a) First order: $P(r)$ and $P_j(r)$, per unit of $\\mu$}}}}"], *first,
+                 [f"\\midrule\\multicolumn{{{ncol}}}{{l}}{{\\textit{{(b) Exact, at $\\mu=1$: $S(r)$ and $S_j(r)$}}}}"], *exact],
+                colspec="l" + "r" * (ncol - 1))
     fig, axes = plt.subplots(3, len(sets), figsize=(5.4 * len(sets), 9.6), gridspec_kw={"hspace": 0.42, "wspace": 0.25}, squeeze=False)
     letters = "abcdef" if len(sets) > 1 else "abc"
     for j, fs in enumerate(sets):

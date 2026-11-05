@@ -136,9 +136,14 @@ def bayes_types(tag: str, sub: pd.DataFrame, first: pd.DataFrame):
     var0 = (sigma ** 2 / (1 - rho[:, 0] ** 2) + sm[0] ** 2) if ar == 2 else np.full(K, sigma ** 2)
     lp = np.log(theta)[None, :] - 0.5 * np.log(2 * np.pi * var0)[None, :] - 0.5 * (y0[:, None] - mu0) ** 2 / var0[None, :]
     w0 = np.exp(lp - lp.max(axis=1, keepdims=True)); w0 /= w0.sum(axis=1, keepdims=True)
+    # the same from the closest held row alone (t-1, the second row), for the targeting exercise
+    X1 = np.asarray(d["X"])[he]; y1 = Y[he]
+    lp1 = np.log(theta)[None, :] - 0.5 * np.log(2 * np.pi * var0)[None, :] - 0.5 * (y1[:, None] - X1 @ coef.T) ** 2 / var0[None, :]
+    w1 = np.exp(lp1 - lp1.max(axis=1, keepdims=True)); w1 /= w1.sum(axis=1, keepdims=True)
     out = pd.DataFrame({"pidp": pids, "type": w.argmax(axis=1)})
     for k in range(K):
         out[f"model_p{k}"] = w0[:, k]
+        out[f"model1_p{k}"] = w1[:, k]
         out[f"post_p{k}"] = w[:, k]          # the fitted-window posterior, the "truth" the targeting exercise scores against
     if KHELD == 2:   # the model's answer from both held rows: the window likelihood of rows hs..he, from the stationary state
         X = np.asarray(d["X"])

@@ -1,7 +1,7 @@
 """Stage 3: does the cost index behave like real NHS spending?
 
-The index is built from self-reported utilisation priced at indicative unit
-costs, so its LEVEL cannot be trusted. What can be checked is whether its
+The index is built from self-reported utilisation priced at national average
+unit costs (2024/25), so its LEVEL cannot be trusted. What can be checked is whether its
 SHAPE reproduces things independently known about NHS spending. If it misses
 the age profile it cannot be trusted on the health profile, which is what we
 want it for.
