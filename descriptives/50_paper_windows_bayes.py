@@ -89,7 +89,7 @@ def main() -> int:
     for w, f in fits.items():
         print(f"{w[0]}-{w[1]}: {f['n']:,} people, rhat {f['rhat']:.3f}, shares {np.round(f['share'], 3)}, rho {np.round(f['rho'], 2)}, wall {f['wall']}")
     fig, axes = plt.subplots(2, 3, figsize=(12.5, 7.9), gridspec_kw={"wspace": 0.25, "hspace": 0.45}, squeeze=False)
-    fig.suptitle(f"$\\theta$, K = {KW} AR(1) + \"spike\" classes refitted on age windows", x=0.125, ha="left", fontsize=11, fontweight="bold", y=0.96)
+    fig.suptitle(f"$\\theta$, K = {KW} AR(1) + transitory classes refitted on age windows", x=0.125, ha="left", fontsize=11, fontweight="bold", y=0.96)
     cmap = plt.get_cmap("viridis")
     rows = []
     for col, (wins, name) in enumerate([(SLIDING, "sliding twenty-year windows"), (BACKWARD, "windows expanding backwards from 90")]):
@@ -142,7 +142,7 @@ def main() -> int:
     ax.set_title("(f) worst class's share per window", loc="left", fontsize=9.5); ax.legend(loc="upper left", fontsize=7.5); ax.set_xlabel("age")
     share_ylim([axes[0, 0], axes[0, 1]])
     split = [f"{lo}-{hi} over chains {','.join(map(str, f['chains']))}" for (lo, hi), f in fits.items() if f.get("chains") is not None]
-    footer = (f"Each window refits the K = {KW} AR(1) + \"spike\" mixture on theta on the people observed at least three times inside it (its own contract and fit). Coloured lines: the window's class paths at the posterior "
+    footer = (f"Each window refits the K = {KW} AR(1) + transitory mixture on theta on the people observed at least three times inside it (its own contract and fit). Coloured lines: the window's class paths at the posterior "
               "mean over its own age range (tick at the start; line width proportional to the class share); grey: the lifecycle 20-90 fit. Panel (c): over pairs of people in both fits (a random 3,000), the correlation between the probability that the window fit puts the pair in the same class "
               "and the probability that the lifecycle fit does, sum_k p_ik p_jk under each; it needs no correspondence between the two sets of labels and is 1 whenever the two posteriors coincide "
               "(the adjusted Rand index of the modal classes is in the csv). Panels (d), (e): the worst class's posterior share of the person-waves observed at each age (five-year rolling mean), one line per window, "

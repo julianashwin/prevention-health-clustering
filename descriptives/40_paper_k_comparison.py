@@ -8,7 +8,7 @@ shares + 1 residual scale (+ K persistences + 1 noise scale under AR(1)). This i
 a plug-in BIC, not a marginal likelihood; it ranks K the way a frequentist
 mixture comparison would. Fits not yet on disk are skipped.
 
-Outputs: paper/tables/tab_k_comparison.tex, artifacts/descriptives/paper_k_comparison.csv
+Outputs: artifacts/scratch/tab_k_comparison.tex (not in the paper), artifacts/descriptives/paper_k_comparison.csv
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import CONTRACT, DESC, TAB, kalman_person_lp, write_table  # noqa: E402
+from _paper_common import SCRATCH, CONTRACT, DESC, TAB, kalman_person_lp, write_table  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR  # noqa: E402
 
@@ -33,7 +33,7 @@ FITS = {  # (variant, spec, K): directory
     **{(v, spec, K): ARTIFACTS_DIR / "health-k45" / f"health-{v}-{spec}-k{K}"
        for K in (4, 5) for spec in ("base", "ssm") for v in ("h", "theta")},
 }
-SPEC_LAB = {"base": "independent residuals", "ssm": "AR(1) plus ``spike''"}
+SPEC_LAB = {"base": "transitory only", "ssm": "AR(1) + transitory"}
 
 
 def loglik(fit_dir: Path, v: str, K: int):
@@ -72,7 +72,7 @@ def main() -> int:
     lab = {"h": "$h$", "theta": r"$\theta$"}
     out = [[lab[r.variant], SPEC_LAB[r.spec], str(r.K), f"{r.loglik:,.0f}", f"{r.BIC:,.0f}", f"{r.dBIC_vs_K3:+,.0f}",
             f"{r.mean_max_posterior:.2f}", f"{r.min_share:.2f}"] for r in t.itertuples()]
-    write_table(TAB / "tab_k_comparison.tex", ["variant", "specification", "$K$", "log-likelihood", "BIC",
+    write_table(SCRATCH / "tab_k_comparison.tex", ["variant", "specification", "$K$", "log-likelihood", "BIC",
                                                "$\\Delta$BIC vs $K=3$", "mean max posterior", "smallest share"], out)
     print(f"wrote tab_k_comparison.tex")
     return 0

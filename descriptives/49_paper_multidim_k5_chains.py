@@ -5,7 +5,7 @@ each settled at a different mode. This draws each chain as its own row of the
 multidimensional figure (physical and mental class paths, class hazards, composition by
 age), with the chain's mean log posterior in the row label, so the modes can be compared.
 
-Output: paper/figures/fig_multidim_k5_chains.png,
+Output: artifacts/scratch/fig_multidim_k5_chains.png (not in the paper),
         artifacts/descriptives/paper_multidim_k5_chains.csv.
 
     PYTHONPATH=src .venv/bin/python descriptives/49_paper_multidim_k5_chains.py
@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import AGES, DESC, FIG, MAX_AGE, MIN_AGE  # noqa: E402
+from _paper_common import SCRATCH, AGES, DESC, FIG, MAX_AGE, MIN_AGE  # noqa: E402
 from _style import INK2, apply_style  # noqa: E402
 
 M39 = importlib.import_module("39_paper_multidim")
@@ -81,17 +81,17 @@ def main() -> int:
         for ax in col:
             ax.set_ylim(lo, hi)
     pd.DataFrame(rows).to_csv(DESC / "paper_multidim_k5_chains.csv", index=False)
-    footer = (f"The multidimensional K = 5 AR(1) + \"spike\" fit with Gompertz-Makeham mortality ({fits[0]['n_person']:,} people), one row per chain, best mean log posterior first: "
+    footer = (f"The multidimensional K = 5 AR(1) + transitory fit with Gompertz-Makeham mortality ({fits[0]['n_person']:,} people), one row per chain, best mean log posterior first: "
               "the four chains settled at four different modes, so the rows are four different five-class solutions of the same likelihood. Columns as in the multidimensional figure: class paths at each "
               "chain's posterior mean (dotted: the observed class mean at each age, posterior-weighted), the class hazards (circles: crude death rates by five-year band), the class composition by age. "
               "Classes ordered worst to best on the physical channel within each chain; one vertical scale per channel across rows.")
     fig.text(0.01, -0.01, "\n".join(textwrap.wrap(footer, 230)), fontsize=7.2, color=INK2, va="top")
-    fig.savefig(FIG / "fig_multidim_k5_chains.png", bbox_inches="tight")
+    fig.savefig(SCRATCH / "fig_multidim_k5_chains.png", bbox_inches="tight")
     for r, i in enumerate(order):
         f = fits[i]
         print(f"chain {CHAINS[i]}: lp {f['lps'][0]:,.1f}, within-chain rhat {f['rhat']:.3f}, shares {np.round(f['share'], 3)}, "
               f"phys at 55 {np.round(f['paths'][0][:, 35], 2)}, hazard ratio 1/5 at 55 {f['hazard'][0][35] / f['hazard'][-1][35]:.1f}x")
-    print(f"wrote fig_multidim_k5_chains.png to {FIG}")
+    print(f"wrote fig_multidim_k5_chains.png to {SCRATCH}")
     return 0
 
 

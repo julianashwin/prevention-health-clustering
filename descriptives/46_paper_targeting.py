@@ -43,7 +43,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import DESC, FIG, TAB  # noqa: E402
+from _paper_common import SCRATCH, DESC, FIG, TAB  # noqa: E402
 from _style import CLUSTER, GREEN, INK2, ORANGE, PURPLE, VERM, apply_style  # noqa: E402
 
 M43 = importlib.import_module("43_paper_type_from_initial")
@@ -167,7 +167,7 @@ def main() -> int:
             v = piv.loc[q, name]; o = piv.loc[q, ORACLE]
             cells += [f"{v:,.0f}", f"{v / uniform:.2f}", f"{v / o:.2f}"]
         tabrows.append([name.replace(V + "(", VL + "("), *cells])
-    with open(TAB / f"tab_targeting{SFX}.tex", "w") as fh:        # grouped header: one block per coverage
+    with open(SCRATCH / f"tab_targeting{SFX}.tex", "w") as fh:        # grouped header: one block per coverage
         fh.write("\\begin{tabular}{l" + "rrr" * len(Q_TABLE) + "}\n\\toprule\n")
         fh.write("targeting on & " + " & ".join(f"\\multicolumn{{3}}{{c}}{{top {int(100 * q)}\\% treated}}" for q in Q_TABLE) + " \\\\\n")
         fh.write(" ".join(f"\\cmidrule(lr){{{2 + 3 * i}-{4 + 3 * i}}}" for i in range(len(Q_TABLE))) + "\n & " + " & ".join(["\\pounds & /uniform & /estimated"] * len(Q_TABLE)) + " \\\\\n\\midrule\n")
@@ -178,7 +178,7 @@ def main() -> int:
     # ---- figure
     fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.6), gridspec_kw={"wspace": 0.25})
     draw_targeting(axes[0], axes[1], res)
-    footer = (f"The K = 3 AR(1) + \"spike\" classes on {V} with the {'first row' if KHELD == 1 else 'first two rows'} held out ({n:,} people); the return to prevention by class P_j(r) of the returns figure, "
+    footer = (f"The K = 3 AR(1) + transitory classes on {V} with the {'first row' if KHELD == 1 else 'first two rows'} held out ({n:,} people); the return to prevention by class P_j(r) of the returns figure, "
               f"at each person's age at t-1, the second row (t is the first fitted row). Each rule predicts a person's return from what is known at t-1 (a multinomial logit of the fitted-window class on a quadratic in age plus the set shown, "
               f"fitted on a 70% split; the model posterior and the estimated class need no regression), treats the top q of the other 30% by predicted return, and is scored by the realised return, "
               "the fitted-window class posterior times P_j(r). The age-only rule is the benchmark: returns fall with age, so what the reading and the observables add is the value of type information. "

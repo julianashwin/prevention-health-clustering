@@ -47,6 +47,7 @@ from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import (  # noqa: E402
+    SCRATCH,
     AGES, DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, HEALTHIER_HIGH, K, LABEL, MAX_AGE, MENTAL_SUFFIX, MENTAL_VARIANTS, MIN_AGE, PROFILE_WINDOW, VARIANTS, load_labels,
     load_measure, load_predicted_cost_rows, load_trajectories, smooth_path,
 )
@@ -189,7 +190,7 @@ def main() -> int:
                "Top: type means, +/- 1 within-type sd.\nMiddle: autocorrelation of within-type deviations. Bottom: type composition by age. "
                "Log frailty is log(frailty + 1/31), so person-ages with no deficit sit at the floor."),
               fontsize=7.4, color=INK2, va="top")
-    fig3.savefig(FIG / f"fig_clusters{tag}.png", bbox_inches="tight")
+    fig3.savefig((SCRATCH if (FRAIL or MENTAL) else FIG) / f"fig_clusters{tag}.png", bbox_inches="tight")
     if not (FRAIL or RULERS or MENTAL):
         fig3p.text(0.01, -0.01, "Partial K-means on each person's predicted cost:\nthe pooled cost curve on h (cubic in the standardised\n"
                    "score on costs capped at p99, waves 7-15, made\nmonotone) evaluated at every contract row, a\ncost-anchored scale of the measure.",
@@ -201,7 +202,7 @@ def main() -> int:
                f"moments\nacross types with age-specific composition shares, then a\nfurther {PROFILE_WINDOW}-year rolling mean."
                if narrow else f"As the main-text decomposition figure, on {measure}: {PROFILE_WINDOW}-year rolling means, age-specific composition shares."),
               fontsize=7.4, color=INK2, va="top")
-    fig4.savefig(FIG / f"fig_cluster_decomposition{tag}.png", bbox_inches="tight")
+    fig4.savefig((SCRATCH if (FRAIL or MENTAL) else FIG) / f"fig_cluster_decomposition{tag}.png", bbox_inches="tight")
     pd.DataFrame(dec_rows).to_csv(DESC / f"paper_cluster_decomposition{tag}.csv", index=False)
     pd.DataFrame(note).to_csv(DESC / f"paper_cluster_autocorr{tag}.csv", index=False)
     # agreement between every pair of typologies on disk
@@ -218,7 +219,7 @@ def main() -> int:
     agree.to_csv(DESC / "paper_cluster_agreement.csv", index=False)
     print(agree[agree["a"] < agree["b"]].round(3).to_string(index=False))
     print(pd.DataFrame(note).round(2).to_string(index=False))
-    print(f"wrote fig_clusters{tag}.png and fig_cluster_decomposition{tag}.png" + ("" if (FRAIL or RULERS) else " and fig_clusters_predcost.png") + f" to {FIG}")
+    print(f"wrote fig_clusters{tag}.png and fig_cluster_decomposition{tag}.png to {SCRATCH if (FRAIL or MENTAL) else FIG}" + ("" if (FRAIL or RULERS or MENTAL) else f"; fig_clusters_predcost.png to {FIG}"))
     return 0
 
 if __name__ == "__main__":

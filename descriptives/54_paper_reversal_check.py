@@ -45,7 +45,7 @@ def samples(d: pd.DataFrame) -> dict:
     L = load_labels("theta")
     out["without the K-means worst type"] = np.setdiff1d(d["pidp"].unique(), L[L == 0].index)
     r = ssm_fit("theta"); modal = pd.Series(r["post"][["class1", "class2", "class3"]].to_numpy().argmax(1), index=r["post"]["pidp"])
-    out['without the AR(1) + "spike" worst class'] = np.setdiff1d(d["pidp"].unique(), modal[modal == 0].index)
+    out['without the AR(1) + transitory worst class'] = np.setdiff1d(d["pidp"].unique(), modal[modal == 0].index)
     return out
 
 
@@ -77,11 +77,11 @@ def reversal_types() -> None:
     sl_k = np.diff(paths_k, axis=1); sl_k = np.column_stack([sl_k, sl_k[:, -1]])
     sets = [("K-means, $K=3$", contributions(paths_k, sl_k, comp_k))]
     r = ssm_fit("theta"); comp_b = r["comp"][["class1", "class2", "class3"]].reindex(AGES).ffill().bfill().to_numpy()
-    sets.append(('AR(1) + "spike", $K=3$', contributions(r["paths"], r["slopes"], comp_b)))
+    sets.append(('AR(1) + transitory, $K=3$', contributions(r["paths"], r["slopes"], comp_b)))
     for k, tag, ch in ((4, "theta-ssm-mort-k4", [1, 3, 4]), (5, "theta-ssm-mort-k5", [1])):
         f = M39.load_fit(tag, "theta", ch, kc=k)
         comp = f["comp"][[f"class{j + 1}" for j in range(k)]].reindex(AGES).ffill().bfill().to_numpy()
-        sets.append((f'multidimensional AR(1) + "spike", $K={k}$', contributions(f["paths"][0], np.gradient(f["paths"][0], AGES, axis=1), comp)))
+        sets.append((f'multidimensional AR(1) + transitory, $K={k}$', contributions(f["paths"][0], np.gradient(f["paths"][0], AGES, axis=1), comp)))
     # within-person slopes for the K-means types
     ss = s.sort_values(["pidp", "age"]); g = ss.groupby("pidp"); nxt_age, nxt_th = g["age"].shift(-1), g["theta"].shift(-1)
     pairs = ss.assign(gap=nxt_age - ss["age"], dth=nxt_th - ss["theta"]).dropna(subset=["dth"])
@@ -116,7 +116,7 @@ def reversal_types() -> None:
         ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
     for ax in axes[1, :2]:
         ax.set_xlabel("age")
-    footer = ("The level-slope covariance across types, Cov_j(hbar_j,a, d_j,a), split into each type's term pi_j(a)(hbar_j,a - hbar_a)(d_j,a - d_a) with age-specific composition shares, stacked: (a) the K-means types and (b) the univariate AR(1) + \"spike\" classes at K = 3, "
+    footer = ("The level-slope covariance across types, Cov_j(hbar_j,a, d_j,a), split into each type's term pi_j(a)(hbar_j,a - hbar_a)(d_j,a - d_a) with age-specific composition shares, stacked: (a) the K-means types and (b) the univariate AR(1) + transitory classes at K = 3, "
               "(c), (d) the multidimensional mixture's physical channel at K = 4 and 5 (chains sharing the better mode; K = 5 from its best chain). A type's term is negative when it sits below the mean and declines more slowly than the mean, or above and faster: it is closing in. "
               "(e) The K-means covariance with slopes from within-person changes (next observed age minus this one, per year of gap, gaps of one to three years, ten-year window by midpoint age) instead of the type mean paths, which removes composition and selection from the slopes. Ten-year rolling means.")
     fig.text(0.01, -0.03, "\n".join(textwrap.wrap(footer, 230)), fontsize=7.2, color=INK2, va="top")

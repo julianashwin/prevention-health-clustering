@@ -15,6 +15,8 @@ from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DI
 DESC = ARTIFACTS_DIR / "descriptives"
 FIG = ROOT_DIR / "paper" / "figures"
 TAB = ROOT_DIR / "paper" / "tables"
+SCRATCH = ARTIFACTS_DIR / "scratch"   # figures and tables the paper does not use: kept out of paper/
+SCRATCH.mkdir(parents=True, exist_ok=True)
 CONTRACT = PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1"
 MIN_AGE, MAX_AGE, K = 20, 90, 3
 AGES = np.arange(MIN_AGE, MAX_AGE + 1)

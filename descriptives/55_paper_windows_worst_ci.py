@@ -7,7 +7,7 @@ Rows K = 3 and K = 4; columns the sliding twenty-year windows and the windows ex
 backwards from 90. The worst class is the one with the lowest mean path over the window's own
 ages at the posterior mean; the draws are read over the same chains as 50 (WINDOW_CHAINS).
 
-Output: paper/figures/fig_windows_worst_ci.png and artifacts/descriptives/paper_windows_worst_ci.csv
+Output: artifacts/scratch/fig_windows_worst_ci.png (not in the paper) and artifacts/descriptives/paper_windows_worst_ci.csv
 (median, band and the dotted observed mean by window, K and age). Dotted: the worst class's
 posterior-weighted observed mean of theta by age, smoothed with a centred three-year rolling mean.
 
@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import CONTRACT, DESC, FIG, MAX_AGE, MIN_AGE, bayes_fit, observed_class_means  # noqa: E402
+from _paper_common import SCRATCH, CONTRACT, DESC, FIG, MAX_AGE, MIN_AGE, bayes_fit, observed_class_means  # noqa: E402
 from _style import INK, INK2, apply_style, share_ylim  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
@@ -101,14 +101,14 @@ def main() -> int:
         rows += [{"K": k, "kind": "lifecycle", "lo": MIN_AGE, "hi": MAX_AGE, "age": int(a), "median": m, "lo95": a0, "hi95": a1, "observed": o}
                  for a, m, a0, a1, o in zip(la, *np.quantile(lp, [0.5, 0.025, 0.975], axis=0), lo_obs)]
     share_ylim(axes.ravel())
-    footer = ("The worst class of the AR(1) + \"spike\" mixture on theta refitted on each age window (colours) and of the lifecycle 20-90 fit (black), "
+    footer = ("The worst class of the AR(1) + transitory mixture on theta refitted on each age window (colours) and of the lifecycle 20-90 fit (black), "
               "at K = 3 (top) and K = 4 (bottom): the class path at the posterior median with a 95% credible band from the posterior draws of its quadratic coefficients. "
               "The worst class is the one with the lowest mean path over the window's own ages. "
               "Dotted: the worst class's posterior-weighted observed mean by age (three-year rolling mean; ages with under 25 people of summed weight left out). The K = 4 70-90 and 60-90 fits are read over the chains that share the better mode (1, 4 and 1-3).")
     fig.text(0.01, 0.0, "\n".join(textwrap.wrap(footer, 170)), fontsize=7.4, color=INK2, va="top")
-    fig.savefig(FIG / "fig_windows_worst_ci.png", bbox_inches="tight")
+    fig.savefig(SCRATCH / "fig_windows_worst_ci.png", bbox_inches="tight")
     pd.DataFrame(rows).to_csv(DESC / "paper_windows_worst_ci.csv", index=False)
-    print(f"wrote fig_windows_worst_ci.png to {FIG}")
+    print(f"wrote fig_windows_worst_ci.png to {SCRATCH}")
     return 0
 
 

@@ -20,7 +20,7 @@ probability of being healthy at each age is the posterior-weighted share of its
 person-waves observed at that age (five-year rolling mean, held at the last value
 beyond 89); HLE from age r is the survival-weighted sum of those probabilities.
 
-Outputs: paper/figures/fig_life_expectancy.png, paper/tables/tab_life_expectancy.tex,
+Outputs: artifacts/scratch/fig_life_expectancy.png, artifacts/scratch/tab_life_expectancy.tex (not in the paper),
 artifacts/descriptives/paper_life_expectancy.csv.
 
     PYTHONPATH=src .venv/bin/python descriptives/44_paper_life_expectancy.py
@@ -38,7 +38,7 @@ import pandas as pd
 from scipy.optimize import fsolve
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import DESC, FIG, TAB  # noqa: E402
+from _paper_common import SCRATCH, DESC, FIG, TAB  # noqa: E402
 from _style import CLUSTER, INK2, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import INTERIM_DATA_DIR, PROCESSED_DATA_DIR  # noqa: E402
@@ -141,7 +141,7 @@ def main() -> int:
             recs.append({"age": r, "class": k + 1, "le": E[k, i], "hle": HE[k, i], "p_healthy": P[k, i], "share_at_age": W[i, k]})
         recs.append({"age": r, "class": 0, "le": e_pop[i], "hle": he_pop[i], "p_healthy": p_pop[i], "share_at_age": 1.0})
     t = pd.DataFrame(recs); t.to_csv(DESC / "paper_life_expectancy.csv", index=False)
-    with open(TAB / "tab_life_expectancy.tex", "w") as fh:
+    with open(SCRATCH / "tab_life_expectancy.tex", "w") as fh:
         fh.write("\\begin{tabular}{l" + "rr" * len(REPORT_AGES) + "}\n\\toprule\n")
         fh.write(" & " + " & ".join(f"\\multicolumn{{2}}{{c}}{{from age {r}}}" for r in REPORT_AGES) + " \\\\\n")
         fh.write(" ".join(f"\\cmidrule(lr){{{2 + 2 * i}-{3 + 2 * i}}}" for i in range(len(REPORT_AGES))) + "\n & " + " & ".join(["LE & HLE"] * len(REPORT_AGES)) + " \\\\\n\\midrule\n")
@@ -177,15 +177,15 @@ def main() -> int:
         ax.set_xlim(R_GRID[0], R_GRID[-1]); ax.grid(True, axis="y"); ax.set_xlabel("age $r$")
     axes[0].legend(fontsize=7.5, loc="upper right")
     import textwrap
-    footer = (f"K = 3 AR(1) + \"spike\" classes of the multidimensional fit (theta, the mental GRM and Gompertz-Makeham mortality; {f['n_person']:,} people, {f['events']:,} recorded deaths), "
+    footer = (f"K = 3 AR(1) + transitory classes of the multidimensional fit (theta, the mental GRM and Gompertz-Makeham mortality; {f['n_person']:,} people, {f['events']:,} recorded deaths), "
              "class 1 worst health. Every class hazard is scaled by one common age-varying factor, chosen so that the composition-weighted population life expectancy at 65 and at 90\n"
              f"matches the ONS national life tables for the UK, 2020 to 2022 (both sexes, {fem:.0%} female as in the sample: {target['e65']:.1f} and {target['e90']:.1f} years), "
              f"which corrects for deaths the panel does not record; the factor is {m[0]:.2f} at 20, {m[45]:.2f} at 65 and {m[70]:.2f} at 90, and the population life expectancy at 20 comes out at {e_pop[0]:.1f} "
              f"against {target['e0'] - 20:.1f} implied by the ONS figure at birth.\nHealthy = general health good, very good or excellent; each class's probability of being healthy at each age is the posterior-weighted share of its person-waves "
              "observed there (five-year rolling mean, held beyond 89). Hazards extrapolated to 110. The population line weights the classes by their posterior composition among the people observed at each age.")
     fig.text(0.01, -0.04, "\n".join(textwrap.wrap(footer.replace("\n", " "), 230)), fontsize=7.2, color=INK2, va="top")
-    fig.savefig(FIG / "fig_life_expectancy.png", bbox_inches="tight")
-    print(f"wrote fig_life_expectancy.png and tab_life_expectancy.tex to {FIG}")
+    fig.savefig(SCRATCH / "fig_life_expectancy.png", bbox_inches="tight")
+    print(f"wrote fig_life_expectancy.png and tab_life_expectancy.tex to {SCRATCH}")
     return 0
 
 

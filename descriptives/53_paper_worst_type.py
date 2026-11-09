@@ -62,13 +62,13 @@ def main() -> int:
     apply_style()
     d = load_measure(["theta"])
     fits = {("K-means", k): km_fit(k, d) for k in KS}
-    fits.update({('AR(1) + "spike"', k): ssm_fit_k(k) for k in KS})
+    fits.update({('AR(1) + transitory', k): ssm_fit_k(k) for k in KS})
     rows = []
     for (meth, k), f in fits.items():
         p = f["paths"]; worst = f["modal"] == 0
         base = fits[(meth, 3)]["modal"]; both = worst.index.intersection(base.index)
         retained = float((worst.loc[both] & (base.loc[both] == 0)).sum() / (base.loc[both] == 0).sum())
-        other = fits[('AR(1) + "spike"' if meth == "K-means" else "K-means", k)]["modal"]; b2 = worst.index.intersection(other.index)
+        other = fits[('AR(1) + transitory' if meth == "K-means" else "K-means", k)]["modal"]; b2 = worst.index.intersection(other.index)
         overlap = float((worst.loc[b2] & (other.loc[b2] == 0)).sum() / worst.loc[b2].sum())
         rows.append({"method": meth, "K": k, "share_modal": float(worst.mean()), "share_mass": f["pi"], "theta_20": p[0][0], "theta_50": p[0][30], "theta_80": p[0][60],
                      "slope_20_50": (p[0][30] - p[0][0]) / 30, "slope_50_80": (p[0][60] - p[0][30]) / 30, "gap_next_50": p[1][30] - p[0][30], "gap_next_80": p[1][60] - p[0][60],
@@ -79,7 +79,7 @@ def main() -> int:
     with open(TAB / "tab_worst_type_by_K.tex", "w") as fh:
         fh.write("\\begin{tabular}{llrrrrrrrrr}\n\\toprule\n")
         fh.write("method & $K$ & share & $\\theta_{20}$ & $\\theta_{50}$ & $\\theta_{80}$ & slope to 50 & sd at 50 & $\\rho$ & of $K{=}3$ worst & worst under other \\\\\n\\midrule\n")
-        for meth in ("K-means", 'AR(1) + "spike"'):
+        for meth in ("K-means", 'AR(1) + transitory'):
             for k in KS:
                 q = T[(T["method"] == meth) & (T["K"] == k)].iloc[0]
                 pct = lambda x: f"{100 * x:.0f}\\%"  # noqa: E731
@@ -91,7 +91,7 @@ def main() -> int:
                 fh.write("\\addlinespace\n")
         fh.write("\\bottomrule\n\\end{tabular}\n")
     fig, axes = plt.subplots(2, 3, figsize=(14, 7.6), gridspec_kw={"hspace": 0.4, "wspace": 0.22}, sharey=True)
-    for i, meth in enumerate(("K-means", 'AR(1) + "spike"')):
+    for i, meth in enumerate(("K-means", 'AR(1) + transitory')):
         for j, k in enumerate(KS):
             f = fits[(meth, k)]; ax = axes[i, j]
             for c in range(k):
@@ -104,7 +104,7 @@ def main() -> int:
                 ax.set_xlabel("age")
             if j == 0:
                 ax.set_ylabel(r"$\theta$")
-    footer = ("The worst type by method and K on theta: partial K-means (top; type 1 the lowest person mean; K = 4 and 5 from 22 --k) and the univariate AR(1) + \"spike\" mixture (bottom; class 1 the lowest "
+    footer = ("The worst type by method and K on theta: partial K-means (top; type 1 the lowest person mean; K = 4 and 5 from 22 --k) and the univariate AR(1) + transitory mixture (bottom; class 1 the lowest "
               "anchor intercept; K = 4 and 5 from artifacts/health-k45, chains sharing the better mode). The worst type is drawn in colour, the others in grey; the red dotted line repeats the K = 3 worst type. "
               "K-means paths are ten-year rolling means of the type means; mixture paths the quadratic class paths at the posterior mean. For the mixture the legend's share is the probability mass; the table gives the modal share too.")
     fig.text(0.01, -0.02, "\n".join(textwrap.wrap(footer, 200)), fontsize=7.2, color=INK2, va="top")

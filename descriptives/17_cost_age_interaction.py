@@ -29,7 +29,7 @@ on theta and on h. theta is comparable across ages by construction (fitted
 against a pooled N(0,1), scored under the pooled prior), and h is a monotone
 function of it, so both are. Standard errors are clustered on the person.
 
-Outputs: measuring_health/figures/fig_cost_age_interaction.png and the same file in paper/figures/,
+Outputs: measuring_health/figures/fig_cost_age_interaction.png (no longer copied to paper/figures/),
          artifacts/descriptives/cost_age_interaction.csv
 """
 
@@ -240,8 +240,7 @@ def main() -> int:
              "oldest to the youngest band's slope within windows of the pooled distribution, the same people on both scales. 95% intervals clustered on the person.",
              fontsize=7.4, color=INK2, va="top")
     fig.tight_layout(rect=[0, 0.045, 1, 1])
-    for out in (ROOT_DIR / "measuring_health" / "figures" / "fig_cost_age_interaction.png",   # the construction note
-                ROOT_DIR / "paper" / "figures" / "fig_cost_age_interaction.png"):             # the paper
+    for out in (ROOT_DIR / "measuring_health" / "figures" / "fig_cost_age_interaction.png",):  # the construction note (not used in the paper)
         fig.savefig(out, dpi=200, bbox_inches="tight")
         print(f"wrote {out}")
     return 0

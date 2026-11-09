@@ -116,7 +116,7 @@ def main() -> int:
     mort = pd.DataFrame(mort).set_index("variant")
     print(f"\nmortality: {len(m):,} person-waves at risk, {m['died_next'].sum():,} deaths before the next wave\n",
           mort.round(3).to_string())
-    with open(TAB / "tab_measure_mortality.tex", "w") as f:
+    with open(ARTIFACTS_DIR / "scratch" / "tab_measure_mortality.tex", "w") as f:
         f.write("\\begin{tabular}{l" + "r" * (len(BANDS) + 2) + "}\n\\toprule\n")
         f.write(" & all ages & " + " & ".join(f"{a}--{b}" for a, b in BANDS) + " & decile ratio \\\\\n\\midrule\n")
         for lab, r in mort.iterrows():
@@ -149,7 +149,7 @@ def main() -> int:
         ct.append(rec)
     ct = pd.DataFrame(ct).set_index("variant")
     print(f"\ncost: {len(c):,} person-waves; log points of cost per SD sicker, by age band\n", ct.round(3).to_string())
-    with open(TAB / "tab_measure_cost_age.tex", "w") as f:
+    with open(ARTIFACTS_DIR / "scratch" / "tab_measure_cost_age.tex", "w") as f:
         f.write("\\begin{tabular}{l" + "r" * (len(COST_BANDS) + 1) + "}\n\\toprule\n")
         f.write(" & " + " & ".join(f"{a}--{b}" for a, b in COST_BANDS) + " & $z\\times$age ($t$) \\\\\n\\midrule\n")
         for lab, r in ct.iterrows():
@@ -160,7 +160,7 @@ def main() -> int:
         for col in r.index:
             rows.append({"table": "cost", "row": col, "variant": lab, "value": r[col]})
     pd.DataFrame(rows).to_csv(ARTIFACTS_DIR / "descriptives" / "paper_measure_tables.csv", index=False)
-    print(f"\nwrote three tables to {TAB}")
+    print(f"\nwrote tab_measure_correlations.tex to {TAB}; tab_measure_mortality.tex and tab_measure_cost_age.tex to {ARTIFACTS_DIR / 'scratch'}")
     return 0
 
 

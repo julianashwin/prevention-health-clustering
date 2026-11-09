@@ -78,7 +78,7 @@ def main() -> int:
         sym = {"theta": r"\theta", "h": "h"}[v]
         rows = [("Observables", OBS_AHEAD, INK2), (f"${sym}_t$", f"+ {v}(t)", "#1f6fb4"),
                 (f"${sym}_t,\\ {sym}_{{t-1}}$", f"+ {v}(t), {v}(t-1)", "#1f6fb4"),
-                ("K-means forecast", "+ K-means forecast", KM_COL), ('AR(1)+"spike" forecast', '+ AR(1)+"spike" forecast', SSM_COL)]
+                ("K-means forecast", "+ K-means forecast", KM_COL), ('AR(1) + transitory forecast', '+ AR(1)+"spike" forecast', SSM_COL)]
         # the multidimensional model is fitted on theta, not h
         return rows + ([("Multidimensional forecast\n(cohort shifts)", "+ multidim cohort forecast", MD_COL)] if v == "theta" else [])
     def ahead(ax, oc, title, v="theta"):
@@ -103,7 +103,7 @@ def main() -> int:
     ba = ba[ba["horizon"] == 1]
     def byage(ax, oc, title, v="theta"):
         sym = {"theta": r"\theta", "h": "h"}[v]
-        SER = [(f"${sym}_t$", f"+ {v}(t)", "#1f6fb4"), ('AR(1)+"spike" forecast', '+ AR(1)+"spike" forecast', SSM_COL)]
+        SER = [(f"${sym}_t$", f"+ {v}(t)", "#1f6fb4"), ('AR(1) + transitory forecast', '+ AR(1)+"spike" forecast', SSM_COL)]
         b = ba[(ba["variant"] == v) & (ba["outcome"] == oc)]
         bands = list(dict.fromkeys(b["band"]))
         bw = 0.34; x = np.arange(len(bands))
@@ -122,7 +122,7 @@ def main() -> int:
     # ---- (b) predicting the type, balanced accuracy
     def typeacc(ax, q, title, v="theta"):
         sym = {"theta": r"\theta", "h": "h"}[v]
-        TYP = [("kmeans", "K-means", KM_COL), ("ssm", 'AR(1)+"spike"', SSM_COL)] + ([("md", "Multidimensional", MD_COL)] if v == "theta" else [])
+        TYP = [("kmeans", "K-means", KM_COL), ("ssm", 'AR(1) + transitory', SSM_COL)] + ([("md", "Multidimensional", MD_COL)] if v == "theta" else [])
         INFO = [("Observables", OBS_TYPE), (f"${sym}_{{t-1}}$", f"+ {v}(1)"), (f"${sym}_{{t-1}},\\ {sym}_{{t-2}}$", f"+ {v}(0), {v}(1)")]
         w, gap = 0.26, 0.5
         centres = np.arange(len(INFO))[::-1] * (len(TYP) * w + gap)
@@ -165,8 +165,8 @@ def main() -> int:
         ax.text(xs[1], 1.03, vname, ha="center", va="bottom", fontsize=9)
         x0 += 3 + 0.8
     ax.set_xticks(ticks, ticklabels, fontsize=7.5); ax.set_ylim(0, 1.1); ax.set_yticks([0, 0.25, 0.5, 0.75, 1], ["0", "25%", "50%", "75%", "100%"])
-    ax.set_ylabel('share within the AR(1)+"spike" type', fontsize=9)
-    ax.set_title('(d) Who is in each AR(1)+"spike" type', loc="left", fontsize=10)
+    ax.set_ylabel('share within the AR(1) + transitory type', fontsize=9)
+    ax.set_title('(d) Who is in each AR(1) + transitory type', loc="left", fontsize=10)
     leg = [h for h, _, _ in handles]; legl = [l for _, l, _ in handles]
     ax.legend(leg, legl, fontsize=7, frameon=False, loc="upper left", bbox_to_anchor=(1.0, 1.0))
     fig.tight_layout()

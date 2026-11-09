@@ -103,7 +103,7 @@ def main() -> int:
     for ax in axes[2]:
         ax.set_xlabel("age")
     fig.text(0.01, -0.01,
-             "AR(1) plus measurement error K = 3 fits with one level shift per birth decade shared across classes, on the health "
+             "AR(1) + transitory K = 3 fits with one level shift per birth decade shared across classes, on the health "
              "contract (38,963 people). Decade effects are re-expressed relative to the 1950s;\nthe 1900s (two people) are "
              "omitted from the bottom row. Rows 2 and 3: age-specific means within decades, cells of at least 50 person-waves, "
              "three-year rolling means; row 3 subtracts each decade's estimated shift.",

@@ -6,7 +6,9 @@ DONE: Is there an overall takeaway that the C_{Hd} reversal is driven by a small
 
 DONE: Result 2 - fovus on main result which is *by type* -> 2 \sum_a (a - hbar_{ja})(hbar_{j,r-1} - hbar_{ja}). This motivates why we want the evolution of the mean for each type
 
-If we focus more on Result 2 - does this change the identification as well?
+
+
+https://questions-statements.parliament.uk/written-questions/detail/2025-12-15/100046.
 
 DONE: Figure 5 - can we smooth this out a little better (e.g. use the same age windows as Exhibit 2)?
 

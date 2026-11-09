@@ -77,8 +77,8 @@ MD_KHELD = KHELD
 MD_LABEL = "multidimensional" + (", cohort shifts" if MD == MD_COHORT else "")
 EDUC = ["GCSE", "A-level", "degree or higher"]
 AGE_BANDS = [(20, 34), (35, 49), (50, 64), (65, 90)]
-TYPOLOGIES = [("kmeans", "K-means"), ("base", "independent residuals"), ("ssm", 'AR(1) + "spike"'),
-              ("ssm-cohort", 'AR(1) + "spike", cohort shifts'), ("md", MD_LABEL)]
+TYPOLOGIES = [("kmeans", "K-means"), ("base", "transitory only"), ("ssm", 'AR(1) + transitory'),
+              ("ssm-cohort", 'AR(1) + transitory, cohort shifts'), ("md", MD_LABEL)]
 
 
 def first_rows(contract=CONTRACT, extra: tuple[str, ...] = (), kheld: int = KHELD) -> tuple[pd.DataFrame, pd.DataFrame]:

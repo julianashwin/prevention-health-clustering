@@ -60,7 +60,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from scipy.optimize import minimize
 
-from _paper_common import AGES as PATH_AGES, CONTRACT, DESC, FIG, TAB, bayes_fit, read_scores  # noqa: E402
+from _paper_common import SCRATCH, AGES as PATH_AGES, CONTRACT, DESC, FIG, TAB, bayes_fit, read_scores  # noqa: E402
 from _style import CLUSTER, GREEN, INK2, ORANGE, PURPLE, VERM, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
@@ -84,6 +84,8 @@ FIT_DIR = ARTIFACTS_DIR / ("health-frailty" if V in ("frailty", "logfrailty") el
 R_GRID = np.arange(25, 86)
 R_REPORT = (25, 50, 70)                # the start ages reported, from 25 as the other prevention exercises
 R_GRAD = 50
+R_BARS = (25, 50)                    # the start ages of the main figure's bars
+R_VAR = np.arange(25, 91)            # the start ages of the main figure's variance decomposition
 PATH_MAX = 90                        # the class paths run to 90
 SCEN = ["baseline", "targeted", "uniform (same budget)", "uniform (mu = 1)"]
 SCOL = {"baseline": INK2, "targeted": VERM, "uniform (same budget)": PURPLE, "uniform (mu = 1)": GREEN}
@@ -162,7 +164,7 @@ def univariate_fit(f_md: dict) -> dict:
 def measures_table() -> int:
     """tab_prevention_le_measures.tex: the r = 50 rows of every version that has been run."""
     VERSIONS = [("", "$\\theta$, multidimensional classes"), ("_uni", "$\\theta$, univariate classes"), ("_h", "$h$"), ("_frailty", "frailty index"), ("_logfrailty", "log frailty")]
-    with open(TAB / "tab_prevention_le_measures.tex", "w") as fh:
+    with open(SCRATCH / "tab_prevention_le_measures.tex", "w") as fh:
         fh.write("\\begin{tabular}{llrrrrrrrr}\n\\toprule\n")
         fh.write(" & & \\multicolumn{2}{c}{population} & \\multicolumn{3}{c}{inequality} & \\multicolumn{3}{c}{gradient in LE, years} \\\\\n")
         fh.write("\\cmidrule(lr){3-4} \\cmidrule(lr){5-7} \\cmidrule(lr){8-10}\n")
@@ -183,40 +185,75 @@ def measures_table() -> int:
                 fh.write(f"{lab if s == 'baseline' else ''} & {pol} & {q['pop_le']:.1f} & {q['pop_hle']:.1f} & {q['sd_death']:.1f} & {q['gap_le']:.1f} & {q['gap_hle']:.1f} & "
                          f"{q['educ_gap_le']:.1f} & {q['income_gap_le']:.1f} & {q['region_range_le']:.1f} \\\\\n")
         fh.write("\\bottomrule\n\\end{tabular}\n")
-    print(f"wrote tab_prevention_le_measures.tex to {TAB}")
+    print(f"wrote tab_prevention_le_measures.tex to {SCRATCH}")
     return 0
 
 
-def draw_main(res: dict, own: dict, share: np.ndarray, stats: dict, fit_desc: str, n_risk: int, n_deaths: int, b_m, W) -> int:
-    """The main-text figure (--slim): (a) remaining LE and (b) HLE by class, each class treated on its own
-    at mu = 1 dashed; (c) the LE gap between the best and the worst class under each policy; (d) the
+def draw_main(res: dict, own: dict, share: np.ndarray, stats: dict, fit_desc: str, n_risk: int, n_deaths: int, b_m, W, var_base: dict) -> int:
+    """The main-text figure (--slim): (a) remaining LE and HLE by class from 25 and from 50, with what each
+    class gains if treated on its own at mu; (b) the share of the variance of age at death that is between
+    types, under each policy; (c) the LE gap between the best and the worst class under each policy; (d) the
     education, income and regional LE gradients at R_GRAD under each policy."""
-    from matplotlib.transforms import Bbox
-    fig, ax = plt.subplots(2, 2, figsize=(13, 9.2), gridspec_kw={"hspace": 0.36, "wspace": 0.24})
-    base = {r: res[(r, "baseline")] for r in R_GRID}
-    for k in range(K):
-        ax[0, 0].plot(R_GRID, [base[r]["E"][k] for r in R_GRID], color=CLUSTER[k], lw=1.0 + 3.5 * share[k], label=f"class {k + 1} ({share[k]:.0%})")
-        ax[0, 0].plot(R_GRID, [own[r][0][k] for r in R_GRID], color=CLUSTER[k], lw=1.2, ls="--")
-        ax[0, 1].plot(R_GRID, [base[r]["HE"][k] for r in R_GRID], color=CLUSTER[k], lw=1.0 + 3.5 * share[k])
-        ax[0, 1].plot(R_GRID, [own[r][1][k] for r in R_GRID], color=CLUSTER[k], lw=1.2, ls="--")
-    ax[0, 0].plot([], [], color=INK2, lw=1.2, ls="--", label=f"treated from $r$, $\\mu={MU:g}$")
+    from matplotlib.patches import Patch
+    from matplotlib.transforms import Bbox, blended_transform_factory
+    fig, ax = plt.subplots(2, 2, figsize=(13, 9.6), gridspec_kw={"hspace": 0.5, "wspace": 0.24})
     LAB = {"baseline": "baseline", "targeted": f"targeted: class 1 at $\\mu={MU:g}$", "uniform (same budget)": "uniform, same budget",
            "uniform (mu = 1)": f"uniform: everyone at $\\mu={MU:g}$"}
-    ax[0, 0].set_title("(a) remaining life expectancy at $r$", loc="left", fontsize=9.5)
-    ax[0, 1].set_title("(b) remaining healthy life expectancy at $r$", loc="left", fontsize=9.5)
-    ax[0, 0].legend(fontsize=7.5, loc="upper right")
-    for s in SCEN:
-        ax[1, 0].plot(R_GRID, [res[(r, s)]["gap_le"] for r in R_GRID], color=SCOL[s], ls=SLS[s], lw=1.8, label=LAB[s])
-    ax[1, 0].set_title("(c) life expectancy gap, class 3 minus class 1", loc="left", fontsize=9.5)
-    ax[1, 0].set_ylim(bottom=min(0, min(res[(r, s)]["gap_le"] for r in R_GRID for s in SCEN) - 0.5)); ax[1, 0].axhline(0, color=INK2, lw=0.6)
-    ax[1, 0].legend(fontsize=7.5, loc="lower right")
-    for a in (ax[0, 0], ax[0, 1], ax[1, 0]):
-        a.set_xlim(R_GRID[0], R_GRID[-1]); a.grid(True, axis="y"); a.set_xlabel("start age $r$"); a.set_ylabel("years")
+    SCEN_B = SCEN[:3]                    # (c): the policies on a budget, without uniform prevention at mu
+    # (a) per start age, per class: an LE bar and a paler HLE bar, solid the baseline, hatched the gain if treated
+    a = ax[0, 0]; wb = 0.38; x0 = 0.0; ticks, tlabs, blocks = [], [], []
+    for r in R_BARS:
+        b = res[(r, "baseline")]; first = x0
+        for k in range(K):
+            for j, (m, alpha) in enumerate((("E", 1.0), ("HE", 0.45))):
+                xx = x0 + (j - 0.5) * wb
+                base = b[m][k]; tr = own[r][j][k]
+                a.bar(xx, base, width=wb * 0.94, color=CLUSTER[k], alpha=alpha, edgecolor=CLUSTER[k], lw=0.8)
+                a.bar(xx, tr - base, bottom=base, width=wb * 0.94, color="white", edgecolor=CLUSTER[k], hatch="////", lw=0.8)
+                if tr - base >= 8:   # inside the hatched part, upright, when it is tall enough, so labels never collide
+                    a.text(xx, (base + tr) / 2, f"+{tr - base:.1f}", ha="center", va="center", fontsize=6.6, color=INK2, rotation=90,
+                           bbox={"boxstyle": "square,pad=0.15", "facecolor": "white", "edgecolor": "none"})
+                else:
+                    a.text(xx, tr + 0.8, f"+{tr - base:.1f}", ha="center", va="bottom", fontsize=6.6, color=INK2)
+            ticks.append(x0); tlabs.append(f"class {k + 1}")
+            x0 += 1.0
+        blocks.append(((first + x0 - 1.0) / 2, f"from {r}"))
+        x0 += 0.6
+    a.set_xticks(ticks); a.set_xticklabels(tlabs, fontsize=8)
+    a.axvline((ticks[K - 1] + ticks[K]) / 2, color="0.8", lw=0.8)
+    for xm, lab in blocks:
+        a.text(xm, -0.13, lab, ha="center", va="top", fontsize=9.5, fontweight="bold", color=INK2, transform=blended_transform_factory(a.transData, a.transAxes))
+    top = max(max(own[r][0].max(), own[r][1].max()) for r in R_BARS)
+    a.set_ylim(0, top * 1.25); a.grid(True, axis="y"); a.set_ylabel("remaining years")
+    a.set_title("(a) life expectancy and healthy life expectancy by class", loc="left", fontsize=9.5)
+    a.legend(handles=[Patch(facecolor=INK2, edgecolor=INK2, label="LE (left bar)"), Patch(facecolor=INK2, alpha=0.45, edgecolor=INK2, label="HLE (right bar)"),
+                      Patch(facecolor="white", edgecolor=INK2, hatch="////", label=f"added if treated at $\\mu={MU:g}$")],
+             fontsize=7.2, loc="upper right", ncol=1)
+    # (b) the variance of age at death from r at baseline, split into between and within types
+    a = ax[0, 1]
+    tot = np.array([var_base[r]["sd_death"] ** 2 for r in R_VAR]); btw = np.array([var_base[r]["between_share"] for r in R_VAR]) * tot
+    a.fill_between(R_VAR, 0, btw, color=INK2, lw=0, label="between types")
+    a.fill_between(R_VAR, btw, tot, color=INK2, alpha=0.25, lw=0, label="within types")
+    for r in (30, 50, 70, 85):
+        i_ = r - R_VAR[0]
+        a.text(r, btw[i_] + 2, f"{100 * btw[i_] / tot[i_]:.0f}%", ha="center", va="bottom", fontsize=7.5, color=INK2)
+    a.set_xlim(R_VAR[0], R_VAR[-1]); a.set_ylim(0, None); a.grid(True, axis="y"); a.set_xlabel("start age $r$")
+    a.set_ylabel("variance of age at death (years$^2$)"); a.legend(fontsize=7.5, loc="upper right")
+    a.set_title("(b) lifespan inequality: between and within types, baseline", loc="left", fontsize=9.5)
+    # (c) the gap
+    a = ax[1, 0]
+    for s in SCEN_B:
+        a.plot(R_GRID, [res[(r, s)]["gap_le"] for r in R_GRID], color=SCOL[s], ls=SLS[s], lw=1.8, label=LAB[s])
+    a.set_title("(c) life expectancy gap, class 3 minus class 1", loc="left", fontsize=9.5)
+    a.set_ylim(bottom=min(0, min(res[(r, s)]["gap_le"] for r in R_GRID for s in SCEN_B) - 0.5)); a.axhline(0, color=INK2, lw=0.6)
+    a.legend(fontsize=7.5, loc="lower right"); a.set_ylabel("years")
+    a.set_xlim(R_GRID[0], R_GRID[-1]); a.grid(True, axis="y"); a.set_xlabel("start age $r$")
+    # (d) the gradients
     a = ax[1, 1]
     names = [("educ_gap_le", "education:\ndegree minus none"), ("income_gap_le", "income:\ntop minus bottom third"), ("region_range_le", "region:\nhighest minus lowest")]
-    xg = np.arange(len(names)); wb = 0.2
+    xg = np.arange(len(names)); wg = 0.2
     for i, s in enumerate(SCEN):
-        a.bar(xg + (i - 1.5) * wb, [stats[s][n] for n, _ in names], width=wb * 0.92, color=SCOL[s], label=LAB[s])
+        a.bar(xg + (i - 1.5) * wg, [stats[s][n] for n, _ in names], width=wg * 0.92, color=SCOL[s], label=LAB[s])
     a.set_xticks(xg); a.set_xticklabels([n for _, n in names], fontsize=8.5); a.grid(True, axis="y"); a.set_ylabel("years")
     a.set_title(f"(d) life expectancy gradients at $r={R_GRAD}$", loc="left", fontsize=9.5)
     a.set_ylim(0, 1.35 * max(stats[s][n] for s in SCEN for n, _ in names)); a.legend(fontsize=7.5, loc="upper left", ncol=2)
@@ -224,7 +261,8 @@ def draw_main(res: dict, own: dict, share: np.ndarray, stats: dict, fit_desc: st
               f"Mortality responds through the within-age gradient of death before the next wave in {VNAME} (a logit on {VNAME}, a quadratic in age and {VNAME} x age over {n_risk:,} person-waves at risk, "
               f"{n_deaths:,} deaths: log-odds {slope(b_m, np.array([55.0]))[0]:.2f} per unit of {VNAME} at 55); the healthy share (general health good, very good or excellent) through the same design fitted to the healthy indicator. "
               f"HLE by the Sullivan method: survival times each class's healthy share at each age. Policies: targeted, class 1 at mu = {MU:g}; uniform with the same budget, everyone at mu = {MU:g} pi_1(r) "
-              f"(class 1's share at r, {W[R_GRAD - 20, 0]:.2f} at {R_GRAD}); uniform, everyone at mu = {MU:g}. (a), (b) dashed: each class treated on its own from r at mu = {MU:g}. "
+              f"(class 1's share at r, {W[R_GRAD - 20, 0]:.2f} at {R_GRAD}); uniform, everyone at mu = {MU:g}. (a) solid, the baseline; hatched, what the class gains if treated on its own from r at mu = {MU:g}. "
+              "(b) the variance of age at death from r at baseline over the composition-weighted mixture, split by the law of total variance into the part between types, sum_k pi_k (m_k - m)^2 with m_k class k's mean age at death, and the part within them; the labels give the between share. "
               f"(d) each group's LE at {R_GRAD} is its class composition among the person-waves within five years of {R_GRAD} times the class LE, so the gradients are the part the types carry; "
               + ("income thirds of the person's mean percentile rank of equivalised household income within wave and five-year age band." if INCAGE else
                  "income thirds of the person's mean percentile rank of equivalised household income within wave, over all adults."))
@@ -233,6 +271,8 @@ def draw_main(res: dict, own: dict, share: np.ndarray, stats: dict, fit_desc: st
     fig.text(box[0, 0], box[0, 1] - 0.012, "\n".join(textwrap.wrap(footer, 190)), fontsize=7.2, color=INK2, va="top")
     fig.savefig(FIG / f"fig_prevention_le{SFX}_main.png", bbox_inches="tight")
     print(f"wrote fig_prevention_le{SFX}_main.png to {FIG}")
+    for r in R_BARS + (70,):
+        print(f"between-type share of the variance of age at death from {r}: " + ", ".join(f"{s} {100 * res[(r, s)]['between_share']:.1f}%" for s in SCEN))
     return 0
 
 
@@ -296,11 +336,12 @@ def main() -> int:
         ages_d = AGES[i:] + 0.5
         mix = sum(W[i, k] * death_distribution(hz_s[k], i)[1] for k in range(K))
         mean_d = float((mix * ages_d).sum()); sd_d = float(np.sqrt((mix * (ages_d - mean_d) ** 2).sum()))
-        sd_cls = []
+        sd_cls, m_cls = [], []
         for k in range(K):
-            d = death_distribution(hz_s[k], i)[1]; mk = (d * ages_d).sum(); sd_cls.append(float(np.sqrt((d * (ages_d - mk) ** 2).sum())))
+            d = death_distribution(hz_s[k], i)[1]; mk = (d * ages_d).sum(); sd_cls.append(float(np.sqrt((d * (ages_d - mk) ** 2).sum()))); m_cls.append(float(mk))
+        between = float((W[i] * (np.array(m_cls) - mean_d) ** 2).sum())   # the law of total variance: between-type part
         return {"r": r, "scenario": name, "mu": mu, "E": E, "HE": HE, "pop_le": float((W[i] * E).sum()), "pop_hle": float((W[i] * HE).sum()),
-                "sd_death": sd_d, "sd_death_class": np.array(sd_cls), "gap_le": float(E[K - 1] - E[0]), "gap_hle": float(HE[K - 1] - HE[0])}
+                "sd_death": sd_d, "sd_death_class": np.array(sd_cls), "between_share": between / sd_d ** 2, "gap_le": float(E[K - 1] - E[0]), "gap_hle": float(HE[K - 1] - HE[0])}
 
     res = {(r, s): scenario(int(r), s) for r in R_GRID for s in SCEN}
     # each class treated on its own at mu = 1, for panels (a), (b)
@@ -351,14 +392,14 @@ def main() -> int:
     recs = []
     for (r, s), q in res.items():
         rec = {"r": r, "scenario": s, "mu_class1": q["mu"][0], "mu_class3": q["mu"][-1], "pop_le": q["pop_le"], "pop_hle": q["pop_hle"], "sd_death": q["sd_death"],
-               "gap_le": q["gap_le"], "gap_hle": q["gap_hle"]}
+               "between_share_death": q["between_share"], "gap_le": q["gap_le"], "gap_hle": q["gap_hle"]}
         for k in range(K):
             rec[f"le_{k + 1}"] = q["E"][k]; rec[f"hle_{k + 1}"] = q["HE"][k]; rec[f"sd_death_{k + 1}"] = q["sd_death_class"][k]
         if r in R_REPORT:
             rec.update(gradient_stats(r, s))
         recs.append(rec)
     T = pd.DataFrame(recs); T.to_csv(DESC / f"paper_prevention_le{SFX}.csv", index=False)
-    with open(TAB / f"tab_prevention_le{SFX}.tex", "w") as fh:
+    with open(SCRATCH / f"tab_prevention_le{SFX}.tex", "w") as fh:
         fh.write("\\begin{tabular}{llrrrrrrrr}\n\\toprule\n")
         fh.write(" & & \\multicolumn{2}{c}{population} & \\multicolumn{3}{c}{inequality} & \\multicolumn{3}{c}{gradient in LE, years} \\\\\n")
         fh.write("\\cmidrule(lr){3-4} \\cmidrule(lr){5-7} \\cmidrule(lr){8-10}\n")
@@ -431,10 +472,10 @@ def main() -> int:
     ax.set_xticks(xg); ax.set_xticklabels([n for _, n in names], fontsize=8.5); ax.grid(True, axis="y")
     ax.set_title(f"(h) LE gradients at $r={R_GRAD}$, years", loc="left", fontsize=9.5); ax.legend(fontsize=7, loc="upper left")
     q50 = {s: res[(R_GRAD, s)] for s in SCEN}
-    fit_desc = (f"The univariate K = 3 AR(1) + \"spike\" classes on {VNAME} ({f['n_person']:,} people), class 1 worst health, with Gompertz-Makeham class hazards estimated by posterior-weighted maximum likelihood "
+    fit_desc = (f"The univariate K = 3 AR(1) + transitory classes on {VNAME} ({f['n_person']:,} people), class 1 worst health, with Gompertz-Makeham class hazards estimated by posterior-weighted maximum likelihood "
                 f"on the multidim contract's death intervals ({f['events']:,} deaths) and calibrated to the ONS life tables (one common age-varying factor on every class hazard, matching the population LE at 65 and 90). "
                 if UNI else
-                f"The K = 3 AR(1) + \"spike\" classes of the multidimensional fit (theta, the mental GRM and Gompertz-Makeham mortality; {f['n_person']:,} people), class 1 worst health; hazards calibrated to the ONS "
+                f"The K = 3 AR(1) + transitory classes of the multidimensional fit (theta, the mental GRM and Gompertz-Makeham mortality; {f['n_person']:,} people), class 1 worst health; hazards calibrated to the ONS "
                 "life tables (one common age-varying factor on every class hazard, matching the population LE at 65 and 90). ")
     footer = (fit_desc + f"Prevention from r at intensity mu holds back a share mu of the class's mean change in {VNAME} after r - 1 "
               f"(the paper's instrument; the gain is held at its value at 90 beyond). Mortality responds through the within-age gradient of death before the next wave in {VNAME} "
@@ -449,10 +490,11 @@ def main() -> int:
                  if UNI and V == "theta" else "The within-age mortality gradient is at or below the one the fit's own class hazards imply between types at every age." if not UNI else ""))
     if "--slim" in sys.argv:
         plt.close(fig)
-        return draw_main(res, own, share, stats, fit_desc, n_risk, n_deaths, b_m, W)
+        var_base = {r: scenario(int(r), "baseline") for r in R_VAR}   # (b): the baseline decomposition at every start age
+        return draw_main(res, own, share, stats, fit_desc, n_risk, n_deaths, b_m, W, var_base)
     fig.text(0.01, -0.04, "\n".join(textwrap.wrap(footer, 250)), fontsize=7.2, color=INK2, va="top")
     fig.savefig(FIG / f"fig_prevention_le{SFX}.png", bbox_inches="tight")
-    print(f"wrote fig_prevention_le{SFX}.png and tab_prevention_le{SFX}.tex to {FIG}")
+    print(f"wrote fig_prevention_le{SFX}.png to {FIG} and tab_prevention_le{SFX}.tex to {SCRATCH}")
     return 0
 
 

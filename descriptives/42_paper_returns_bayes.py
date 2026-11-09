@@ -54,6 +54,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import (  # noqa: E402
+    SCRATCH,
     AGES, DESC, FIG, HEALTHIER_HIGH, K, MAX_AGE, MIN_AGE, MODE_CHAINS, TAB, bayes_fit, load_labels, load_measure, load_trajectories,
     smooth_path, write_table)
 from _style import BLUE, CLUSTER, INK2, ORANGE, VERM, apply_style, share_ylim  # noqa: E402
@@ -67,8 +68,8 @@ COST = "flat_cost_total"
 CONTRACT = PROCESSED_DATA_DIR / "contracts" / "health_lifecycle_20_89_minobs3_v1"
 AGE_BANDS = [(20, 34), (35, 44), (45, 54), (55, 64), (65, 74), (75, 90)]
 MEASURE_LABEL = {"theta": r"$\theta$", "h": "$h$", "frailty": "frailty index", "logfrailty": "log(frailty + 1/31)"}
-SET_NAMES = {"kmeans": "K-means types", "base": "independent-residuals classes", "ssm": 'AR(1) + "spike" classes',
-             "ssm-cohort": 'AR(1) + "spike" classes, cohort shifts', "multidim": "multidimensional classes",
+SET_NAMES = {"kmeans": "K-means types", "base": "transitory-only classes", "ssm": 'AR(1) + transitory classes',
+             "ssm-cohort": 'AR(1) + transitory classes, cohort shifts', "multidim": "multidimensional classes",
              "multidim-cohort": "multidimensional classes, cohort shifts"}
 MD_TAGS = {("multidim", "theta"): ("theta-ssm-mort", None), ("multidim", "h"): ("h-ssm-mort", [1, 2, 3]),
            ("multidim-cohort", "theta"): ("theta-ssm-mort-cohort", None)}
@@ -415,7 +416,7 @@ def main() -> int:
         share_ylim(list(axes.ravel()))
         pd.concat(recs).to_csv(DESC / "paper_returns_by_model.csv", index=False)
         fig.text(0.01, -0.02, "\n".join(textwrap.wrap(
-            "The return to prevention by class, P_j(r), on theta under six typologies, all K = 3: the partial K-means types; the independent-residuals and AR(1) + \"spike\" mixtures, "
+            "The return to prevention by class, P_j(r), on theta under six typologies, all K = 3: the partial K-means types; the transitory-only and AR(1) + transitory mixtures, "
             "the latter also with birth-decade shifts (paths at the 1950s; the preventable decline is shift invariant); and the physical channel of the multidimensional fits (theta, the mental GRM and mortality), "
             "without and with the shifts, on the multidim contract's rows. Line width is proportional to the class share; dashed, the uniform return. Same cost curve throughout (the cubic in pounds on theta); "
             "one vertical scale for all panels.", 210)), fontsize=7.2, color=INK2, va="top")
@@ -455,7 +456,7 @@ def main() -> int:
         t = pd.DataFrame(recs); t.to_csv(DESC / "paper_returns_timing.csv", index=False)
         print(t.round(3).to_string(index=False))
         fig.text(0.01, -0.02, "\n".join(textwrap.wrap(
-            "The K = 3 AR(1) + \"spike\" classes on theta with the cost curve in pounds. Top: the saving in each year of age a from prevention started at r, s_j(a | r) = E[-c'(h_a) | j] (hbar_{j,r-1} - hbar_{j,a}), "
+            "The K = 3 AR(1) + transitory classes on theta with the cost curve in pounds. Top: the saving in each year of age a from prevention started at r, s_j(a | r) = E[-c'(h_a) | j] (hbar_{j,r-1} - hbar_{j,a}), "
             "the per-age terms whose sum over a >= r is the class return P_j(r); for starts at 25, 50 and 70. Bottom: the cumulative share of P_j(r) collected by age a, with the ages by which half and 90% has arrived "
             "and the present value at 3.5% a year (the Green Book rate) as a share of the undiscounted return. Pounds per unit of mu; no survival weighting.", 210)), fontsize=7.2, color=INK2, va="top")
         fig.savefig(FIG / "fig_prevention_timing.png", bbox_inches="tight")
@@ -489,7 +490,7 @@ def main() -> int:
         share_ylim(drawn)
         pd.concat(recs).to_csv(DESC / "paper_returns_by_measure.csv", index=False)
         fig.text(0.01, -0.02, "\n".join(textwrap.wrap(
-            "The return to prevention by class, P_j(r), under the AR(1) + \"spike\" mixture on each measure (columns) at K = 3, 4 and 5 (rows), each measure with its own cost curve in pounds (a cubic in the measure on the cost index). "
+            "The return to prevention by class, P_j(r), under the AR(1) + transitory mixture on each measure (columns) at K = 3, 4 and 5 (rows), each measure with its own cost curve in pounds (a cubic in the measure on the cost index). "
             "On the frailty indices higher is frailer, so the preventable decline is the class's rise in frailty and the classes are relabelled with class 1 the frailest. Line width is proportional to the class share; "
             "dashed, the uniform return. One vertical scale for all panels." + (f" Not fitted: {', '.join(missing)}." if missing else "")
             + " The h fit at K = 5 is read over the three chains that share a mode.", 230)), fontsize=7.2, color=INK2, va="top")
@@ -518,7 +519,7 @@ def main() -> int:
         print(R.loc[R_TABLE, ["C", "C_mean", "C_between", "C_within", "within_share", "P", "P_over_C", "cov_share", "P_1", "P_2", "P_3", "best_class", "type_gain"]].round(3).to_string())
         print(R.loc[R_TABLE, ["S", "S_over_C", "S_1", "S_2", "S_3", "S_best_class", "S_gain", "S_q2", "S_q3"]].round(3).to_string())
     ncol = 8 + K
-    write_table(TAB / f"tab_returns_bayes{sfx}.tex",
+    write_table(SCRATCH / f"tab_returns_bayes{sfx}.tex",   # not in the paper
                 ["classes", "$r$", "$C(r)$", "within", "uniform", "$\\div C$", "between", *[f"{cs['kind']} {c + 1}" for c in range(K)], "gain"],
                 [[f"\\multicolumn{{{ncol}}}{{l}}{{\\textit{{(a) First order: $P(r)$ and $P_j(r)$, per unit of $\\mu$}}}}"], *first,
                  [f"\\midrule\\multicolumn{{{ncol}}}{{l}}{{\\textit{{(b) Exact, at $\\mu=1$: $S(r)$ and $S_j(r)$}}}}"], *exact],

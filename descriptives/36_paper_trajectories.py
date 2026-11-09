@@ -6,7 +6,9 @@ under independent residuals, theta under AR(1) plus "spike"; columns are K = 3,
 4 and 5. Each panel draws the fitted class paths in the variant's own units,
 line width proportional to the class share, with the class share and (under
 AR(1)) the class persistence in the legend, and the posterior class composition
-of the observed person-waves as a strip beneath. Dotted lines are the observed
+of the observed person-waves as a strip beneath. The K = 3 column also draws the partial
+K-means type means on the same rows (dashed red, as in 32_paper_bayes_fits.py combined), so the
+figure carries the comparison with K-means as well. Dotted lines are the observed
 class means: at each age, the mean of the measure over the people observed at that
 age weighted by their posterior class probabilities (drawn where the summed
 weight is at least 25 people), so the eye can check the quadratic. A fit that has not finished
@@ -25,6 +27,7 @@ from __future__ import annotations
 
 import json
 import sys
+import textwrap
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -32,19 +35,31 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import AGES, CONTRACT, DESC, FIG, K, MAX_AGE, MIN_AGE, bayes_fit, observed_class_means, MODE_CHAINS  # noqa: E402
+from _paper_common import (AGES, CONTRACT, DESC, FIG, K, MAX_AGE, MIN_AGE, bayes_fit, load_labels, load_measure,  # noqa: E402
+                           observed_class_means, MODE_CHAINS)
 from _style import CLUSTER, INK2, apply_style, share_ylim  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR  # noqa: E402
 
 K45_DIR = ARTIFACTS_DIR / "health-k45"
 KS = (3, 4, 5)
-SETS = [("base", "independent residuals"), ("ssm", 'AR(1) + "spike"')]
+SETS = [("base", "transitory only"), ("ssm", 'AR(1) + transitory')]
 LABEL = {"h": "$h$", "theta": r"$\theta$"}
 observed_means = observed_class_means
 PALETTE = {3: CLUSTER, 4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
            5: ["#08306b", "#08519c", "#2171b5", "#4292c6", "#9ecae1"]}     # worst -> best health
 A = (AGES - 55) / 10
+KMEANS_RED = ["#a50f15", "#ef3b2c", "#fc9272"]      # K-means types, worst -> best, as in 32_paper_bayes_fits.py
+MIN_SUPPORT = 25                                    # K-means type means drawn where the type has at least 25 people at that age
+
+
+def kmeans_means(v: str):
+    """The partial K-means type means by age on the health contract's rows, and the type shares."""
+    L = load_labels(v)
+    d = load_measure([v])
+    s = d[d["pidp"].isin(L.index)].assign(cluster=lambda x: x["pidp"].map(L))
+    t = s.groupby(["cluster", "age"])[v].agg(["mean", "count"]).reset_index()
+    return {"t": t[t["count"] >= MIN_SUPPORT], "share": np.array([(L == c).mean() for c in range(K)])}
 
 
 def k3_panel(tag: str, v: str):
@@ -79,14 +94,18 @@ def kn_panel(tag: str, v: str, Kc: int):
             "observed": observed_means(f["post"], v, Kc)}
 
 
-def draw(ax, axc, fit, show_rho, ylabel=None):
+def draw(ax, axc, fit, show_rho, ylabel=None, km=None):
     Kc = fit["K"]; cols = PALETTE[Kc]
     for k in range(Kc):
         lab = f"{k + 1}: {fit['share'][k]:.0%}" + (f", $\\rho$ {fit['rho'][k]:.2f}" if show_rho else "")
         ax.plot(AGES, fit["paths"][k], color=cols[k], lw=1.0 + 3.5 * fit["share"][k], label=lab)
         obs = fit["observed"][f"class{k + 1}"]
         ax.plot(obs.index, obs.to_numpy(), color=cols[k], lw=1.0, ls=":")
-    ax.legend(fontsize=6.6, loc="lower left", ncols=1 if Kc == 3 else 2, handlelength=1.6, columnspacing=0.8)
+    if km is not None:      # the K-means reference, K = 3 column only; the legend after the classes'
+        for k in range(K):
+            q = km["t"][km["t"]["cluster"] == k]
+            ax.plot(q["age"], q["mean"], color=KMEANS_RED[k], lw=1.0, ls="--", label=f"K-means {k + 1}: {km['share'][k]:.0%}")
+    ax.legend(fontsize=6.6, loc="lower left", ncols=1 if (Kc == 3 and km is None) else 2, handlelength=1.6, columnspacing=0.8)
     ax.grid(True, axis="y")
     ax.set_xlim(MIN_AGE, MAX_AGE)
     ax.set_xticklabels([])
@@ -112,15 +131,18 @@ def main() -> int:
     V_ONLY = "h" if "--h" in sys.argv else "theta"
     row_specs = [(V_ONLY, tag, spec) for tag, spec in SETS]
     fig = plt.figure(figsize=(13.5, 8.6))
-    gs = fig.add_gridspec(2 * len(row_specs), len(KS), height_ratios=[3.0, 0.55] * len(row_specs), hspace=0.32, wspace=0.16,
-                          top=0.95, bottom=0.08)
+    # each panel is a trajectory axis over its composition strip, the strip close beneath
+    gs = fig.add_gridspec(len(row_specs), len(KS), hspace=0.2, wspace=0.16, top=0.95, bottom=0.08)
     traj_axes = []       # every trajectory panel shows the same measure: one vertical scale for all
+    km = kmeans_means(V_ONLY)
     for r, (v, tag, spec) in enumerate(row_specs):
         for c, Kc in enumerate(KS):
-            ax = fig.add_subplot(gs[2 * r, c]); axc = fig.add_subplot(gs[2 * r + 1, c])
+            sub = gs[r, c].subgridspec(2, 1, height_ratios=[3.0, 0.55], hspace=0.1)
+            ax = fig.add_subplot(sub[0]); axc = fig.add_subplot(sub[1])
             fit = k3_panel(tag, v) if Kc == 3 else kn_panel(tag, v, Kc)
             if r == 0:
                 ax.set_title(f"$K = {Kc}$", fontsize=11, loc="center")
+            ax.set_title(f"({'abcdef'[r * len(KS) + c]})", fontsize=10, loc="left")
             if fit is None:
                 missing.append(f"health-{v}-{tag}-k{Kc}")
                 ax.text(0.5, 0.5, "fit still running", ha="center", va="center", transform=ax.transAxes, color=INK2, fontsize=10)
@@ -131,7 +153,8 @@ def main() -> int:
                 if c == 0:
                     ax.set_ylabel(f"{LABEL[v]}, {spec}", fontsize=9)
                 continue
-            draw(ax, axc, fit, show_rho=(tag == "ssm"), ylabel=f"{LABEL[v]}, {spec}" if c == 0 else None)
+            draw(ax, axc, fit, show_rho=(tag == "ssm"), ylabel=f"{LABEL[v]}, {spec}" if c == 0 else None,
+                 km=km if Kc == 3 else None)
             traj_axes.append(ax)
             if r == len(row_specs) - 1:
                 axc.set_xlabel("age")
@@ -141,15 +164,16 @@ def main() -> int:
     share_ylim(traj_axes)
     dropped = [f"{name}: chains {', '.join(map(str, ch))} of 4" for name, ch in CHAINS.items()
                if name.split('-')[1] == V_ONLY and name not in missing]
-    fig.text(0.01, 0.0,
-             "Quadratic growth mixtures on the health contract (38,963 people, 334,194 person-ages), parameters at the posterior mean, in "
-             "each variant's own units; class 1 is worst health. Line width is proportional to the class share; the legend gives\nthe share "
-             "and, under AR(1), the class persistence. Dotted: the observed class mean at each age, the measure averaged over the people observed at that "
-             "age weighted by their posterior class probabilities\n(where the summed weight is at least 25). The strip beneath each panel is the "
-             "posterior class composition of the person-waves observed at each age. Rows: the variant and the stochastic specification,\nindependent "
-             'residuals or an AR(1) latent state plus a one-period "spike"; columns: the number of classes. All six panels share one vertical scale.' + (f" Not yet fitted: {', '.join(missing)}." if missing else "")
-             + (f" Posterior mean over the chains that share a mode for {'; '.join(dropped)} (the other chain sat in a worse mode)." if dropped else ""),
-             fontsize=7.4, color=INK2, va="top")
+    footer = ("Quadratic growth mixtures on the health contract (38,963 people, 334,194 person-ages), parameters at the posterior mean, in "
+              "each variant's own units; class 1 is worst health. Line width is proportional to the class share; the legend gives the share "
+              "and, under AR(1), the class persistence. Dotted: the observed class mean at each age, the measure averaged over the people observed at that "
+              "age weighted by their posterior class probabilities (where the summed weight is at least 25). Dashed red ($K = 3$ only): the partial "
+              "K-means type means on the same rows, with the type shares in the legend. The strip beneath each panel is the "
+              "posterior class composition of the person-waves observed at each age. Rows: the stochastic specification, transitory only "
+              'or AR(1) + transitory; columns: the number of classes. All six panels share one vertical scale.'
+              + (f" Not yet fitted: {', '.join(missing)}." if missing else "")
+              + (f" Posterior mean over the chains that share a mode for {'; '.join(dropped)} (the other chain sat in a worse mode)." if dropped else ""))
+    fig.text(0.01, 0.0, "\n".join(textwrap.wrap(footer, 235)), fontsize=7.4, color=INK2, va="top")
     fig.savefig(FIG / ("fig_class_trajectories_by_K.png" if V_ONLY == "theta" else "fig_class_trajectories_by_K_h.png"), bbox_inches="tight")
     plt.close(fig)
     if V_ONLY == "h":

@@ -276,7 +276,7 @@ def main() -> int:
         plt.close(hidden)
     tag = ("_inpatient" if inpatient else "") + ("_capab" if cap_ab else "") + ("_uncappedc" if not cap_c else "") + ("_panels6" if six else "")
     mtag = {"main": "", "measures": "_measures", "frailty": FRAILTY_SUFFIX, "both": "_both", "mental": MENTAL_SUFFIX}[mode]
-    to_paper = not tag and mode in ("main", "measures", "frailty", "mental")
+    to_paper = not tag and mode in ("main", "measures")
     out = (ROOT_DIR / "paper" / "figures" if to_paper else ARTIFACTS_DIR / "scratch") / f"fig_cost_mortality_age{tag}{mtag}.png"
     tag += mtag
     out.parent.mkdir(parents=True, exist_ok=True)

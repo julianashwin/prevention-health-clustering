@@ -38,7 +38,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, LABEL, MENTAL_SUFFIX, MENTAL_VARIANTS, VARIANTS  # noqa: E402
+from _paper_common import SCRATCH, DESC, FIG, FRAILTY_SUFFIX, FRAILTY_VARIANTS, LABEL, MENTAL_SUFFIX, MENTAL_VARIANTS, VARIANTS  # noqa: E402
 from _paper_moments import (  # noqa: E402
     BANDS, admissible, cell_names, corr_of, fit_common, fit_constrained, ident_panel, layers, pairs_of,
     pooled_moments, wide,
@@ -46,12 +46,12 @@ from _paper_moments import (  # noqa: E402
 from _style import BLUE, GREEN, INK2, INK3, ORANGE, PURPLE, apply_style  # noqa: E402
 
 CASES = ["case1", "case2", "case3", "case4"]
-CASE_LAB = {"case1": "Case 1: i.i.d. noise", "case2": "Case 2: AR(1), one variance",
-            "case3": "Case 3: AR(1), variance by age", "case4": "Case 4: AR(1) + one-period error"}
+CASE_LAB = {"case1": "Case 1: transitory only", "case2": "Case 2: AR(1), one variance",
+            "case3": "Case 3: AR(1), variance by age", "case4": "Case 4: AR(1) + transitory"}
 CASE_COL = {"case1": GREEN, "case2": ORANGE, "case3": BLUE, "case4": PURPLE}
 LAYER_COL = {"VH": BLUE, "CHd": ORANGE, "Vd": GREEN, "noise": "#b8b8b8", "spike": "#6f6f6f"}
 LAYER_LAB = {"VH": "$V_H$", "CHd": "$(s+t)\\,C_{Hd}$", "Vd": "$st\\,V_d$", "noise": "carried noise",
-             "spike": "one-period / i.i.d. noise"}
+             "spike": "transitory"}
 DESIGNS = {
     "main": {"offs": np.array([0, 4, 8, 12]), "how": "pairwise", "cell_min": 50, "common": False,
              "label": "four ages four years apart, pairwise moments"},
@@ -191,25 +191,25 @@ def main() -> int:
     main_foot = ("Four ages four years apart, pairwise moments pooled over base ages within each band; a base age enters "
                  "when every cell rests on at least 50 people observed at both of its ages.\n" + common_foot)
     if FRAIL:
-        barchart(FIG / f"fig_exhibit2_main{SUFFIX}.png", [("logfrailty", "case1"), ("logfrailty", "case4"), ("frailty", "case1"), ("frailty", "case4")],
+        barchart(SCRATCH / f"fig_exhibit2_main{SUFFIX}.png", [("logfrailty", "case1"), ("logfrailty", "case4"), ("frailty", "case1"), ("frailty", "case4")],
                  fits["main"], main_spec, "Exhibit 2: Cases 1 and 4 on log frailty and frailty",
                  "Frailty: the share of 31 equal-weight deficits, higher = frailer; log frailty is log(frailty + 1/31), zeros at the floor. " + main_foot)
-        print(f"wrote fig_exhibit2_main{SUFFIX}.png to {FIG}")
+        print(f"wrote fig_exhibit2_main{SUFFIX}.png to {SCRATCH}")
         return 0
     if MENTAL:
-        barchart(FIG / f"fig_exhibit2_main{SUFFIX}.png", [("mental", "case1"), ("mental", "case4")],
+        barchart(SCRATCH / f"fig_exhibit2_main{SUFFIX}.png", [("mental", "case1"), ("mental", "case4")],
                  fits["main"], main_spec, "Exhibit 2: Cases 1 and 4 on the mental GRM",
                  "The mental GRM: three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis; higher = better. " + main_foot)
-        print(f"wrote fig_exhibit2_main{SUFFIX}.png to {FIG}")
+        print(f"wrote fig_exhibit2_main{SUFFIX}.png to {SCRATCH}")
         return 0
     y2_spec = DESIGNS["2y"]
     barchart(FIG / "fig_exhibit2_main.png", [("theta", "case4")], fits["main"], main_spec, "Exhibit 2: Case 4 on theta", main_foot)
     barchart(FIG / "fig_exhibit2_case1.png", [("theta", "case1"), ("h", "case1"), ("frailty", "case1"), ("logfrailty", "case1")],
              fits["main"], main_spec, "Exhibit 2, Case 1 on every measure",
-             "Case 1 (i.i.d. noise) on theta, h, the frailty index and log(frailty + 1/31). " + main_foot)
+             "Case 1 (transitory only) on theta, h, the frailty index and log(frailty + 1/31). " + main_foot)
     barchart(FIG / "fig_exhibit2_measures.png", [("h", "case4"), ("frailty", "case4"), ("logfrailty", "case4")],
              fits["main"], main_spec, "Exhibit 2, Case 4 on the other measures",
-             "Case 4 (AR(1) plus a one-period spike) on h, the frailty index and log(frailty + 1/31). " + main_foot)
+             "Case 4 (AR(1) + transitory) on h, the frailty index and log(frailty + 1/31). " + main_foot)
     barchart(FIG / "fig_exhibit2_2y.png", [("h", "case1"), ("h", "case4"), ("theta", "case1"), ("theta", "case4")],
              fits["2y"], y2_spec, "Exhibit 2, two-year design: Cases 1 and 4 on h and theta",
              "Four ages two years apart, balanced moments (people observed at all four ages), one rho shared by the four "

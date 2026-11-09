@@ -20,8 +20,8 @@ over the slope panels as horizontal segments per age band: sqrt(V_d) against sd_
 Corr(H, d) = C_Hd / sqrt(V_H V_d) against Corr_j(hbar, d), so the type-based moments and the
 moments-only fit can be read against each other.
 
-Outputs: paper/figures/fig_decomp_alt.png (four rows by two typologies),
-         paper/figures/fig_decomp_alt_compact.png (three panels, both typologies overlaid),
+Outputs: artifacts/scratch/fig_decomp_alt.png (four rows by two typologies),
+         artifacts/scratch/fig_decomp_alt_compact.png (three panels, both typologies overlaid),
          artifacts/descriptives/paper_decomp_alt.csv.
 
     PYTHONPATH=src .venv/bin/python descriptives/52_paper_decomposition_alt.py
@@ -38,7 +38,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import AGES, DESC, FIG, K, MAX_AGE, MIN_AGE, bayes_fit, load_labels, load_measure, load_trajectories, smooth_path  # noqa: E402
+from _paper_common import SCRATCH, AGES, DESC, FIG, K, MAX_AGE, MIN_AGE, bayes_fit, load_labels, load_measure, load_trajectories, smooth_path  # noqa: E402
 from _style import BLUE, GREEN, INK2, INK3, ORANGE, VERM, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR  # noqa: E402
@@ -48,7 +48,7 @@ MIN_SUPPORT = 25
 BASE_AGES = [20, 30, 40, 50, 60, 70, 80]
 LAGS = np.arange(0, 10)
 BANDS = {"25-40": (25, 40), "40-60": (40, 60), "60-75": (60, 75), "75-90": (75, 90)}
-STYLE = {"kmeans": dict(color=BLUE, ls="-", label="K-means types"), "ssm": dict(color=VERM, ls="--", label='AR(1) + "spike" classes')}
+STYLE = {"kmeans": dict(color=BLUE, ls="-", label="K-means types"), "ssm": dict(color=VERM, ls="--", label='AR(1) + transitory classes')}
 
 
 def kmeans_moments() -> dict:
@@ -193,13 +193,13 @@ def main() -> int:
         ax.legend(fontsize=6.5, ncols=3, loc="upper left"); ax.set_xlabel("age")
         for ax in axes[:, j]:
             ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-    footer = (f"Theta, K = 3. Left: the partial K-means types ({mm['kmeans']['n']:,} people; smoothed type paths, slopes the forward five-year change over five). Right: the AR(1) + \"spike\" classes "
+    footer = (f"Theta, K = 3. Left: the partial K-means types ({mm['kmeans']['n']:,} people; smoothed type paths, slopes the forward five-year change over five). Right: the AR(1) + transitory classes "
               f"({mm['ssm']['n']:,} people; quadratic class paths at the posterior mean, slopes their derivative). (a), (b): the cross-sectional variance among the typology's people split into between types "
               "(variance of the type means under the age-specific composition) and within; the dotted line in (b) adds the mixture's own stationary within-class variance to the between part. "
               "(c)-(f): moments of the type slopes across types with person-level shares; grey segments are the linear model's layers of Figure 3 (Case 4) by age band, sqrt(V_d) and C_Hd / sqrt(V_H V_d). "
               "(g), (h): the between-type part of the covariance rows of Figure 2(c), Cov_j(hbar_s, hbar_s+l) under the composition at the base age, with the observed rows dotted. Five-year rolling means in (a)-(f).")
     fig.text(0.01, -0.005, "\n".join(textwrap.wrap(footer, 190)), fontsize=7.2, color=INK2, va="top")
-    fig.savefig(FIG / "fig_decomp_alt.png", bbox_inches="tight")
+    fig.savefig(SCRATCH / "fig_decomp_alt.png", bbox_inches="tight")
 
     # ---- figure 2: compact, both typologies overlaid
     fig, axes = plt.subplots(3, 1, figsize=(6.2, 10.5), gridspec_kw={"hspace": 0.4})
@@ -220,12 +220,12 @@ def main() -> int:
     ax.set_title("(c) level-slope correlation across types, Corr$_j(\\bar h_{j,a}, d_{j,a})$", loc="left", fontsize=10); ax.legend(fontsize=8, loc="lower left"); ax.set_xlabel("age")
     for ax in axes:
         ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-    footer = ("Theta, K = 3, the partial K-means types (solid) and the AR(1) + \"spike\" classes (dashed). (a) The variance of the type means under the age-specific composition as a share of the cross-sectional "
+    footer = ("Theta, K = 3, the partial K-means types (solid) and the AR(1) + transitory classes (dashed). (a) The variance of the type means under the age-specific composition as a share of the cross-sectional "
               "variance among the typology's people. (b), (c) The type slopes (K-means: forward five-year change of the smoothed path over five; mixture: the derivative of the quadratic class path), "
               "their spread across types and their correlation with the level, person-level type shares; grey segments: the linear model's layers of Figure 3 (Case 4) by age band. Five-year rolling means.")
     fig.text(0.01, -0.01, "\n".join(textwrap.wrap(footer, 120)), fontsize=7.2, color=INK2, va="top")
-    fig.savefig(FIG / "fig_decomp_alt_compact.png", bbox_inches="tight")
-    print(f"wrote fig_decomp_alt.png and fig_decomp_alt_compact.png to {FIG}")
+    fig.savefig(SCRATCH / "fig_decomp_alt_compact.png", bbox_inches="tight")
+    print(f"wrote fig_decomp_alt.png and fig_decomp_alt_compact.png to {SCRATCH}")
     return 0
 
 

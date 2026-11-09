@@ -92,7 +92,7 @@ def main() -> int:
         ax.set_title(f"({'cd'[j]}) vs {name}: ARI {agree[name]['ari']:.2f},\nsame class {agree[name]['same']:.0%}", loc="left", fontsize=9)
         for sp in ax.spines.values():
             sp.set_visible(False)
-    footer = ("Three K = 3 AR(1) + \"spike\" fits with one level shift per birth decade common to the classes, all drawn at the 1950s: theta alone on the health contract (38,963 people), "
+    footer = ("Three K = 3 AR(1) + transitory fits with one level shift per birth decade common to the classes, all drawn at the 1950s: theta alone on the health contract (38,963 people), "
               "the mental GRM alone on the multidim contract (38,181 people), and the multidimensional fit of theta, the mental GRM and Gompertz-Makeham mortality on the multidim contract. "
               f"Line width is proportional to the class share; the legend gives the share and the class persistence on that channel. (c), (d): rows are the multidimensional modal class, columns the univariate modal class, "
               f"row-normalised, on the {agree['physical']['n']:,} and {agree['mental']['n']:,} people in both fits; classes ordered worst to best on each fit's anchor (the physical channel for the multidimensional fit).")

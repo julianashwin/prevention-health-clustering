@@ -25,8 +25,13 @@ both the health and the multidim contracts.
 The figure's lower row is the held-out comparison from 33_paper_prediction.py
 (paper_prediction_death_heldout.csv), which must run first.
 
-Outputs: paper/figures/fig_prediction_mortality.png,
-         artifacts/descriptives/paper_mortality_prediction.csv
+--slim writes the appendix version on theta only: one panel, the full-sample rows, with age,
+the observables, the K-means type, the AR(1)+"spike" class, the multidimensional model hazard,
+theta(t) and theta(t), theta(t-1); every gain is over age alone on the same rows.
+
+Outputs: artifacts/scratch/fig_prediction_mortality.png (theta; not in the paper), paper/figures/fig_prediction_mortality_h.png,
+         artifacts/descriptives/paper_mortality_prediction.csv;
+         --slim: paper/figures/fig_prediction_mortality_slim.png, artifacts/descriptives/paper_mortality_prediction_slim.csv
 """
 
 from __future__ import annotations
@@ -42,7 +47,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import CONTRACT, DESC, FIG, kalman_person_lp, load_measure  # noqa: E402
+from _paper_common import SCRATCH, CONTRACT, DESC, FIG, kalman_person_lp, load_measure  # noqa: E402
 from _style import CLUSTER, GREEN, INK2, ORANGE, PURPLE, VERM, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
@@ -55,6 +60,10 @@ EDUC = ["GCSE", "A-level", "degree or higher"]
 MD_CHAINS = {"theta-ssm-mort": None, "h-ssm-mort": [1, 2, 3], "theta-ssm-mort-cohort": None}
 # the cohort version (birth-decade shifts on both channels, common to the classes) exists on theta only
 MD_COHORT = {"theta": "theta-ssm-mort-cohort"}
+SLIM = "--slim" in sys.argv
+SLIM_SETS = ["age", "+ observables", "+ K-means type", '+ AR(1)+"spike" class', "+ multidim model hazard", "+ theta(t)", "+ theta(t), theta(t-1)"]
+SLIM_LAB = {"+ observables": "+ education, income, sex", "+ K-means type": "+ K-means type", '+ AR(1)+"spike" class': '+ AR(1) + transitory class',
+            "+ multidim model hazard": "+ multidimensional model's hazard", "+ theta(t)": r"+ $\theta_t$", "+ theta(t), theta(t-1)": r"+ $\theta_t$, $\theta_{t-1}$"}
 
 
 def logistic_fit(X, y, iters=60, ridge=1e-4):
@@ -127,7 +136,8 @@ def main() -> int:
     md_people = pd.read_csv(M39.CONTRACT / "long.csv", usecols=["pidp"])["pidp"].unique()
     people = np.intersect1d(health_people, md_people)
     out_rows, aucs = [], {}
-    for v in VARIANTS:
+    km_all = pd.read_parquet(DESC / "paper_kmeans_labels.parquet")
+    for v in (["theta"] if SLIM else VARIANTS):
         d = load_measure([v]).sort_values(["pidp", "wave"])
         d = d[d["pidp"].isin(people)].copy()
         lag = d[["pidp", "wave", v]].rename(columns={v: "y_lag"}); lag["wave"] = lag["wave"] + 1
@@ -144,6 +154,9 @@ def main() -> int:
             post = post[post["variant"] == v].set_index("pidp")[["class1", "class2"]]
             d = d.join(post.rename(columns={"class1": f"{tag}_c1", "class2": f"{tag}_c2"}), on="pidp")
         d = d.merge(multidim_posteriors(v), on=["pidp", "wave"], how="left")
+        km = km_all[(km_all["variant"] == v) & (km_all["lo"] == 20) & (km_all["hi"] == 90)].set_index("pidp")["cluster"]
+        for c in range(K - 1):                                  # the full-sample partial K-means type, as dummies
+            d[f"km_{c + 1}"] = d["pidp"].map(km).eq(c).astype(float).where(d["pidp"].isin(km.index))
         if v in MD_COHORT:
             d = d.merge(multidim_posteriors(v, MD_COHORT[v], "mdc"), on=["pidp", "wave"], how="left")
         d["a"] = (d["age"] - 55) / 10
@@ -152,6 +165,7 @@ def main() -> int:
             "age": [],
             "+ observables": obs,
             "+ iid class": ["base_c1", "base_c2"],
+            "+ K-means type": ["km_1", "km_2"],
             '+ AR(1)+"spike" class': ["ssm_c1", "ssm_c2"],
             "+ multidim class (health channels only)": ["mdg_c1", "mdg_c2"],
             "+ multidim class (full likelihood, in sample)": ["mdf_c1", "mdf_c2"],
@@ -163,22 +177,30 @@ def main() -> int:
             f"+ multidim class (health only), {v}(t)": ["mdg_c1", "mdg_c2", v],
             "+ all": ["ssm_c1", "ssm_c2", v] + obs,
         }
+        if SLIM:
+            SETS = {n: SETS[n] for n in SLIM_SETS}
         base_cols = ["died_next", "a", v] + obs + ["base_c1", "ssm_c1", "mdg_c1", "md_loghaz"]
         s = d.dropna(subset=base_cols)
+        print(f"rows without a K-means type: {int(s['km_1'].isna().sum())}")
         test = ((pd.util.hash_pandas_object(s["pidp"], index=False) % 10) >= 7).to_numpy()
         y = s["died_next"].to_numpy(float)
         print(f"{v}: {len(s):,} person-waves at risk, {s['pidp'].nunique():,} people, {int(y.sum()):,} deaths ({y.mean():.3%})")
         for name, cols in SETS.items():
             s2, t2, y2 = s, test, y
-            if "y_lag" in cols:
-                keep = s["y_lag"].notna().to_numpy(); s2, t2, y2 = s[keep], test[keep], y[keep]
-            X = np.column_stack([np.ones(len(s2)), s2["a"], s2["a"] ** 2] + [s2[c].to_numpy(float) for c in cols])
-            b = logistic_fit(X[~t2], y2[~t2]); p = 1 / (1 + np.exp(-np.clip(X @ b, -30, 30)))
-            score = auc(y2[t2], p[t2])
-            out_rows.append({"variant": v, "predictors": name, "n": len(s2), "n_test": int(t2.sum()), "deaths": int(y2.sum()), "auc": score})
+            keep = s[cols].notna().all(axis=1).to_numpy() if cols else np.ones(len(s), bool)
+            s2, t2, y2 = s[keep], test[keep], y[keep]
+            def fit_auc(cs):
+                X = np.column_stack([np.ones(len(s2)), s2["a"], s2["a"] ** 2] + [s2[c].to_numpy(float) for c in cs])
+                b = logistic_fit(X[~t2], y2[~t2]); p = 1 / (1 + np.exp(-np.clip(X @ b, -30, 30)))
+                return auc(y2[t2], p[t2])
+            score = fit_auc(cols)
+            out_rows.append({"variant": v, "predictors": name, "n": len(s2), "n_test": int(t2.sum()), "deaths": int(y2.sum()), "auc": score,
+                             "auc_age_same_rows": fit_auc([])})          # age alone on the same rows, for a like-for-like gain
         aucs[v] = pd.DataFrame([r for r in out_rows if r["variant"] == v]).set_index("predictors")["auc"]
         print(aucs[v].round(3).to_string())
     t = pd.DataFrame(out_rows); t["gain"] = t["auc"] - t.groupby("variant")["auc"].transform("first")
+    if SLIM:
+        return draw_slim(t)
     t.to_csv(DESC / "paper_mortality_prediction.csv", index=False)
     held = pd.read_csv(DESC / "paper_prediction_death_heldout.csv")      # from 33_paper_prediction.py
     for VSEL, sfx in ((['theta'], ''), (['h'], '_h')):          # theta for the paper, h for the appendix
@@ -206,7 +228,7 @@ def main() -> int:
                     if np.isnan(gval):
                         ax.text(0.0005, i, "no cohort fit on h" if "cohort" in names[i] else "fit running", va="center", fontsize=7, color=INK2)
                 ax.set_yticks(np.arange(len(names)))
-                ax.set_yticklabels([n.replace(f"{v}(t)", f"${VL[v]}(t)$").replace(f"{v}(t-1)", f"${VL[v]}(t-1)$") for n in names], fontsize=8)
+                ax.set_yticklabels([n.replace('AR(1)+"spike"', "AR(1) + transitory").replace("iid class", "transitory-only class").replace(f"{v}(t)", f"${VL[v]}(t)$").replace(f"{v}(t-1)", f"${VL[v]}(t-1)$") for n in names], fontsize=8)
                 ax.invert_yaxis(); ax.axvline(0, color=INK2, lw=0.8); ax.grid(True, axis="x")
                 ax.set_title(f"({'ab'[r]}) on ${VL[v]}$, {title}\nAUC gain over age only ({base:.2f})", fontsize=9, loc="left")
         n = t[(t["variant"] == VSEL[0]) & (t["predictors"] == "age")].iloc[0]
@@ -219,8 +241,40 @@ def main() -> int:
         footer = "\n".join(textwrap.wrap(footer.replace("\n", " "), 118))
         fig.text(0.01, 0.02, footer, fontsize=7.2, color=INK2, va="top")
         fig.subplots_adjust(top=0.95, bottom=0.2, left=0.42, right=0.98)
-        fig.savefig(FIG / f"fig_prediction_mortality{sfx}.png")
+        fig.savefig((SCRATCH if sfx == "" else FIG) / f"fig_prediction_mortality{sfx}.png")   # theta: the paper uses --slim
     print("wrote fig_prediction_mortality{,_h}.png")
+    return 0
+
+
+def draw_slim(t: pd.DataFrame) -> int:
+    """The appendix figure: AUC gain over age alone on the same rows, theta, full-sample fits."""
+    t = t.copy(); t["gain_same_rows"] = t["auc"] - t["auc_age_same_rows"]
+    t.to_csv(DESC / "paper_mortality_prediction_slim.csv", index=False)
+    print(t[["predictors", "n", "deaths", "auc", "auc_age_same_rows", "gain_same_rows"]].round(4).to_string())
+    names = [n for n in SLIM_SETS if n != "age"]
+    q = t.set_index("predictors").reindex(names)
+    age = t[t["predictors"] == "age"].iloc[0]
+    col = {"+ observables": INK2, "+ K-means type": CLUSTER[2], '+ AR(1)+"spike" class': CLUSTER[1], "+ multidim model hazard": VERM,
+           "+ theta(t)": ORANGE, "+ theta(t), theta(t-1)": ORANGE}
+    fig, ax = plt.subplots(figsize=(7.2, 3.6))
+    y = np.arange(len(names))
+    ax.barh(y, q["gain_same_rows"], color=[col[n] for n in names], height=0.62)
+    for i, g in enumerate(q["gain_same_rows"]):
+        ax.text(g + 0.0007, i, f"+{g:.3f}", va="center", fontsize=7.5, color=INK2)
+    ax.set_yticks(y); ax.set_yticklabels([SLIM_LAB[n] for n in names], fontsize=8.5); ax.invert_yaxis()
+    ax.axvline(0, color=INK2, lw=0.8); ax.grid(True, axis="x"); ax.set_xlim(0, q["gain_same_rows"].max() * 1.18)
+    ax.set_xlabel(f"AUC gain over age alone (age alone: {age['auc']:.2f})")
+    ax.set_title("Predicting death before the next wave, on $\\theta$", loc="left", fontsize=9.5)
+    lag = t[t["predictors"] == "+ theta(t), theta(t-1)"].iloc[0]
+    footer = (f"Every person-wave at risk on the full-sample fits: death before the next wave ({int(age['n']):,} person-waves, {int(age['deaths']):,} deaths), "
+              "people in both the health and the multidimensional contracts. Each row adds its predictors to a quadratic in age in a logit, fitted on 70% of people and scored on the other 30%; "
+              "the gain is over age alone on the same rows. The class posteriors and the K-means type are from the full-sample fits, which never see the death record; "
+              "the multidimensional model's hazard is its class-weighted Gompertz-Makeham hazard at the person's age, with the class from the physical and mental channels only. "
+              f"theta(t-1) needs the previous wave, so that row uses the {int(lag['n']):,} person-waves with one.")
+    fig.canvas.draw(); box = fig.transFigure.inverted().transform(ax.get_tightbbox(fig.canvas.get_renderer()))
+    fig.text(box[0, 0], box[0, 1] - 0.03, "\n".join(textwrap.wrap(footer, 150)), fontsize=7, color=INK2, va="top")
+    fig.savefig(FIG / "fig_prediction_mortality_slim.png", bbox_inches="tight")
+    print("wrote fig_prediction_mortality_slim.png")
     return 0
 
 

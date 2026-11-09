@@ -48,6 +48,7 @@ from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _paper_common import (  # noqa: E402
+    SCRATCH,
     DESC, FIG, K, MAX_AGE, MENTAL_COL, MIN_AGE, MULTIDIM_CONTRACT, TAB, VARIANTS, bayes_fit, load_labels, load_measure,
     observed_class_means, write_table)
 from _style import CLUSTER, INK2, apply_style  # noqa: E402
@@ -105,7 +106,7 @@ def main() -> int:
                             "alpha": r["coef"][k, 0], "beta": r["coef"][k, 1], "gamma": r["coef"][k, 2],
                             "level_30": mu[10], "level_80": mu[60], "sigma": r["sigma"], "rhat": r["rhat"],
                             "rho": r["rho"][k], "sigma_meas": r["sigma_meas"], "set": SET})
-        ax.set_title(f"{lab}\n{'AR(1) plus measurement error' if SET == 'ssm' else 'baseline (independent residuals)'}", loc="left", fontsize=9.5)
+        ax.set_title(f"{lab}\n{'AR(1) + transitory' if SET == 'ssm' else 'transitory only'}", loc="left", fontsize=9.5)
         ax.legend(fontsize=6.8, loc="lower left", ncols=2); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
         # ---- rows 2-3: composition strips
         for row, comp, name in ((1, r["comp"], "Bayesian posteriors"),
@@ -133,19 +134,19 @@ def main() -> int:
                      + ([" / ".join(f"{x:.2f}" for x in r["rho"]), f"{r['sigma_meas']:.3f}"] if SET == "ssm" else []))
         posts.append(r["post"].assign(variant=v))
     fig.text(0.01, -0.01,
-             ("Baseline K = 3 quadratic growth mixtures, independent residuals," if SET == "base" else
-              "K = 3 quadratic growth mixtures with AR(1) plus measurement error (an AR(1) latent state and a one-period measurement error),")
+             ("Baseline K = 3 quadratic growth mixtures, transitory only," if SET == "base" else
+              "K = 3 quadratic growth mixtures with AR(1) + transitory (an AR(1) latent state plus a transitory shock),")
              + "\non the health contract (38,963 people, 334,194 person-ages), parameters at the posterior mean; class 1 is worst "
              "health.\nK-means types from 22_paper_kmeans.py on the same rows. Paths are in each variant's own units. Dotted: the "
              "observed class mean at each age,\nthe measure averaged over the people observed there weighted by their posterior class "
              "probabilities. Dashed red: the K-means type means.\nComposition: class shares of the person-waves observed at each age. "
              "Cross-tab rows sum to one.",
              fontsize=7.4, color=INK2, va="top")
-    fig.savefig(FIG / f"fig_bayes_{SET}.png")
+    fig.savefig(SCRATCH / f"fig_bayes_{SET}.png")   # not in the paper
     header = ["variant", "shares, mixture", "shares, K-means", "ARI", "same class", "mean max posterior", "max $\\hat R$"]
     if SET == "ssm":
         header += ["$\\rho$ by class", "$\\sigma_{\\text{meas}}$"]
-    write_table(TAB / f"tab_bayes_{SET}.tex", header, table, colspec="lllrrrr" + ("lr" if SET == "ssm" else ""))
+    write_table(SCRATCH / f"tab_bayes_{SET}.tex", header, table, colspec="lllrrrr" + ("lr" if SET == "ssm" else ""))
     pd.DataFrame(classes).to_csv(DESC / f"paper_bayes_{SET}_classes.csv", index=False)
     pd.concat(posts).to_parquet(DESC / f"paper_bayes_{SET}_posteriors.parquet", index=False)
     print(pd.DataFrame(classes).round(3).to_string(index=False))
@@ -155,9 +156,9 @@ def main() -> int:
 
 # --mental: the univariate fits on the mental GRM alone (clustering/runs/mental_queue.py), on the
 # multidim contract's rows, with a third column for the fit with birth-decade shifts
-MENTAL_FITS = [("base", "independent residuals", ARTIFACTS_DIR / "mental-health" / "mental-theta-base"),
-               ("ssm", 'AR(1) + "spike"', ARTIFACTS_DIR / "mental-health" / "mental-theta-ssm"),
-               ("ssm-cohort", 'AR(1) + "spike", cohort shifts', ARTIFACTS_DIR / "mental-health" / "mental-theta-ssm-cohort")]
+MENTAL_FITS = [("base", "transitory only", ARTIFACTS_DIR / "mental-health" / "mental-theta-base"),
+               ("ssm", 'AR(1) + transitory', ARTIFACTS_DIR / "mental-health" / "mental-theta-ssm"),
+               ("ssm-cohort", 'AR(1) + transitory, cohort shifts', ARTIFACTS_DIR / "mental-health" / "mental-theta-ssm-cohort")]
 
 
 def combined(v: str = "theta") -> int:
@@ -181,7 +182,7 @@ def combined(v: str = "theta") -> int:
     else:
         # the frailty fits sit in artifacts/health-frailty/, the theta and h fits in health-base/ and health-ssm/
         fits = [(fs, name, ARTIFACTS_DIR / ("health-frailty" if frail else "health-base" if fs == "base" else "health-ssm") / f"health-{v}-{fs}")
-                for fs, name in (("base", "independent residuals"), ("ssm", 'AR(1) + "spike"'))]
+                for fs, name in (("base", "transitory only"), ("ssm", 'AR(1) + transitory'))]
         fits = [f for f in fits if (f[2] / "run_summary.json").exists()]
     nc = len(fits)
     fig, axes = plt.subplots(2, nc, figsize=(5 * nc, 7.2), gridspec_kw={"height_ratios": [3.2, 0.7], "hspace": 0.32, "wspace": 0.2},
@@ -212,14 +213,14 @@ def combined(v: str = "theta") -> int:
               else f"{ {'theta': 'theta', 'h': 'h', 'frailty': 'the 31-deficit frailty index', 'logfrailty': 'log(frailty + 1/31)'}[v] } on the health contract (38,963 people, 334,194 person-ages)"
               + ("; higher is frailer, so the classes are relabelled with class 1 the frailest" if frail else ""))
     footer = (f"K = 3 quadratic growth mixtures on {sample}, parameters at the posterior mean; "
-             "class 1 is worst health. Left: independent residuals;\nmiddle" + ("" if mental else "/right") + ": an AR(1) latent state plus a one-period \"spike\", with the class persistence in the legend"
+             "class 1 is worst health. Left: transitory only;\nmiddle" + ("" if mental else "/right") + ": an AR(1) latent state plus a transitory shock, with the class persistence in the legend"
              + ("; right: the same with one level shift per birth decade, common to the classes, paths and observed means at the 1950s, every score net of its decade shift. " if mental else ". ")
              + "Line width is proportional to the class share. Dotted: the observed class mean at each age, the measure averaged over\nthe people observed there weighted by their "
              "posterior class probabilities. Dashed red: the partial K-means type means on the same rows. Bottom: the posterior class composition of the person-waves observed at each age.")
     if mental or frail:   # wrapped to the figure's width
         footer = "\n".join(textwrap.wrap(footer.replace("\n", " "), 75 * nc))
     fig.text(0.01, 0.0, footer, fontsize=7.2, color=INK2, va="top")
-    out = FIG / ("fig_bayes_mixtures.png" if v == "theta" else f"fig_bayes_mixtures_{v}.png")
+    out = (FIG if v == "mental" else SCRATCH) / ("fig_bayes_mixtures.png" if v == "theta" else f"fig_bayes_mixtures_{v}.png")   # only the mental one is in the paper
     fig.savefig(out, bbox_inches="tight")
     print(f"wrote {out}")
     return 0

@@ -83,7 +83,7 @@ def main() -> int:
         share_ylim([axes[r, 2 * j] for r in range(len(ks)) if axes[r, 2 * j].lines])
     pd.DataFrame(rows).to_csv(DESC / "paper_frailty_by_K.csv", index=False)
     chains_note = "; ".join(f"{fit_dir(v, k).name}: chains {','.join(map(str, f['chains']))}" for (v, k), f in sorted(fits.items()) if f["chains"] is not None)
-    footer = ("AR(1) + \"spike\" mixtures on the health contract's frailty columns, K = 3 (artifacts/health-frailty) and K = 4, 5 (artifacts/health-k45), class paths at the posterior mean in the measure's own units, "
+    footer = ("AR(1) + transitory mixtures on the health contract's frailty columns, K = 3 (artifacts/health-frailty) and K = 4, 5 (artifacts/health-k45), class paths at the posterior mean in the measure's own units, "
               "line width proportional to the class share, the legend giving each class's persistence; the strip is the posterior class composition of the person-waves observed at each age. Classes ordered frailest first. "
               "Each measure's path panels share one vertical scale across rows."
               + (f" Fits read over the chains that share the better mode: {chains_note}." if chains_note else ""))

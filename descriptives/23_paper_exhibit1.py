@@ -81,7 +81,8 @@ def main() -> int:
               "cells with fewer than 100 person-waves are dropped.\nEach covariance row starts on the diagonal at its\n"
               "five-year base-age bin (dotted: the variance profile)\nand runs nine years. Panels (b) and (c) share a vertical scale."),
              fontsize=7.4, color=INK2, va="top")
-    out = ROOT_DIR / "paper" / "figures" / f"fig_exhibit1{SUFFIX}.png"
+    out = (ARTIFACTS_DIR / "scratch" if FRAIL else ROOT_DIR / "paper" / "figures") / f"fig_exhibit1{SUFFIX}.png"   # frailty version not in the paper
+    out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, bbox_inches="tight")
     plt.close(fig)
     if EXTRA:

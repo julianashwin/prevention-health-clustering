@@ -57,7 +57,7 @@ def main() -> int:
     axes[0, 0].set_xlabel("start age $r$"); axes[0, 1].set_xlabel("start age $r$")
     M42.draw_timing_profiles(axes[1, 0], sv, cs, r_list=(25, 60), letter="c", uniform=False, mu=MU_A)
     M46.draw_targeting(axes[1, 1], None, res, letters="d")
-    footer = (f"The K = 3 AR(1) + \"spike\" classes on theta with the cost curve estimated in pounds on theta (a degree-{cs['deg']} polynomial on the cost index, waves 7-15). "
+    footer = (f"The K = 3 AR(1) + transitory classes on theta with the cost curve estimated in pounds on theta (a degree-{cs['deg']} polynomial on the cost index, waves 7-15). "
               "Savings are exact: the cost curve is a cubic, so the expansion in mu stops at the cube. "
               "(a) The treatment cost avoided by prevention at mu = 0.1 (a tenth of each class's future decline held back) from start age r, by class, line width proportional to the class share, dashed the uniform policy. "
               "(b) C(r), the expected treatment cost from r to 90 on the observed cross-section, split into the cost at the mean path, what the class differences add and what realised deviations add "

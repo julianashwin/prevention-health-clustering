@@ -37,7 +37,7 @@ import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import AGES, DESC, FIG, LABEL, MAX_AGE, MIN_AGE, kalman_person_lp  # noqa: E402
+from _paper_common import SCRATCH, AGES, DESC, FIG, LABEL, MAX_AGE, MIN_AGE, kalman_person_lp  # noqa: E402
 from _style import CLUSTER, INK2, apply_style, share_ylim  # noqa: E402
 
 from prevention_health_clustering.config import ARTIFACTS_DIR, PROCESSED_DATA_DIR  # noqa: E402
@@ -48,19 +48,19 @@ K = 3
 A = (AGES - 55) / 10.0
 # (tag, physical variant, specification label, chains read)
 FITS = [
-    ("theta-ssm-mort", "theta", 'AR(1) + "spike"', None),
-    ("h-ssm-mort", "h", 'AR(1) + "spike"', [1, 2, 3]),
-    ("theta-base-mort", "theta", "independent residuals", None),
-    ("h-base-mort", "h", "independent residuals", None),
+    ("theta-ssm-mort", "theta", 'AR(1) + transitory', None),
+    ("h-ssm-mort", "h", 'AR(1) + transitory', [1, 2, 3]),
+    ("theta-base-mort", "theta", "transitory only", None),
+    ("h-base-mort", "h", "transitory only", None),
 ]
 # --cohort: the theta AR(1) + "spike" fit with birth-decade level shifts on both channels, common to the
 # classes; class paths are drawn at the 1950s decade and the likelihood nets the shifts out of the scores.
-FITS_COHORT = [("theta-ssm-mort-cohort", "theta", 'AR(1) + "spike", cohort shifts', None)]
+FITS_COHORT = [("theta-ssm-mort-cohort", "theta", 'AR(1) + transitory, cohort shifts', None)]
 COHORT_REF = 1950
 # --k: the theta AR(1) + "spike" fit at K = 3, 4 and 5 (clustering/runs/multidim_health_k45_queue.py), one row each
-FITS_K = [("theta-ssm-mort", "theta", 'AR(1) + "spike", K = 3', None, 3),
-          ("theta-ssm-mort-k4", "theta", 'AR(1) + "spike", K = 4', [1, 3, 4], 4),   # chain 2 sits at a worse mode (lp 300 lower); 1, 3, 4 agree
-          ("theta-ssm-mort-k5", "theta", 'AR(1) + "spike", K = 5', [1], 5)]   # four chains, four modes; chain 1 has the highest lp (by 150+), drawn alone
+FITS_K = [("theta-ssm-mort", "theta", 'AR(1) + transitory, K = 3', None, 3),
+          ("theta-ssm-mort-k4", "theta", 'AR(1) + transitory, K = 4', [1, 3, 4], 4),   # chain 2 sits at a worse mode (lp 300 lower); 1, 3, 4 agree
+          ("theta-ssm-mort-k5", "theta", 'AR(1) + transitory, K = 5', [1], 5)]   # four chains, four modes; chain 1 has the highest lp (by 150+), drawn alone
 # --kcohort: K = 4 and 5 without and with birth-decade shifts, side by side (the shifted fits from
 # clustering/runs/multidim_health_k45_queue.py --cohort); a row is drawn when its fit exists
 FITS_K_COHORT = [("theta-ssm-mort-k4", "theta", 'K = 4, no shifts', [1, 3, 4], 4),
@@ -277,21 +277,21 @@ def main() -> int:
              f"{ev:,} deaths). Rows: the physical measure and the stochastic specification. Columns: the physical and mental class paths at the posterior mean\n"
              "in each channel's units (dotted: the observed class mean at each age, posterior-weighted), the class-specific Gompertz-Makeham yearly hazard "
              "(circles: the posterior-weighted crude death rate by five-year band), and the posterior class composition of the person-waves observed at each age.\n"
-             "Under AR(1) + \"spike\" the legend gives each class's persistence on that channel; the innovation and \"spike\" scales are common to the classes. "
+             "Under AR(1) + transitory the legend gives each class's persistence on that channel; the innovation and transitory scales are common to the classes. "
              "The Makeham constant is below 0.0001 in every fit. Each column has one vertical scale across its rows."
              + (" Class paths and observed class means are at the 1950s birth decade, every score net of its estimated decade shift." if COHORT else "")
-             + (" Rows: K = 4 and 5 under AR(1) + \"spike\" without and with one level shift per birth decade common to the classes (paths at the 1950s, scores net of the shift); "
+             + (" Rows: K = 4 and 5 under AR(1) + transitory without and with one level shift per birth decade common to the classes (paths at the 1950s, scores net of the shift); "
                 "classes ordered worst to best; each fit read over the chains that share its better mode (K = 4: chains 1, 3, 4 without shifts, 2, 3 with; K = 5: chain 1 without shifts, 2, 3 with)." if KCOHORT
-                else " Rows: the class count K = 3, 4 and 5 under AR(1) + \"spike\"; classes ordered worst to best." if KMODE else "")
-             + (" h + AR(1) + \"spike\" is read over the three chains that share a mode; the fourth sat in the mode "
+                else " Rows: the class count K = 3, 4 and 5 under AR(1) + transitory; classes ordered worst to best." if KMODE else "")
+             + (" h + AR(1) + transitory is read over the three chains that share a mode; the fourth sat in the mode "
              "with the class 2 and 3 intercepts pressed together on the ordering constraint, about 2,950 log-posterior units lower." if V_ONLY == "h" else ""),
              fontsize=7.2, color=INK2, va="top")
     fig.subplots_adjust(top=0.93, bottom=0.17 if len(FITS_V) > 1 else 0.30, left=0.05, right=0.99)
     sfx = "_by_K_cohort" if KCOHORT else "_by_K" if KMODE else "_cohort" if COHORT else ("" if V_ONLY == "theta" else "_h")
-    fig.savefig(FIG / f"fig_multidim_trajectories{sfx}.png")
+    fig.savefig((SCRATCH if sfx == "_by_K" else FIG) / f"fig_multidim_trajectories{sfx}.png")   # _by_K not in the paper
     tab = pd.DataFrame(rows); tab.to_csv(DESC / f"paper_multidim{sfx}.csv", index=False)
     print(tab[["fit", "class", "share", "rho_phys", "rho_ment", "signal_phys", "signal_ment", "gomp_slope", "hazard_55", "hazard_85"]].round(3).to_string(index=False))
-    print(f"wrote fig_multidim_trajectories{sfx}.png to {FIG}")
+    print(f"wrote fig_multidim_trajectories{sfx}.png to {SCRATCH if sfx == '_by_K' else FIG}")
     return 0
 
 

@@ -35,7 +35,7 @@ import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _paper_common import AGES, DESC, FIG, K, MAX_AGE, MIN_AGE, TAB, load_labels, load_measure, ssm_fit, write_table  # noqa: E402
+from _paper_common import SCRATCH, AGES, DESC, FIG, K, MAX_AGE, MIN_AGE, TAB, load_labels, load_measure, ssm_fit, write_table  # noqa: E402
 from _style import CLUSTER, INK2, apply_style  # noqa: E402
 
 from prevention_health_clustering.config import PROCESSED_DATA_DIR  # noqa: E402
@@ -101,7 +101,7 @@ def main() -> int:
     if BAYES:
         f = ssm_fit(v)
         for c in range(K):
-            ax.plot(AGES, f["paths"][c], color=CLUSTER[c], lw=1.8, label=f'AR(1) + "spike" class {c + 1} ({f["theta"][c]:.0%})')
+            ax.plot(AGES, f["paths"][c], color=CLUSTER[c], lw=1.8, label=f'AR(1) + transitory class {c + 1} ({f["theta"][c]:.0%})')
     for c in range(K):
         q = rollm(t[t["cluster"] == c])
         ax.plot(q["age"], q["mean"], color=CLUSTER[c], lw=1.6, ls="--" if BAYES else "-", label=f"{'K-means ' if BAYES else ''}type {c + 1} ({float((L == c).mean()):.0%})")
@@ -144,7 +144,7 @@ def main() -> int:
              "rank of equivalised household net income; education the highest qualification ever recorded.\n"
              f"Panels (b) and (d) involve income and stop at age {INCOME_MAX_AGE}."
              + (f" Every series is a centred {ROLL}-year rolling mean of the cell means." if ROLL > 1 else "")
-             + (" Panel (a) adds the AR(1) + \"spike\" class paths (quadratic, posterior mean) solid, the K-means type means dashed." if BAYES else ""),
+             + (" Panel (a) adds the AR(1) + transitory class paths (quadratic, posterior mean) solid, the K-means type means dashed." if BAYES else ""),
              fontsize=7.4, color=INK2, va="top")
     fig.savefig(OUT / f"fig_observables{sfx}.png", bbox_inches="tight")
 
@@ -158,7 +158,7 @@ def main() -> int:
         ari = 1.0 if col == "cluster" else adjusted_rand_score(ok[col].astype(str), ok["cluster"])
         rows.append([name] + [f"{bs[a]:.3f}" for a in CHECK_AGES] + [f"{ari:.3f}"])
         recs.append({"partition": name, **{f"between_share_{a}": bs[a] for a in CHECK_AGES}, "ari_vs_types": ari})
-    write_table(TAB / f"tab_observables{sfx}.tex",
+    write_table(SCRATCH / f"tab_observables{sfx}.tex",   # not in the paper
                 ["partition"] + [f"between share, age {a}" for a in CHECK_AGES] + ["ARI vs types"], rows)
     out = pd.DataFrame(recs)
     out.to_csv(DESC / f"paper_observables{sfx}.csv", index=False)
