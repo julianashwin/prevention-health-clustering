@@ -1,5 +1,9 @@
 """Shared figure style, carried from the PCS construction note's figures."""
 
+import os
+import sys
+from pathlib import Path
+
 import matplotlib as mpl
 
 BLUE, ORANGE, GREEN, VERM, PURPLE = (
@@ -7,6 +11,8 @@ BLUE, ORANGE, GREEN, VERM, PURPLE = (
 CLUSTER = ["#08306b", "#3182bd", "#6baed6"]   # sequential, worst -> best health
 INK, INK2, INK3 = "#1a1a1a", "#4a4a4a", "#7a7a7a"
 SURFACE = "#fcfcfb"
+NOTES_DIR = "notes"   # each saved figure's footer goes to <figure dir>/notes/<stem>.txt
+_REPO = Path(__file__).resolve().parents[1]
 
 
 def apply_style() -> None:
@@ -53,16 +59,77 @@ def fit_footers(fig, margin: float = 0.985) -> None:
         t.set_text("\n".join(textwrap.wrap(text.replace("\n", " "), chars)))
 
 
+def find_footers(fig) -> list:
+    """The figure's footers (its notes): figure-level texts hung from their top (va="top")
+    near the bottom edge (y <= 0.05) or below the lowest panel. The suptitle is va="top" too
+    but sits above the panels, so it is never picked up."""
+    axes = [a for a in fig.axes if a.get_visible()]
+    bottom = min((a.get_position().y0 for a in axes), default=0.0)
+    out = []
+    for t in fig.texts:
+        if t.get_va() != "top" or not t.get_text().strip():
+            continue
+        y = t.get_position()[1]
+        if y <= 0.05 or y < bottom:
+            out.append(t)
+    return out
+
+
+def note_path(fname):
+    """Where a saved figure's note goes: ``notes/<stem>.txt`` beside the figure, e.g.
+    paper/figures/notes/fig_returns_bayes.txt for paper/figures/fig_returns_bayes.png.
+    None for a file object."""
+    if not isinstance(fname, (str, os.PathLike)):
+        return None
+    p = Path(fname)
+    return p.parent / NOTES_DIR / f"{p.stem}.txt"
+
+
+def write_note(fname, footers) -> None:
+    """Write the figure's note: the figure name, the command that made it, then the footer
+    text unwrapped (one paragraph per footer). Written on every save, so it is as new as
+    the figure; a figure without a footer gets "(no note)"."""
+    path = note_path(fname)
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    script = Path(sys.argv[0]).resolve() if sys.argv and sys.argv[0] else None
+    try:
+        script = script.relative_to(_REPO).as_posix()
+    except (AttributeError, ValueError):
+        script = script.name if script else "?"
+    cmd = " ".join([script] + sys.argv[1:])
+    body = "\n\n".join(" ".join(t.get_text().split()) for t in footers) or "(no note)"
+    path.write_text(f"{Path(fname).stem}\nmade by: {cmd}\n\n{body}\n")
+
+
 def _install_footer_guard() -> None:
-    """Make every Figure.savefig fit its footers first (idempotent)."""
+    """Make every Figure.savefig write the figure's footer to its notes file and leave it
+    off the image (idempotent). Set PHC_FOOTERS_ON_IMAGE=1 to draw the footers on the
+    image as before (re-flowed to fit by fit_footers); the note is written either way."""
     from matplotlib.figure import Figure
     if getattr(Figure, "_phc_footer_guard", False):
         return
     original = Figure.savefig
 
-    def savefig(self, *args, **kwargs):
-        fit_footers(self)
-        return original(self, *args, **kwargs)
+    def savefig(self, fname, *args, **kwargs):
+        try:
+            self.canvas.draw()   # settle the panel positions first (layout engines)
+        except Exception:
+            pass
+        footers = find_footers(self)
+        write_note(fname, footers)
+        if os.environ.get("PHC_FOOTERS_ON_IMAGE"):
+            fit_footers(self)
+            return original(self, fname, *args, **kwargs)
+        shown = [t.get_visible() for t in footers]
+        for t in footers:
+            t.set_visible(False)   # hidden artists are left out of the tight bounding box too
+        try:
+            return original(self, fname, *args, **kwargs)
+        finally:
+            for t, v in zip(footers, shown):
+                t.set_visible(v)
 
     Figure.savefig = savefig
     Figure._phc_footer_guard = True

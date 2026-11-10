@@ -1,0 +1,4 @@
+fig_targeting_first2
+made by: descriptives/46_paper_targeting.py --first2
+
+The K = 3 AR(1) + transitory classes on theta with the first two rows held out (29,899 people); the return to prevention by class P_j(r) of the returns figure, at each person's age at t-1, the second row (t is the first fitted row). Each rule predicts a person's return from what is known at t-1 (a multinomial logit of the fitted-window class on a quadratic in age plus the set shown, fitted on a 70% split; the model posterior and the estimated class need no regression), treats the top q of the other 30% by predicted return, and is scored by the realised return, the fitted-window class posterior times P_j(r). The age-only rule is the benchmark: returns fall with age, so what the reading and the observables add is the value of type information. Dotted: everyone treated. Pounds of treatment cost avoided to 90 per unit of mu, no survival weighting, no discounting.

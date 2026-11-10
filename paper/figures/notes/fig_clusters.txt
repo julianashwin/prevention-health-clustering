@@ -1,0 +1,4 @@
+fig_clusters
+made by: descriptives/25_paper_clusters.py
+
+The health contract: 38,963 people with at least three observed ages 20-89, one row per person-age; partial K-means with 50 seeded starts, types ordered worst to best. Top: cluster means where at least 25 members are observed, shaded to +/- 1 within-cluster sd. Middle: correlation of a person's deviation from their type's mean at age a with their deviation k years later. Bottom: type composition of the person-waves observed at each age.

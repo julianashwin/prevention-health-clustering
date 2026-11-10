@@ -1,0 +1,4 @@
+fig_worst_type_by_K
+made by: descriptives/53_paper_worst_type.py
+
+The worst type by method and K on theta: partial K-means (top; type 1 the lowest person mean; K = 4 and 5 from 22 --k) and the univariate AR(1) + transitory mixture (bottom; class 1 the lowest anchor intercept; K = 4 and 5 from artifacts/health-k45, chains sharing the better mode). The worst type is drawn in colour, the others in grey; the red dotted line repeats the K = 3 worst type. K-means paths are ten-year rolling means of the type means; mixture paths the quadratic class paths at the posterior mean. For the mixture the legend's share is the probability mass; the table gives the modal share too.

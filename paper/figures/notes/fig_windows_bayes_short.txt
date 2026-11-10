@@ -1,0 +1,4 @@
+fig_windows_bayes_short
+made by: descriptives/50_paper_windows_bayes.py --short
+
+Each window refits the K = 3 AR(1) + transitory mixture on theta on the people observed at least three times inside it (its own contract and fit). Top: the window's class paths at the posterior mean over its own age range (tick at the start; line width proportional to the class share); grey: the lifecycle 20-90 fit. Bottom: the worst class's posterior share of the person-waves observed at each age (five-year rolling mean), one line per window, against the lifecycle fit in grey. Classes ordered worst to best by the class path's mean over the window.

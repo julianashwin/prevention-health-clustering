@@ -1,0 +1,4 @@
+fig_exhibit1
+made by: descriptives/23_paper_exhibit1.py
+
+387,599 person-waves, 69,958 people, ages 20-90. Profiles are 10-year centred rolling means; cells with fewer than 100 person-waves are dropped. Each covariance row starts on the diagonal at its five-year base-age bin (dotted: the variance profile) and runs nine years. Panels (b) and (c) share a vertical scale.

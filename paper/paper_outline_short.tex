@@ -6,7 +6,7 @@
 \usepackage[round,authoryear]{natbib}
 \usepackage[hidelinks]{hyperref}
 \graphicspath{{figures/}}
-\setlist[itemize]{itemsep=1pt,topsep=2pt,parsep=0pt,leftmargin=1.4em}
+\setlist[itemize]{itemsep=1pt,topsep=0pt,parsep=0pt,leftmargin=1.4em}
 \newtheorem{proposition}{Proposition}
 \newtheorem{result}{Result}
 \newtheorem{corollary}{Corollary}
@@ -17,32 +17,37 @@
 \newcommand{\open}[1]{\textcolor{red!75!black}{\small[\textbf{Open:} #1]}}
 \setlength{\parskip}{3pt}\setlength{\parindent}{0pt}
 
-\title{Prevention, treatment and lifecycle health types\\[4pt]
-	\large Streamlined outline: figures, equations and essential points}
+\title{Outline for Prevention and Lifecycle Health Types}
 \author{}
-\date{November 2026}
+%\date{November 2026}
 
 \begin{document}
 \maketitle
 
-\textcolor{gray}{\small Boiled down from \texttt{paper\_skeleton.tex} (7 Nov), which keeps the full text, numbers and caveats. Every figure, equation and table is kept here; the text is cut to the argument. Open questions from the skeleton are collected in red at the end of each section.}
-
 %% =============================================================================
 \section{Introduction}
 %% =============================================================================
+
+Question: what are the returns to prevention over the life course, for whom, and when?
+
+Key results:
 \begin{itemize}
-	\item Question: what are the returns to prevention over the life course, for whom, and when?
-	\item Prevention acts on how health \emph{changes}; treatment pays for the level once realised. So the return to prevention depends on each lifecycle health type's mean path, not on the cross-section of levels.
-	\item We estimate those types on UKHLS 2009--24 (ages 20--90), price them with an NHS cost proxy, and find a worst type of 15--18\% that carries most of the targetable return.
+	\item Return to prevention depends on each lifecycle health type's mean path, not on the cross-section
+	\item Divergence then convergence over the lifecycle
+	\item Unhealth group of $\approx$20\% that carries most of the targetable return
+	\item Health is by far the most important observable for targeting
+	\item Target the unhealthy when they are young and the healthy when then are old
+	\item Uniform prevention could increase lifespan an health gradients
 \end{itemize}
 
-\subsection{Related literature}
+Related literature:
 \begin{itemize}
+	\item Literature on prevention
 	\item Earnings dynamics and its use of the covariance matrix.
 	\item Health measurement in economics (factor and item-response models).
 	\item Stochastic specification closest to \citet{hosseini2022}: log frailty as fixed effect plus AR(1) plus transitory shock.
 \end{itemize}
-\open{Introduction still to be written.}
+
 
 %% =============================================================================
 \section{Conceptual framework}
@@ -56,9 +61,9 @@
 		h_{i,a} = \bar h_{j,a} + u_{i,a}, \qquad \bar h_{j,a} \equiv H_j + \sum_{a'=1}^{a} d_{j,a'} .
 		\label{eq:levels}
 	\end{equation}
-	\item Three kinds of information: what \emph{stays} (level), what is \emph{in the moment} (transitory, measurement error), how one is \emph{evolving} ($d_{j,a}$). Prevention targets the third; the first two are paid for as treatment.
+	\item Three kinds of information: what \emph{stays} ($H$), what is \emph{in the moment} ($u$), how one is \emph{evolving} ($d$). \item Prevention targets the third; the first two are paid for as treatment.
 	\item Each leaves a different trace on the covariance matrix: the basis for identification.
-	\item Types are the object of interest because the return to prevention for a type depends only on its mean path (Result~\ref{res:prev}).
+	\item Types are the object of interest because the return to prevention depends on a type's mean path.
 	\item Linear illustration ($d_{j,a}=d_j$):
 	\begin{equation}
 		\begin{gathered}
@@ -70,7 +75,7 @@
 		\end{gathered}
 		\label{eq:linear}
 	\end{equation}
-	\item Units matter: the covariance matrix treats health as cardinal, so we need an anchor (costs, Section~\ref{sec:data}).
+	\item Units matter: the covariance matrix treats health as cardinal, so we need an anchor (costs).
 \end{itemize}
 
 \subsection{Policy: the treatment bill, and prevention as avoiding it}
@@ -80,7 +85,7 @@
 	$$
 	\bar h^{\mu}_{j,a}=\bar h_{j,a}+\mu\,(\bar h_{j,r-1}-\bar h_{j,a})\quad\text{for } a\ge r .
 	$$
-	\item We are assuming that prevention acts on health dispersion that is (i) deterministic and (ii) actionable. 
+	\item We assume prevention acts on health dispersion that is (i) deterministic and (ii) actionable. 
 	\item Treatment bill still to come from age $r$:
 	\begin{equation}
 		C(r)=\sum_{a\ge r}\E[c(h_{i,a})]=\sum_{a\ge r}\Bigl[\underbrace{c(\bar h_a)}_{\text{mean path}}+\underbrace{\textstyle\sum_j\pi_{j,a}c(\bar h_{j,a})-c(\bar h_a)}_{\text{type differences}}+\underbrace{\E[c(h_{i,a})]-\textstyle\sum_j\pi_{j,a}c(\bar h_{j,a})}_{\text{realised deviations}}\Bigr].
@@ -114,7 +119,7 @@
 		+\underbrace{\Cov_j\bigl(1-\bar h_{j,a},\,\bar h_{j,r-1}-\bar h_{j,a}\bigr)}_{\text{between-type channel}}\Bigr].
 		\label{eq:P}
 	\end{equation}
-	The between-type channel splits into pathway, persistence and accumulation margins. The mean channel is most of the uniform return; the types add the dispersion of $P_j(r)$, which is what targeting works through.
+	The between-type channel splits into pathway, persistence and accumulation. The mean channel is most of the uniform return; types add the dispersion of $P_j(r)$, which brings in targeting.
 \end{corollary}
 
 \begin{itemize}
@@ -138,15 +143,16 @@
 \label{sec:ident_fw}
 \begin{itemize}
 	\item Observed covariance $=$ between-type part $+$ noise part; the returns need the first, so we need to separate it from the second. 
-	\item Assumptions: A1 window linearity, A2 noise orthogonal to $(H,d)$, A3 a noise class. In the linear case
+	\item Assumptions: A1 window linearity, A2 noise orthogonal to $(H,d)$, A3 a noise class. Linear case:
 	\begin{equation}
 		\Cov(h_s,h_t)=V_H+(s+t)C_{Hd}+st\,V_d+\Cov(u_s,u_t).
 		\label{eq:forward}
 	\end{equation}
 	\item Unrestricted noise variances can never rule out pure noise; stationary noise identifies $(C_{Hd},V_d)$ from the diagonal but not $V_H$ from $\sigma^2_u$.
+	\item The noise class below, a persistent AR(1) component plus a one-period shock, is the persistent--transitory specification (standard in earnings and income dynamics and also used in health).  %\citep{macurdy1982,abowd1989,meghir2004,blundell2008}, also used for medical spending \citep{frenchjones2004,denardi2010} and frailty \citep{hosseini2022}. 
+	\item The transitory shock includes both pure noise (measurement error) and genuine changes in health that are gone by the next period; the covariance matrix cannot tell them apart.
 \end{itemize}
 
-\textbf{Terminology.} The noise class below, a persistent AR(1) component plus a one-period shock, is the \emph{persistent--transitory} specification, and the case with no persistent component is \emph{transitory only}: the standard specification and name in earnings and income dynamics \citep{macurdy1982,abowd1989,meghir2004,blundell2008}, also used for medical spending \citep{frenchjones2004,denardi2010} and frailty \citep{hosseini2022}. The transitory shock includes both pure noise (measurement error) and an \emph{episodic} shock, a genuine change in health that is gone by the next period; the covariance matrix cannot tell them apart.
 
 \begin{proposition}[Identification within the persistent--transitory class]\label{prop:main}
 	Under A1--A2 and $\Cov(u_s,u_t)=\rho^{\,t-s}v_s+\mathbf 1\{s=t\}\sigma^2_{\varepsilon,s}$: five waves identify $V_H,C_{Hd},V_d,\rho$ and both noise variances; four suffice without the transitory shock or with stationary noise; three without it and with stationary variance; two if also $C_{Hd}=0$ and memoryless noise.
@@ -154,12 +160,13 @@
 
 \begin{itemize}
 	\item One identifying force per region of the matrix: \textbf{diagonal} ($C_{Hd}$, $V_d$ from differences); \textbf{first row} (a line cannot mimic a decay: splits level from noise, gives $\rho$; the transitory shock is the anchor's excess); \textbf{interior} ($V_d$, overidentification).
-	\item Linearity is local, so $C_{Hd}(a)$ can change sign: a flattening variance profile requires it.
+	\item Linearity is local, so $C_{Hd}(a)$ can change sign: a flattening variance profile requires it. $V_H$ at a given age is an accumulation of past dispersion. 
 	\item The uniform return is priced by the surface's moments alone:
 	\begin{equation}
 		P(r)=2\sum_{a\ge r}\bigl[(1-\bar h_a)(\bar h_{r-1}-\bar h_a)+ (a-r+1)\,C_{Hd} + a(a-r+1)\,V_d\bigr].
 		\label{eq:Pr}
 	\end{equation}
+	\item $C_{Hd}$, $V_H$ and $V_d$ are all informative for the value of timing and targeting. 
 \end{itemize}
 
 \begin{center}\small
@@ -175,51 +182,59 @@
 	\end{tabular}
 \end{center}
 
-\open{which noise class to lead with (data point to a transitory shock and $\rho$ near 1); is the AR(1) ``noise within class'' or part of ``what stays''; mention selection here; how many identification cases to show.}
-
 %% =============================================================================
 \section{Data and motivating descriptives}
 \label{sec:data}
 %% =============================================================================
 
 \subsection{Data and the health measure}
+
+%\begin{table}[H]
+%	\caption{Underlying health variables}
+%	\label{tab:health_vars}
+%	\centering\small
+%	\begin{tabular}{llc}
+	%		\toprule
+	%		Item & What it records & Categories \\
+	%		\midrule
+	%		GH & self-rated general health & 5 \\
+	%		PF & moderate activities and climbing stairs & 5 \\
+	%		RP & accomplished less, limited in kind of work or other activity & 9 \\
+	%		BP & pain interference with normal activity & 5 \\
+	%		LIM\_FL & functional limitations: mobility, lifting, dexterity, co-ordination & 5 \\
+	%		LIM\_SELF & self-care: personal care, continence & 3 \\
+	%		LIM\_SENS & sensory: hearing, sight & 3 \\
+	%		COND & ever-diagnosed physical conditions, 0--5 and 6 or more & 7 \\
+	%		\bottomrule
+	%	\end{tabular}
+%\end{table}
+
 \begin{itemize}
 	\item UKHLS waves 1--15 (2009--24), ages 20--90. Lifecycle sample: at least three observed ages, 334,194 person-ages on 38,963 people.
-	\item Eight physical-health items (Table~\ref{tab:health_vars}), none tied to employment.
-\end{itemize}
-
-\begin{table}[H]
-	\caption{Underlying health variables}
-	\label{tab:health_vars}
-	\centering\small
-	\begin{tabular}{llc}
-		\toprule
-		Item & What it records & Categories \\
-		\midrule
-		GH & self-rated general health & 5 \\
-		PF & moderate activities and climbing stairs & 5 \\
-		RP & accomplished less, limited in kind of work or other activity & 9 \\
-		BP & pain interference with normal activity & 5 \\
-		LIM\_FL & functional limitations: mobility, lifting, dexterity, co-ordination & 5 \\
-		LIM\_SELF & self-care: personal care, continence & 3 \\
-		LIM\_SENS & sensory: hearing, sight & 3 \\
-		COND & ever-diagnosed physical conditions, 0--5 and 6 or more & 7 \\
-		\bottomrule
-	\end{tabular}
-\end{table}
-
-\begin{itemize}
+	\item Eight physical-health items, none tied to employment.
 	\item Graded-response model \citep{samejima1969}:
 	\begin{equation}
 		P(Y_j \ge c \mid \theta) \;=\; \frac{1}{1 + \exp\{-a_j(\theta - b_{j,c-1})\}}
 	\end{equation}
+	\item Latent health $\theta$ is assumed standard normal in the pooled sample
 	\item Bounded expected-score twin:
 	\begin{equation}
 		h(\theta) \;=\; \frac{\sum_{j=1}^{J} \sum_{c=2}^{k_j} P(Y_j \ge c \mid \theta)}{\sum_{j=1}^{J} (k_j - 1)},
 		\qquad h_i = h(\hat\theta_i), \quad \hat\theta_i = E[\theta \mid \mathbf{y}_i].
 	\end{equation}
 	\item Plus a 31-deficit frailty index and $\log(\text{frailty}+1/31)$; $h$ behaves like frailty, $\theta$ like log frailty.
-	\item No measure is uniquely cardinal, but covariances are; costs give the anchor. Main text uses $\theta$ (unbounded, convex cost curve); the others are in Appendix~\ref{app:measures}.
+	\item No measure is uniquely cardinal, but covariances are; costs give the anchor. Main text uses $\theta$ the others are in an Appendix.
+	\item Advantage of $\theta$ - distinguishes between the healthy, not just the unhealthy which is important for lifecycle dynamics.
+\end{itemize}
+
+	\begin{figure}[H]\centering
+		% note: figures/notes/fig_cost_mortality_age.txt
+		\includegraphics[width=\linewidth]{fig_cost_mortality_age.png}
+		\caption{Annual cost (a) and one-year mortality (b) against $\theta$, by age band: binned means with 95\% intervals; lines in (b) are within-band logits.}
+		\label{fig:cost}
+	\end{figure}
+	
+	\begin{itemize}
 	\item Cost proxy: annual NHS cost from in-patient, out-patient and GP use, waves 7--15, 2024/25 prices:
 	\begin{equation}
 		\widehat{C}_{it} \;=\;
@@ -229,24 +244,15 @@
 		\;+\;
 		\underbrace{c_{\text{gp}} \cdot \widehat{n}^{\text{gp}}_{it}}_{\text{GP}} .
 	\end{equation}
-	Wrong in level (\pounds900 vs \pounds3{,}000 a head), right in shape.
+	\item Wrong in level (\pounds900 vs \pounds3{,}000 a head), right in shape.
 	\item Figure~\ref{fig:cost}: cost is convex in poor health ($t=17.4$ on the quadratic) and close to age-invariant above $\theta\approx-2$; mortality is roughly log-linear in $\theta$, but age carries extra mortality risk.
 \end{itemize}
 
-\begin{figure}[H]\centering
-	\includegraphics[width=\linewidth]{fig_cost_mortality_age.png}
-	\caption{Cost (a) and one-year mortality (b) against $\theta$, by age band; orange line in (a) is the pooled cubic used for pricing.}
-	\label{fig:cost}
-\end{figure}
+
 
 \subsection{The moments of health over the life course} \label{subsec:health_moments}
 
-\begin{figure}[H]\centering
-	\includegraphics[width=0.55\linewidth]{fig_exhibit1.png}
-	\caption{Mean path, variance profile and covariance rows of $\theta$, model-free.}
-	\label{fig:exhibit1}
-\end{figure}
-
+First look at health covariance matrix:
 \begin{itemize}
 	\item (a) The mean decline accelerates with age: on its own this says intervene late.
 	\item (b) Variance rises 60\% from 30 to 60, peaks at 62, then falls: $C_{Hd}(a)$ turns negative after 60.
@@ -255,19 +261,29 @@
 	\item Same on log frailty; bounded measures ($h$, frailty) keep variance growing after 60.
 \end{itemize}
 
+\begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit1.txt
+	\includegraphics[width=0.5\linewidth]{fig_exhibit1.png}
+	\caption{Model-free moments of $\theta$ by age: (a) mean, (b) variance, (c) rows of the covariance matrix leaving the diagonal at five-year base ages (dotted: the variance profile).}
+	\label{fig:exhibit1}
+\end{figure}
+
+
+
 \subsection{The linear approximation on real data} \label{subsec:lin_ident}
 \begin{itemize}
-	\item Fit $V_H$, $C_{Hd}$, $V_d$ and noise by constrained least squares on the ten moments of four ages four years apart, within four age bands (Case~4: persistent--transitory).
+	\item Fit $V_H$, $C_{Hd}$, $V_d$ and noise by constrained least squares on the ten moments of four ages four years apart, within four age bands and persistent--transitory stochastic process. 
 	\item $\Corr(H,d)$ goes from positive to negative with age ($+0.45$, $+0.78$, $-0.56$, $-0.53$); the sign path is robust across cases and measures.
 \end{itemize}
 
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit2_main.txt
 	\includegraphics[width=\linewidth]{fig_exhibit2_main.png}
-	\caption{The linear approximation on $\theta$, Case~4: fitted layers against observed moments by age band.}
+	\caption{The linear approximation on $\theta$ under persistent--transitory stochastic process, by age band: bars stack the fitted layers of the variances $V(k)$ and covariances $C(k,l)$ of four ages four years apart; black ticks are the observed moments.}
 	\label{fig:ex2main}
 \end{figure}
 
-\open{which identification cases to present here, and pairwise vs balanced moments; PSID replication to bring in; take posterior uncertainty in $\theta$ into the clustering.}
+%\open{which identification cases to present here, and pairwise vs balanced moments; PSID replication to bring in; take posterior uncertainty in $\theta$ into the clustering.}
 
 %% =============================================================================
 \section{Lifecycle types}
@@ -276,36 +292,45 @@
 
 \subsection{Why and how}
 \begin{itemize}
-	\item Health at 55 is an outcome of earlier dynamics, and divergence happens before late middle age, so we need the full lifecycle (most work uses the old or short windows).
+	\item Health at 50 is an outcome of earlier dynamics, and divergence happens before late middle age, so we need the full lifecycle (most work uses the old or short windows).
 	\item Cohort-independent types with cohort-dependent shares, estimated three ways: partial K-means, Bayesian mixtures, then against observables.
 	\item Challenges: power and type definition; mortality and attrition; cohort effects; units and bounds.
 \end{itemize}
 
-\subsection{(A) Non-parametric types: partial K-means}
-\begin{itemize}
-	\item Minimise squared deviations over observed entries only, $K=3$, 50 starts; every person-wave weighted equally.
-	\item Three ordered paths, 18/43/40\%. The worst type falls fastest to 60, then the order reverses: divergence then convergence.
-	\item Within-type deviations are persistent (lag-1 autocorrelation 0.37--0.64), so the final model needs persistence.
-\end{itemize}
-
 \begin{figure}[H]\centering
-	\includegraphics[width=0.55\linewidth]{fig_clusters.png}
-	\caption{Partial K-means types ($K=3$) on $\theta$: type means, within-type autocorrelation, composition by age.}
+	% note: figures/notes/fig_clusters_means.txt
+	\includegraphics[width=0.55\linewidth]{fig_clusters_means.png}
+	\caption{Partial K-means types ($K=3$) on $\theta$: the mean of $\theta$ by age in each type, shaded to $\pm1$ within-type sd. The legend gives each type's share of people.}
 	\label{fig:clusters}
 \end{figure}
 
+\subsection{Non-parametric types: partial K-means}
 \begin{itemize}
-	\item Between-type share of variance 48\% at 30, 65\% at 70; $\Cov_j(\bar h_{j,a},d_{j,a})$ changes sign at 61.
-	\item Cohort adjustment leaves the typology unchanged (ARI 0.90).
+	\item Partial K-means: minimise squared deviations over observed entries only with every person-wave weighted equally.
+	\item  Figure \ref{fig:clusters} shows $K=3$ ordered paths, 18/43/40\%. The worst type falls fastest to 60, then the order reverses: divergence then convergence.
+	\item Within-type deviations are persistent (lag-1 autocorrelation 0.37--0.64), so the final model needs persistence. 
+	\item Share of population in worst type increases with age (opposite of mortality selection) so parameteric model should deal with this too. 
 \end{itemize}
 
+
+
+
+
 \begin{figure}[H]\centering
-	\includegraphics[width=0.55\linewidth]{fig_cluster_decomposition.png}
-	\caption{Between versus within by age for the K-means types: variance split, spread of type slopes, level--slope covariance.}
+	% note: figures/notes/fig_cluster_decomposition.txt
+	\includegraphics[width=0.5\linewidth]{fig_cluster_decomposition.png}
+	\caption{Between versus within the partial K-means types on $\theta$, by age: (a) the variance split, (b) the spread of the type slopes, (c) the covariance of type levels and slopes.}
 	\label{fig:decomp}
 \end{figure}
 
-\subsection{(B) Parametric types: Bayesian mixtures} \label{subsec:parametric}
+
+\begin{itemize}
+	\item Figure \ref{fig:decomp} is analogue of Figure \ref{fig:exhibit1} with the cluster types
+	\item Within type variance is relatively constant and variance in $d_{j,a}$ has U shape 
+	\item $\Cov_j(\bar h_{j,a},d_{j,a})$ changes sign at 61.
+\end{itemize}
+
+\subsection{Parametric types: Bayesian mixtures} \label{subsec:parametric}
 \begin{itemize}
 	\item Baseline: mixture of quadratic growth curves, $\tilde a=(a-55)/10$, estimated in Stan:
 	\begin{equation}
@@ -323,52 +348,62 @@
 \end{itemize}
 
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_class_trajectories_by_K.txt
 	\includegraphics[width=\linewidth]{fig_class_trajectories_by_K.png}
-	\caption{Mixtures on $\theta$: transitory only (a)--(c) and persistent--transitory (d)--(f), at $K=3,4,5$; red dashed is K-means.}
+	\caption{Quadratic growth mixtures on $\theta$: transitory only (a)--(c) and persistent--transitory (d)--(f), at $K=3,4,5$. Line width is proportional to the class share; dotted lines are the observed class means; red dashed lines ($K=3$) are the partial K-means types; the strips show class composition by age.}
 	\label{fig:trajK}
 \end{figure}
 
-\paragraph{Is there always a bad group?}
 \begin{itemize}
-	\item Yes, 15--18\% under every method, and mostly the same people (74--85\% overlap).
+	\item Figure \ref{fig:trajK}: Bayesian model with transitory only shocks is almost identical to K-means. 
+	\item $K=4,5$: under the transitory-only specification each new class is a sicker group; under the persistent--transitory specification, small healthy groups.
+	\item There is allways a ``bad" group that looks similar under every method, and mostly the same people (74--85\% overlap).
 	\item The stochastic structure changes how they got there: level-based methods overstate early separation and understate decline, and decline is what prevention prices.
 	\item This group drives the level--slope reversal: drop it and the reversal disappears.
-\end{itemize}
+\end{itemize}	
 
-\paragraph{Extensions.}
-\begin{itemize}
-	\item $K=4,5$: under the transitory-only specification each new class is a sicker group; under the persistent--transitory specification, small healthy groups.
-	\item Multidimensional model (physical, mental, Gompertz--Makeham mortality, shared classes): the physical typology survives; mental health is faster and noisier; the worst class's hazard is 11.5$\times$ the best at 55 and 3.2$\times$ at 85.
-	\item Windows: a window finds the bad type only if it contains the 40--60 divergence; about fifty years of ages are needed.
-	\item Cohort shifts leave the typology unchanged but should not be read as cohort effects (age--cohort collinearity).
-	\item Life expectancy from 25: 47.7/57.2/62.2 years; healthy LE separates the classes far more (17.5 vs 59.2).
-	\item Death is hard to predict: class adds a little over age (AUC 0.85 to 0.88), less than current health (0.90).
-\end{itemize}
 
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_multidim_trajectories_cohort.txt
 	\includegraphics[width=\linewidth]{fig_multidim_trajectories_cohort.png}
-	\caption{Multidimensional $K=3$ mixture with birth-decade shifts: physical and mental class paths, class hazards, composition.}
+	\caption{Multidimensional persistent--transitory mixture ($K=3$) with birth-decade shifts: physical and mental class paths (dotted: observed class means), Gompertz--Makeham class hazards (circles: crude death rates), and class composition by age. Paths are at the 1950s cohort.}
 	\label{fig:multidim}
 \end{figure}
 
+
+
 \begin{figure}[H]\centering
-	\includegraphics[width=\linewidth]{fig_windows_bayes.png}
-	\caption{Persistent--transitory classes refitted on sliding and backward-expanding age windows, agreement with the lifecycle classes, and the worst class's share.}
+	% note: figures/notes/fig_windows_bayes_short.txt
+	\includegraphics[width=0.7\linewidth]{fig_windows_bayes_short.png}
+	\caption{Persistent--transitory classes ($K=3$, $\theta$) refitted on (a) sliding twenty-year and (b) backward-expanding age windows, against the lifecycle fit in grey (line width proportional to the class share); (c), (d) the worst class's share of the person-waves observed at each age, one line per window.}
 	\label{fig:windows}
 \end{figure}
 
-\subsection{(C) Types against observables}
-\label{sec:observables}
 \begin{itemize}
-	\item Gradients by education and income exist and run the expected way.
+	\item Figure \ref{fig:multidim} shows multidimensional model (physical, mental, Gompertz--Makeham mortality, shared classes): the physical typology survives; mental health is faster and noisier; the worst class's hazard is 11.5$\times$ the best at 55 and 3.2$\times$ at 85.
+	\item Cohort shifts leave the typology unchanged but can't be read as clean cohort effects .
+	\item Death is hard to predict: type adds a little over age and less than current health.
+	\item Life expectancy from 25: 47.7/57.2/62.2 years; healthy LE separates the classes far more (17.5 vs 59.2).
+	\item Figure \ref{fig:windows} shows the clustering over different windows. A window finds the bad type only if it contains the 40--60 divergence, so this age range is crucial for identifying health types? 
+\end{itemize}
+
+
+\subsection{Types against observables}
+\label{sec:observables}
+
+\begin{figure}[H]\centering
+	% note: figures/notes/fig_observables.txt
+	\includegraphics[width=\linewidth]{fig_observables.png}
+	\caption{Mean $\theta$ by age for (a) the persistent--transitory classes (solid) and partial K-means types (dashed), (b) 40 cells of education, sex, ethnicity and income, (c) education, (d) income decile; (b) and (d) stop at 70.}
+	\label{fig:obs}
+\end{figure}
+
+\begin{itemize}
+	\item Health types explain much more of the health distribution that other observables. 
+	\item Gradients by education and income exist and run the expected way (see also Figure \ref{fig:prevle}).
 	\item But even 40 observable cells span half the range the types do; between-group variance shares 3--9\% against 48--65\% for types; ARI with types 0.01--0.03.
 \end{itemize}
 
-\begin{figure}[H]\centering
-	\includegraphics[width=\linewidth]{fig_observables.png}
-	\caption{Lifecycle trajectories of $\theta$ by (a) type, (b) 40 observable cells, (c) education, (d) income decile.}
-	\label{fig:obs}
-\end{figure}
 
 \subsection{Predictive value} \label{subsec:pred}
 \begin{itemize}
@@ -378,56 +413,58 @@
 \end{itemize}
 
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prediction_summary.txt
 	\includegraphics[width=\linewidth]{fig_prediction_summary.png}
-	\caption{Out-of-sample gain over age in predicting $\theta$ ahead (a, c) and balanced accuracy in predicting the type (b), with the type composition by observables (d).}
+	\caption{Out-of-sample prediction on $\theta$: (a) gain in $R^2$ over age alone in predicting $\theta$ one and two waves ahead, and (c) the same by age; (b) balanced accuracy in predicting the type from the two rows before the fitted window; (d) the persistent--transitory types by education, income and sex.}
 	\label{fig:predsummary}
 \end{figure}
-
-\open{bounded observation model for $h$ and frailty; class composition in the persistent--transitory fits looks like mortality selection; calibrate healthy LE to ONS.}
 
 %% =============================================================================
 \section{Prevention exercises}
 \label{sec:policy}
 %% =============================================================================
 \begin{itemize}
-	\item Priced on the $K=3$ persistent--transitory classes with the estimated cubic cost curve; pounds to 90, undiscounted.
-	\item \textbf{The bill}: \pounds67{,}500 per person from 25; 63\% mean path, 16\% type differences, 21\% unpreventable deviations.
-	\item \textbf{Uniform prevention}: $P(r)/C(r)$ is 1.17 at 25, 0.78 at 50, 0.45 at 70; the exact saving at $\mu=1$ is 65\%, 52\%, 35\% of the bill. The later the start, the more is already determined.
-	\item \textbf{By class}: the worst class returns 2.3$\times$ the uniform amount from 25 because its gap and decline coincide; the best class a tenth.
-	\item \textbf{Timing}: the between-class channel stays positive at every start age once the transitory shock is separated (it turns negative by 50 under the transitory-only specification).
-	\item \textbf{Targeting on class}: gains of 133\% from 25, 38\% from 50, 51\% from 70.
+	\item Priced on the $K=3$ persistent--transitory univariate physical classes with the estimated cubic cost, undiscounted. 
+	\item We can do all of this for the multidimensional, but we would still need to add an extra step on how mortality within a class changes with prevension in order to have Figure \ref{fig:prevle}.
+	\item Expected total cost is \pounds67{,}500 per person from 25; 63\% mean path, 16\% type differences, and 21\% unpreventable deviations. Note that because costs are non-linear, the linear approximation to returns is only accurate for small $\mu$, so for $\mu=1$ we use the exact return. 
+	\item The exact saving from uniform prevention $P(r)/C(r)$ at $\mu=1$ is 65\% at 25, 52\% at 50, 35\% at 70 of the total bill. The later the start, the more is already determined.
+	\item The worst class returns 2.3$\times$ the uniform amount from 25 because its gap and decline coincide; the best class a tenth.
+	\item For a 10\% preventative intervention, returns are highest in the unhealthiest class until age 54, but in older ages it becomes more valuable to target the middle class. 
+	\item Figure \ref{fig:prevention}(c) shows tyhat savings are back-loaded (half by 72 for the worst class, 82 middle, 86 best), so discounting would substantially reduce the returns to intervening early.
+	\item Figure \ref{fig:prevention}(d) shows what to target on: age first; then a health reading (\pounds9{,}100 per treated person at 10\% coverage) beats observables (\pounds8{,}300); the estimated class gets \pounds10{,}800. Observing current health closes about half the gap from age to class.
 \end{itemize}
 
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prevention.txt
 	\includegraphics[width=\linewidth]{fig_prevention.png}
-	\caption{Prevention in pounds: (a) saving at $\mu=0.1$ by class and start age; (b) the bill $C(r)$ and the uniform saving at $\mu=1$; (c) when the saving arrives; (d) targeting with what is known before the fitted window.}
+	\caption{Prevention in pounds on the $K=3$ persistent--transitory classes on $\theta$, to age 90 and undiscounted; $\mu$ is the share of each class's future decline held back. (a) Saving at $\mu=0.1$ by class and start age (dashed: uniform); (b) the bill $C(r)$, split into the mean path, class differences and unpreventable deviations, with the uniform saving at $\mu=1$; (c) when the saving arrives, for starts at 25 and 60; (d) saving per treated person when the top $q$ are targeted on what is known before the fitted window.}
 	\label{fig:prevention}
 \end{figure}
 
+
 \begin{itemize}
-	\item \textbf{When}: savings are back-loaded (half by 72 for the worst class, 82 middle, 86 best), so discounting will bite.
-	\item \textbf{What to target on}: age first; then a health reading (\pounds9{,}100 per treated person at 10\% coverage) beats observables (\pounds8{,}300); the estimated class gets \pounds10{,}800. Two readings close about half the gap from age to class.
+	\item Figure \ref{fig:prevle} looks at implications for inequality.
+	\item Prevention adds more healthy years than years of life.
+	\item  Most lifespan inequality is within type (89\%) but types explain 30-40\% of the education and income gradients.
+	\item Targeting the worst class from 50 halves the LE gap between types (9.5 to 4.6 years); the same budget spread evenly does not. In fact uniform prevention actually slightly exacerbates inequalities as it works against the convergence. 
+	\item Targeting the worst class also more than halves the education and income LE gradients the types carry.
 \end{itemize}
 
+
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prevention_le_uni_main.txt
 	\includegraphics[width=\linewidth]{fig_prevention_le_uni_main.png}
-	\caption{Targeted prevention in life years: (a) LE and HLE by class with gains if treated; (b) variance of age at death; (c) LE gap between best and worst class; (d) socioeconomic LE gradients.}
+	\caption{Prevention in life years on the $K=3$ persistent--transitory classes on $\theta$: (a) LE and HLE by class from 25 and 50, hatched the gain if the class alone is treated at $\mu=1$; (b) variance of age at death, between and within types; (c) LE gap between the best and worst class and (d) LE gradients at 50 by education, income and region, at baseline, targeting class 1, and under uniform prevention.}
 	\label{fig:prevle}
 \end{figure}
 
-\begin{itemize}
-	\item Prevention adds more healthy years than years of life.
-	\item Most lifespan inequality is within type (types explain about 11\%).
-	\item Targeting the worst class from 50 halves the LE gap between types (9.5 to 4.6 years); the same budget spread evenly does not.
-	\item It also more than halves the education and income LE gradients the types carry.
-\end{itemize}
 
-\open{gap between first-order and exact savings in the text; survival weighting and discounting; cost of a unit of $\mu$; within-class gradients; additive-prevention robustness; posterior uncertainty.}
+%\open{survival weighting and discounting; cost of a unit of $\mu$; within-class gradients; additive-prevention robustness; posterior uncertainty.}
 
 %% =============================================================================
 \section{Conclusions}
 %% =============================================================================
-\open{To be written.}
+...
 
 \bibliographystyle{plainnat}
 \bibliography{references}
@@ -503,6 +540,7 @@
 \end{table}
 
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_health_scale.txt
 	\includegraphics[width=\linewidth]{fig_health_scale.png}
 	\caption{(a) The map from $\theta$ to $h$; (b) item discriminations against thresholds.}
 	\label{fig:h_theta_comp}
@@ -544,8 +582,9 @@
 	\item All twelve costing variants are convex ($t$ 17--36); long-stay pricing moves the sickest-to-healthiest ratio most.
 \end{itemize}
 \begin{figure}[H]
+	% note: figures/notes/fig_cost_convexity.txt
 	\includegraphics[width=\linewidth]{fig_cost_convexity}
-	\caption{Cost against the four measures, and sensitivity of the convexity to each costing assumption.}
+	\caption{Cost against the four measures by percentile (a) and per standard deviation (b), and (c) the convexity (quadratic term) under each costing assumption.}
 	\label{fig:costconvex}
 \end{figure}
 
@@ -555,6 +594,7 @@
 	\item Concentration passes; level undershoots as expected; age profile too flat (3$\times$ vs 7$\times$), so not for cost-by-age projections. The health gradient is strong.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_cost_validation.txt
 	\includegraphics[width=\linewidth]{fig_cost_validation}
 	\caption{Validation: age profile, top-coding, concentration, health gradient.}
 	\label{fig:costval}
@@ -569,31 +609,36 @@
 	\item Cost itself is almost entirely a one-period draw: the in-the-moment part of the bill that prevention cannot reach.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit1_balanced.txt
 	\includegraphics[width=\linewidth]{fig_exhibit1_balanced.png}
-	\caption{Covariance rows on pairwise (top) and balanced (bottom) samples.}
+	\caption{Covariance rows of $h$ (left) and $\theta$ (right) on pairwise samples (top, as in Figure~\ref{fig:exhibit1}) and on people observed at all ten ages of each row (bottom).}
 	\label{fig:ex1balanced}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit1_cost.txt
 	\includegraphics[width=0.55\linewidth]{fig_exhibit1_cost.png}
-	\caption{The cost index through the moments of Figure~\ref{fig:exhibit1}.}
+	\caption{The cost index, capped at the 99th percentile, through the moments of Figure~\ref{fig:exhibit1}.}
 	\label{fig:ex1cost}
 \end{figure}
 
 \subsection{The Linear Approximation}
 \label{app:linear_robust}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit2_case1.txt
 	\includegraphics[width=\linewidth]{fig_exhibit2_case1.png}
 	\caption{Figure~\ref{fig:ex2main} under Case~1 (transitory only), on all four measures.}
 	\label{fig:ex2case1}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit2_corr.txt
 	\includegraphics[width=\linewidth]{fig_exhibit2_corr.png}
-	\caption{Implied $\Corr(H,d)$ by age band under Cases 1--4, all measures, two designs.}
+	\caption{Implied $\Corr(H,d)$ by age band under Cases 1--4, on all four measures: four ages four years apart, pairwise (top), and two years apart, balanced, with one $\rho$ (bottom). Open circles: at the bound or not identified.}
 	\label{fig:ex2corr}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit2_2y.txt
 	\includegraphics[width=\linewidth]{fig_exhibit2_2y.png}
-	\caption{Figure~\ref{fig:ex2main} on the two-year balanced design.}
+	\caption{Figure~\ref{fig:ex2main} on the two-year balanced design (four ages two years apart, one $\rho$ across bands), on $h$ and $\theta$ under Cases 1 and 4.}
 	\label{fig:ex2twoyear}
 \end{figure}
 
@@ -602,8 +647,9 @@
 \subsection{The Types on Predicted Cost}
 \label{app:clusters_predcost}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_clusters_predcost.txt
 	\includegraphics[width=0.55\linewidth]{fig_clusters_predcost.png}
-	\caption{Partial K-means on predicted cost; lands with the $h$ types (ARI 0.65).}
+	\caption{Partial K-means on each person's predicted cost (the pooled cost curve on $h$ at each observation); the types largely match the $h$ types (ARI 0.65).}
 	\label{fig:clusterspredcost}
 \end{figure}
 
@@ -613,8 +659,9 @@
 	\item K-means is more stable across windows than the mixture, but only because it is insensitive to where the decline happens.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_windows.txt
 	\includegraphics[width=\linewidth]{fig_windows.png}
-	\caption{As Figure~\ref{fig:windows}, for partial K-means.}
+	\caption{Partial K-means types refitted on the age windows of Figure~\ref{fig:windows}: (a), (b) type paths against the lifecycle typology in grey; (c) agreement with the lifecycle types; (d), (e) the worst type's share by age, one line per window; (f) the worst type's share of each window's people.}
 	\label{fig:windows_kmeans}
 \end{figure}
 
@@ -626,8 +673,9 @@
 	\item The error structure changes the worst type's path, not its membership; more classes tighten it without changing its shape.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_worst_type_by_K.txt
 	\includegraphics[width=0.9\linewidth]{fig_worst_type_by_K.png}
-	\caption{The worst type under K-means and the persistent--transitory mixture, $K=3,4,5$.}
+	\caption{The worst type on $\theta$ (colour; other types grey) under partial K-means (top) and the persistent--transitory mixture (bottom), $K=3,4,5$; red dotted repeats the $K=3$ worst type.}
 	\label{fig:worsttype}
 \end{figure}
 \begin{table}[H]\centering\scriptsize\setlength{\tabcolsep}{2.5pt}
@@ -642,8 +690,9 @@
 	\item The worst type's own convergence carries nearly all the negative covariance after 60, also with within-person slopes.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_reversal_types.txt
 	\includegraphics[width=\linewidth]{fig_reversal_types.png}
-	\caption{The level--slope covariance split into each type's term, by typology.}
+	\caption{The level--slope covariance across types split into each type's term, by age: (a) partial K-means and (b) persistent--transitory classes at $K=3$, (c), (d) the multidimensional physical channel at $K=4,5$; (e) partial K-means with slopes from within-person changes instead of the type paths.}
 	\label{fig:reversaltypes}
 \end{figure}
 
@@ -653,23 +702,27 @@
 	\item Neither K-means with flexible age nor the mixtures with decade shifts change the typology; believe the flexible version's shifts (zero before 1970).
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_kmeans_cohort.txt
 	\includegraphics[width=0.75\linewidth]{fig_kmeans_cohort.png}
-	\caption{Cohort adjustment within partial K-means.}
+	\caption{Cohort adjustment within partial K-means, on $\theta$ (left) and $h$ (right): decade shifts from OLS against the mixture's estimates (top), type means unadjusted (dashed) and adjusted (solid) (middle), and the worst and best types' shares by birth decade (bottom).}
 	\label{fig:kmeanscohort}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_cohort.txt
 	\includegraphics[width=0.62\linewidth]{fig_cohort.png}
-	\caption{Single-channel mixtures with birth-decade shifts.}
+	\caption{Persistent--transitory $K=3$ mixtures with birth-decade shifts on $\theta$ (left) and $h$ (right): class paths at the 1950s with and without the shifts (top), observed means by birth decade, raw and net of the shift (middle), and the estimated shifts (bottom).}
 	\label{fig:cohort}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_multidim_trajectories.txt
 	\includegraphics[width=\linewidth]{fig_multidim_trajectories.png}
-	\caption{Multidimensional $K=3$ mixtures without the decade shifts.}
+	\caption{As Figure~\ref{fig:multidim} without the decade shifts, under the persistent--transitory (top) and transitory-only (bottom) specifications.}
 	\label{fig:multidim_nocohort}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_multidim_trajectories_by_K_cohort.txt
 	\includegraphics[width=\linewidth]{fig_multidim_trajectories_by_K_cohort.png}
-	\caption{Multidimensional $K=4$ and $K=5$ fits with and without decade shifts.}
+	\caption{Multidimensional persistent--transitory fits at $K=4$ and $K=5$, each without and with birth-decade shifts (rows); columns as in Figure~\ref{fig:multidim}.}
 	\label{fig:multidim_k4_cohort}
 \end{figure}
 
@@ -679,24 +732,27 @@
 	\item The multidimensional classes are the physical classes with a mental path attached; the mental score alone gives a different partition.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_multidim_vs_univariate.txt
 	\includegraphics[width=\linewidth]{fig_multidim_vs_univariate.png}
-	\caption{Multidimensional against univariate physical and mental classes.}
+	\caption{Multidimensional against univariate persistent--transitory classes ($K=3$, with decade shifts): class paths for (a) physical and (b) mental $\theta$ (solid: univariate; dashed: multidimensional), and the cross-tabulation of class membership against (c) the physical and (d) the mental univariate fit.}
 	\label{fig:multidim_vs_uni}
 \end{figure}
 
 \subsection{The Windows at Four Classes}
 \label{app:windows_k4}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_windows_bayes_k4.txt
 	\includegraphics[width=\linewidth]{fig_windows_bayes_k4.png}
-	\caption{As Figure~\ref{fig:windows}, at $K=4$.}
+	\caption{The persistent--transitory mixture at $K=4$ refitted on the age windows of Figure~\ref{fig:windows}: (a), (b) class paths against the $K=4$ lifecycle fit in grey; (c) agreement with the lifecycle classes; (d), (e) the worst class's share by age, one line per window; (f) its share of each window's people.}
 	\label{fig:windows_k4}
 \end{figure}
 
 \subsection{Predicting Death}
 \label{app:predmort}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prediction_mortality_slim.txt
 	\includegraphics[width=0.75\linewidth]{fig_prediction_mortality_slim.png}
-	\caption{AUC gain over age in predicting death before the next wave, on $\theta$.}
+	\caption{Out-of-sample AUC gain over age alone in predicting death before the next wave, on $\theta$.}
 	\label{fig:predmort}
 \end{figure}
 
@@ -709,26 +765,30 @@
 	\item Close to age-invariant below 75; the 75--90 band sits 32\% above, so late-life cost is understated.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_cost_curve.txt
 	\includegraphics[width=\linewidth]{fig_cost_curve.png}
-	\caption{The cubic cost curve: by age band (a) and capped vs uncapped (b).}
+	\caption{The cost curve on $\theta$: (a) the cubic refitted within age bands against the pooled fit; (b) the pooled fit against a quadratic on costs capped at the 99th percentile, with binned means.}
 	\label{fig:costcurve}
 \end{figure}
 
 \subsection{The Detailed Returns and the Targeting Rules}
 \label{app:returns_detail}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_returns_bayes.txt
 	\includegraphics[width=\linewidth]{fig_returns_bayes.png}
-	\caption{Bill, $P_j(r)$, $P(r)$, $S(r)$ and ratios by start age; persistent--transitory (left) and transitory only (right).}
+	\caption{Returns on the $K=3$ classes on $\theta$, persistent--transitory (left) and transitory only (right): (a), (b) the return by class $P_j(r)$ per unit of $\mu$ (dashed: uniform $P(r)$); (c), (d) the bill $C(r)$ with what uniform prevention avoids, $P(r)$ and the exact $S(r)$; (e), (f) ratios. Pounds to 90, undiscounted.}
 	\label{fig:returnsbayes}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_targeting_first2.txt
 	\includegraphics[width=\linewidth]{fig_targeting_first2.png}
-	\caption{Targeting rules when the type is not observed: return per treated person and share collected.}
+	\caption{Targeting rules on $\theta$ when the class is not observed: each rule predicts a person's return from what is known before the fitted window and treats the top $q$; (a) realised return per treated person, (b) share of the total return collected. Dashed: the estimated class; dotted: everyone treated.}
 	\label{fig:targeting}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prevention_timing.txt
 	\includegraphics[width=\linewidth]{fig_prevention_timing.png}
-	\caption{When the saving arrives by class, with half-way ages and present values at 3.5\%.}
+	\caption{When the saving arrives, by persistent--transitory class on $\theta$, for starts at 25, 50 and 70: (a)--(c) saving per year of age; (d)--(f) the cumulative share of the return collected, with the ages by which half and 90\% has arrived and present values at 3.5\%.}
 	\label{fig:timing}
 \end{figure}
 
@@ -738,8 +798,9 @@
 	\item Lower $P/C$ than the mixture, and the between-type channel turns negative from about 40.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_returns_bayes_kmeans.txt
 	\includegraphics[width=0.55\linewidth]{fig_returns_bayes_kmeans.png}
-	\caption{As Figure~\ref{fig:returnsbayes}, on the K-means types.}
+	\caption{As the left column of Figure~\ref{fig:returnsbayes}, on the partial K-means types.}
 	\label{fig:returnskmeans}
 \end{figure}
 
@@ -749,8 +810,9 @@
 	\item Capping roughly halves first-order returns; the ranking survives.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_returns_bayes_capped.txt
 	\includegraphics[width=\linewidth]{fig_returns_bayes_capped.png}
-	\caption{As Figure~\ref{fig:returnsbayes}, with costs capped at the 99th percentile.}
+	\caption{As Figure~\ref{fig:returnsbayes}, with the cost curve fitted to costs capped at the 99th percentile (a quadratic).}
 	\label{fig:returnscapped}
 \end{figure}
 
@@ -760,13 +822,15 @@
 	\item Same shape under every typology; decade shifts raise returns by about a quarter; the worst class carries the return on every measure; adding classes splits the return, it does not create it.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_returns_by_model.txt
 	\includegraphics[width=\linewidth]{fig_returns_by_model.png}
-	\caption{$P_j(r)$ under six typologies on $\theta$.}
+	\caption{$P_j(r)$ on $\theta$ under six $K=3$ typologies: partial K-means, transitory only, persistent--transitory with and without decade shifts, and the multidimensional classes with and without them (dashed: uniform).}
 	\label{fig:returnsmodels}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_returns_by_measure.txt
 	\includegraphics[width=\linewidth]{fig_returns_by_measure.png}
-	\caption{$P_j(r)$ on each of the four measures at $K=3,4,5$.}
+	\caption{$P_j(r)$ under the persistent--transitory mixture on each of the four measures (columns) at $K=3,4,5$ (rows), each with its own cost curve; on the frailty indices class 1 is the frailest.}
 	\label{fig:returnsmeasures}
 \end{figure}
 
@@ -776,31 +840,37 @@
 	\item Multidimensional classes give wider gaps and the same policy ranking; on the other measures targeting closes the gaps almost entirely.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prevention_le_uni.txt
 	\includegraphics[width=\linewidth]{fig_prevention_le_uni.png}
-	\caption{Detailed version of Figure~\ref{fig:prevle}.}
+	\caption{Detailed version of Figure~\ref{fig:prevle}: (a) LE and (b) HLE by class from $r$ (dashed: treated at $\mu=1$); (c) LE gap and (d) sd of age at death under each policy; (e)--(g) LE (filled) and HLE (open) at 50 by education, income and region; (h) the gradients.}
 	\label{fig:prevle_uni}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prevention_le_uni_mu0.1_main.txt
 	\includegraphics[width=\linewidth]{fig_prevention_le_uni_mu0.1_main.png}
 	\caption{As Figure~\ref{fig:prevle}, at $\mu=0.1$.}
 	\label{fig:prevle_mu01}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prevention_le.txt
 	\includegraphics[width=\linewidth]{fig_prevention_le.png}
-	\caption{As Figure~\ref{fig:prevle_uni}, on the multidimensional classes.}
+	\caption{As Figure~\ref{fig:prevle_uni}, on the multidimensional persistent--transitory classes.}
 	\label{fig:prevle_md}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prevention_le_h.txt
 	\includegraphics[width=\linewidth]{fig_prevention_le_h.png}
 	\caption{As Figure~\ref{fig:prevle_uni}, on $h$.}
 	\label{fig:prevle_h}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prevention_le_frailty.txt
 	\includegraphics[width=\linewidth]{fig_prevention_le_frailty.png}
 	\caption{As Figure~\ref{fig:prevle_uni}, on the frailty index.}
 	\label{fig:prevle_frailty}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prevention_le_logfrailty.txt
 	\includegraphics[width=\linewidth]{fig_prevention_le_logfrailty.png}
 	\caption{As Figure~\ref{fig:prevle_uni}, on log frailty.}
 	\label{fig:prevle_logfrailty}
@@ -812,88 +882,105 @@
 	\item Cost and mortality gradients are weaker than on $\theta$.
 \end{itemize}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit1_mental.txt
 	\includegraphics[width=0.45\linewidth]{fig_exhibit1_mental.png}
 	\caption{As Figure~\ref{fig:exhibit1}, on the mental GRM.}
 	\label{fig:exhibit1_mental}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_bayes_mixtures_mental.txt
 	\includegraphics[width=\linewidth]{fig_bayes_mixtures_mental.png}
-	\caption{$K=3$ mixtures on the mental GRM.}
+	\caption{$K=3$ mixtures on the mental GRM: transitory only, persistent--transitory, and persistent--transitory with decade shifts (paths at the 1950s); red dashed: partial K-means types; strips: class composition by age.}
 	\label{fig:bayes_mental}
 \end{figure}
 
 \section{The Main Figures on the Other Measures} \label{app:measures}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_cost_mortality_age_measures.txt
 	\includegraphics[width=\linewidth]{fig_cost_mortality_age_measures.png}
 	\caption{As Figure~\ref{fig:cost}, on $h$, frailty and log frailty.}
 	\label{fig:cost_measures}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit1_measures.txt
 	\includegraphics[width=\linewidth]{fig_exhibit1_measures.png}
 	\caption{As Figure~\ref{fig:exhibit1}, on $h$, frailty and log frailty.}
 	\label{fig:exhibit1_measures}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_exhibit2_measures.txt
 	\includegraphics[width=\linewidth]{fig_exhibit2_measures.png}
 	\caption{As Figure~\ref{fig:ex2main}, on $h$, frailty and log frailty.}
 	\label{fig:ex2measures}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_clusters_measures.txt
 	\includegraphics[width=\linewidth]{fig_clusters_measures.png}
-	\caption{As Figure~\ref{fig:clusters}, on $h$, frailty and log frailty.}
+	\caption{Partial K-means types ($K=3$) on $h$, frailty and log frailty: type means as in Figure~\ref{fig:clusters} (top), the autocorrelation of within-type deviations by lag (middle), and type composition by age (bottom).}
 	\label{fig:clusters_measures}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_cluster_decomposition_measures.txt
 	\includegraphics[width=\linewidth]{fig_cluster_decomposition_measures.png}
 	\caption{As Figure~\ref{fig:decomp}, on $h$, frailty and log frailty.}
 	\label{fig:decomp_measures}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_frailty_by_K.txt
 	\includegraphics[width=\linewidth]{fig_frailty_by_K.png}
-	\caption{Frailty and log frailty under the persistent--transitory specification at $K=3,4,5$.}
+	\caption{Persistent--transitory classes on the frailty index and log frailty at $K=3,4,5$ (rows), with class composition by age; class 1 is the frailest.}
 	\label{fig:frailty_by_K}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_class_trajectories_by_K_h.txt
 	\includegraphics[width=\linewidth]{fig_class_trajectories_by_K_h.png}
 	\caption{As Figure~\ref{fig:trajK}, on $h$.}
 	\label{fig:trajK_h}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_multidim_trajectories_h.txt
 	\includegraphics[width=\linewidth]{fig_multidim_trajectories_h.png}
-	\caption{As Figure~\ref{fig:multidim}, on $h$.}
+	\caption{As Figure~\ref{fig:multidim_nocohort}, on $h$: no decade shifts, persistent--transitory (top) and transitory only (bottom).}
 	\label{fig:multidim_h}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_windows_h.txt
 	\includegraphics[width=\linewidth]{fig_windows_h.png}
 	\caption{As Figure~\ref{fig:windows_kmeans}, on $h$.}
 	\label{fig:windows_h}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_observables_h.txt
 	\includegraphics[width=\linewidth]{fig_observables_h.png}
 	\caption{As Figure~\ref{fig:obs}, on $h$.}
 	\label{fig:obs_h}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prediction_summary_h.txt
 	\includegraphics[width=\linewidth]{fig_prediction_summary_h.png}
-	\caption{As Figure~\ref{fig:predsummary}, on $h$.}
+	\caption{As Figure~\ref{fig:predsummary}(a)--(c), on $h$: (a) predicting $h$ ahead, (b) the same by age, (c) predicting the type; no multidimensional fit.}
 	\label{fig:predsummary_h}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prediction_cost.txt
 	\includegraphics[width=\linewidth]{fig_prediction_cost.png}
 	\caption{As Figure~\ref{fig:predsummary}(a), (c), predicting the cost proxy.}
 	\label{fig:predcost}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_prediction_mortality_h.txt
 	\includegraphics[width=0.62\linewidth]{fig_prediction_mortality_h.png}
-	\caption{Predicting death on $h$.}
+	\caption{Predicting death on $h$, AUC gain over age alone: (a) death before the next wave at every person-wave, full-sample fits; (b) death after the last interview against leaving the panel alive, held-out fits.}
 	\label{fig:predmort_h}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_returns_bayes_h.txt
 	\includegraphics[width=\linewidth]{fig_returns_bayes_h.png}
 	\caption{As Figure~\ref{fig:returnsbayes}, on $h$.}
 	\label{fig:returnsbayes_h}
 \end{figure}
 \begin{figure}[H]\centering
+	% note: figures/notes/fig_targeting_first2_h.txt
 	\includegraphics[width=\linewidth]{fig_targeting_first2_h.png}
 	\caption{As Figure~\ref{fig:targeting}, on $h$.}
 	\label{fig:targeting_h}

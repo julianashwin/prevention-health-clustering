@@ -1,0 +1,4 @@
+fig_exhibit2_corr
+made by: descriptives/29_paper_moments.py --measures
+
+Identification panel: 33,711 people with at least four observed ages 20-90. Top: the main design; bottom: the two-year design with one rho shared across bands (Cases 2-4). Properly constrained fit throughout; open circles mark bands where the admissibility constraint binds, so only the sign of Corr(H,d) is identified, or where V_H is below 5% of the first variance, so nothing is.

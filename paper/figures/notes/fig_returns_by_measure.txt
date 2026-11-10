@@ -1,0 +1,4 @@
+fig_returns_by_measure
+made by: descriptives/42_paper_returns_bayes.py --measures
+
+The return to prevention by class, P_j(r), under the AR(1) + transitory mixture on each measure (columns) at K = 3, 4 and 5 (rows), each measure with its own cost curve in pounds (a cubic in the measure on the cost index). On the frailty indices higher is frailer, so the preventable decline is the class's rise in frailty and the classes are relabelled with class 1 the frailest. Line width is proportional to the class share; dashed, the uniform return. One vertical scale for all panels. The h fit at K = 5 is read over the three chains that share a mode.

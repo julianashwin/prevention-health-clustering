@@ -1,0 +1,4 @@
+fig_clusters_predcost
+made by: descriptives/25_paper_clusters.py
+
+Partial K-means on each person's predicted cost: the pooled cost curve on h (cubic in the standardised score on costs capped at p99, waves 7-15, made monotone) evaluated at every contract row, a cost-anchored scale of the measure.

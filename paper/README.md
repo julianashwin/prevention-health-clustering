@@ -20,6 +20,11 @@ cd paper && latexmk -pdf paper_skeleton.tex
   commit). The main-text figures are on theta; the `_h`, `_measures`,
   `_frailty`, `_mental`, `_cohort`, `_by_K`, `_first2` suffixes are the
   appendix and robustness versions the same scripts write with their flags.
+  `figures/notes/` holds each figure's note, written by the script when it saves
+  the figure (`descriptives/_style.py`), with the command that made it. The notes
+  are the detailed record; the LaTeX captions are shorter. Each `\includegraphics`
+  has a `% note:` comment pointing at its note, and
+  `descriptives/check_figure_notes.py` flags a missing or stale note.
   `figures/external/` holds copies of the figures taken from
   `conceptual_framework/figures` and `measuring_health/figures`, so this folder
   compiles on its own; refresh the copies if those figures are regenerated.

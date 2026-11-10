@@ -1,0 +1,4 @@
+fig_prevention_timing
+made by: descriptives/42_paper_returns_bayes.py --timing
+
+The K = 3 AR(1) + transitory classes on theta with the cost curve in pounds. Top: the saving in each year of age a from prevention started at r, s_j(a | r) = E[-c'(h_a) | j] (hbar_{j,r-1} - hbar_{j,a}), the per-age terms whose sum over a >= r is the class return P_j(r); for starts at 25, 50 and 70. Bottom: the cumulative share of P_j(r) collected by age a, with the ages by which half and 90% has arrived and the present value at 3.5% a year (the Green Book rate) as a share of the undiscounted return. Pounds per unit of mu; no survival weighting.

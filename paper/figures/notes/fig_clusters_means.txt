@@ -1,0 +1,4 @@
+fig_clusters_means
+made by: descriptives/25_paper_clusters.py
+
+The health contract: 38,963 people with at least three observed ages 20-89, one row per person-age; partial K-means with 50 seeded starts, types ordered worst to best. Lines: type means at each age where at least 25 members are observed, shaded to +/- 1 within-type sd. The legend gives each type's share of the people.

@@ -1,0 +1,4 @@
+fig_clusters_measures
+made by: descriptives/25_paper_clusters.py --measures
+
+The health contract's people, on h (left), the 31-deficit frailty index (middle) and log(frailty + 1/31) (right): partial K-means with 50 seeded starts, type 1 worst health (frailest on the frailty indices). Top: type means, +/- 1 within-type sd. Middle: autocorrelation of within-type deviations. Bottom: type composition by age. Log frailty is log(frailty + 1/31), so person-ages with no deficit sit at the floor.

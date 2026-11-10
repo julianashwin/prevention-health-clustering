@@ -1,0 +1,4 @@
+fig_windows
+made by: descriptives/26_paper_windows.py
+
+Each window refits K = 3 on the people observed at least three times inside it. Coloured lines: the window's type means over its own age range (tick at the start); grey: the full 20-90 typology. Panel (c): over pairs of people in both the window and the lifecycle typology (a random 3,000), the correlation between the same-type indicator under the window and under the lifecycle typology, which needs no correspondence between the two sets of labels (the adjusted Rand index is in the csv). Panels (d), (e): the share of the person-waves observed at each age that the window assigns to its worst type (five-year rolling mean), one line per window, against the lifecycle typology in grey; (f) the worst type's share of each window's people. Types are ordered worst to best within each window.

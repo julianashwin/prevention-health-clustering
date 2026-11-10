@@ -1,0 +1,4 @@
+fig_health_measure
+made by: descriptives/21_health_measure.py
+
+Left: the expected-score curve, with the pooled distribution of theta behind it. Middle: fitted discriminations against category thresholds. Right: the multigroup fit by single year of age — item parameters common across ages, the pooled latent distribution standardised.

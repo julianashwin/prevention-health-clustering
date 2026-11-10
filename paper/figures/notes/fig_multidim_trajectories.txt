@@ -1,0 +1,4 @@
+fig_multidim_trajectories
+made by: descriptives/39_paper_multidim.py
+
+Multidimensional K = 3 mixtures on the multidim health contract (38,181 people, the health contract's people with a mental score on every row; 2,045 deaths). Rows: the physical measure and the stochastic specification. Columns: the physical and mental class paths at the posterior mean in each channel's units (dotted: the observed class mean at each age, posterior-weighted), the class-specific Gompertz-Makeham yearly hazard (circles: the posterior-weighted crude death rate by five-year band), and the posterior class composition of the person-waves observed at each age. Under AR(1) + transitory the legend gives each class's persistence on that channel; the innovation and transitory scales are common to the classes. The Makeham constant is below 0.0001 in every fit. Each column has one vertical scale across its rows.

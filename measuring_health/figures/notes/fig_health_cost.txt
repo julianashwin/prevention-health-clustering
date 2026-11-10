@@ -1,0 +1,4 @@
+fig_health_cost
+made by: descriptives/21_health_measure.py
+
+Twentieths of each variant on its own cost sample (211,697 person-waves, waves 7–15, ages 20–90). Costs capped at the 99th percentile. Convexity is the same fact in all three: the curve steepens as health worsens (leftwards).

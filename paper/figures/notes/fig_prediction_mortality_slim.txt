@@ -1,0 +1,4 @@
+fig_prediction_mortality_slim
+made by: descriptives/41_paper_mortality_prediction.py --slim
+
+Every person-wave at risk on the full-sample fits: death before the next wave (308,949 person-waves, 1,267 deaths), people in both the health and the multidimensional contracts. Each row adds its predictors to a quadratic in age in a logit, fitted on 70% of people and scored on the other 30%; the gain is over age alone on the same rows. The class posteriors and the K-means type are from the full-sample fits, which never see the death record; the multidimensional model's hazard is its class-weighted Gompertz-Makeham hazard at the person's age, with the class from the physical and mental channels only. theta(t-1) needs the previous wave, so that row uses the 248,802 person-waves with one.

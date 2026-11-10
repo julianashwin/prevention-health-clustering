@@ -1,0 +1,4 @@
+fig_exhibit2_2y
+made by: descriptives/29_paper_moments.py --measures
+
+Four ages two years apart, balanced moments (people observed at all four ages), one rho shared by the four bands in Case 4. Properly constrained fit: V_H, V_d and noise variances non-negative and |Corr(H,d)| <= 1 imposed in the estimation, rho profiled. Where the unconstrained fit was inadmissible the title gives it and the fit cost of the constraint in squared error. Where V_H falls below 5% of the first variance the level, and so Corr(H,d), is not identified. Bars stack the fitted layers; black ticks are the observed moments. V(k): the variance at the k-th age; C(k,l): the covariance between ages k and l.

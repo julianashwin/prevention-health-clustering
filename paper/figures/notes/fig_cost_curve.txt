@@ -1,0 +1,4 @@
+fig_cost_curve
+made by: descriptives/42_paper_returns_bayes.py --curve
+
+The cost index in pounds, waves 7-15, 211,697 person-waves, against theta: a polynomial (cubic unless that is not monotone on the 1st-99th percentile range), fitted pooled and within each age band, over the 1st-99th percentile range of theta. Panel (b): the pooled fit, and the same fit on costs capped at the 99th percentile (£12,629), with the mean cost in twentieths of theta.

@@ -1,0 +1,4 @@
+fig_health_variants
+made by: descriptives/21_health_measure.py
+
+Panel (a) plots each variant's mean within fiftieths of h, rescaled to a common range; the dotted line is equality. Panels (b) and (c) standardise each variant on the pooled sample, so the curves are comparable across variants but not across scales.

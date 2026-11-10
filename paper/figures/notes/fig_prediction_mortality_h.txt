@@ -1,0 +1,4 @@
+fig_prediction_mortality_h
+made by: descriptives/41_paper_mortality_prediction.py
+
+Top: death before the next wave at every person-wave at risk (308,949 person-waves, 1,267 deaths), full-sample fits, people in both the health and the multidim contracts. Single-channel class posteriors never saw the death record; the multidimensional class is shown from the physical and mental channels only (out of sample for death) and from the full likelihood, which includes the decedent's event (in sample); the model hazard is the class-weighted Gompertz-Makeham hazard at the person's age with the health-only weights. Bottom: the held-out fits, predicting from the last fitted row t whether a person dies after their last interview (t+2) or leaves the panel alive (13,516 people, 7.2% deaths); nobody dies before t+2 by construction. The multidimensional posterior there uses survival through the fitted window only. Both: split 70/30 by person, fitted on the 70, scored on the 30.

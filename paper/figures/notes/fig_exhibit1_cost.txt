@@ -1,0 +1,4 @@
+fig_exhibit1_cost
+made by: descriptives/31_paper_appendix_extras.py
+
+275,575 person-ages on 55,793 people, waves 7-15, ages 20-90. Ten-year centred rolling means (mean and variance); cells with fewer than 100 person-ages dropped; rows run eight years. Panels (b) and (c) share a vertical scale.

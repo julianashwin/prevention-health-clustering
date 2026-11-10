@@ -1,0 +1,4 @@
+fig_bayes_mixtures_mental
+made by: descriptives/32_paper_bayes_fits.py combined --mental
+
+K = 3 quadratic growth mixtures on the mental GRM on the multidim health contract (38,181 people with a mental score on every row, 325,822 person-ages), parameters at the posterior mean; class 1 is worst health. Left: transitory only; middle: an AR(1) latent state plus a transitory shock, with the class persistence in the legend; right: the same with one level shift per birth decade, common to the classes, paths and observed means at the 1950s, every score net of its decade shift. Line width is proportional to the class share. Dotted: the observed class mean at each age, the measure averaged over the people observed there weighted by their posterior class probabilities. Dashed red: the partial K-means type means on the same rows. Bottom: the posterior class composition of the person-waves observed at each age.

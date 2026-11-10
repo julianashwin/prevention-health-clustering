@@ -1,0 +1,4 @@
+fig_cost_convexity
+made by: descriptives/16_cost_convexity.py
+
+Cost index, waves 7-15, ages 20-90, common sample on all four measures (the frailty indices negated, so higher is healthier). Panel (c) varies the spell rule, maternity treatment, condition weighting and top-band value; (w) marks the winsorised-at-p99 twin of each. A positive bar means an extra SD of poor health costs more, in pounds, when already unwell. All cost in pounds.

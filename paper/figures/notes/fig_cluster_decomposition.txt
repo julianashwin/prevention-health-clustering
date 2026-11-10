@@ -1,0 +1,4 @@
+fig_cluster_decomposition
+made by: descriptives/25_paper_clusters.py
+
+Partial K-means types, K = 3. Row (a): the cross-sectional variance of the measure among the clustered people, split into between types (the variance of the type means under the age-specific composition) and within; 10-year rolling means. Rows (b) and (c): the smoothed type paths (10-year rolling means, ends extended linearly), d the one-year change, moments across types with age-specific composition shares, then a further 10-year rolling mean.

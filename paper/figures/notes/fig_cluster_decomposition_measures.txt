@@ -1,0 +1,4 @@
+fig_cluster_decomposition_measures
+made by: descriptives/25_paper_clusters.py --measures
+
+As the main-text decomposition figure, on h (left), the 31-deficit frailty index (middle) and log(frailty + 1/31) (right): 10-year rolling means, age-specific composition shares.

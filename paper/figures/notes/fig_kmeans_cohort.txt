@@ -1,0 +1,4 @@
+fig_kmeans_cohort
+made by: descriptives/35_kmeans_cohort.py
+
+Health contract people. Top: decade level shifts from OLS on single-year age dummies plus decade dummies (95% person-clustered intervals), against the mixture's quadratic-plus-decade estimates. Middle: K-means type means, unadjusted scores (dashed) and scores net of the OLS shifts re-clustered (solid). Bottom: share of people in the worst and best type by birth decade under both.

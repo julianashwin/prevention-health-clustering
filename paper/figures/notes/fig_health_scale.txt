@@ -1,0 +1,4 @@
+fig_health_scale
+made by: descriptives/21_health_measure.py
+
+Left: the expected-score curve that maps theta to h, with the pooled distribution of theta behind it. Right: each item's fitted discrimination against its category thresholds.

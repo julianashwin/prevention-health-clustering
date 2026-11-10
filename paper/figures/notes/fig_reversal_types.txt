@@ -1,0 +1,4 @@
+fig_reversal_types
+made by: descriptives/54_paper_reversal_check.py
+
+The level-slope covariance across types, Cov_j(hbar_j,a, d_j,a), split into each type's term pi_j(a)(hbar_j,a - hbar_a)(d_j,a - d_a) with age-specific composition shares, stacked: (a) the K-means types and (b) the univariate AR(1) + transitory classes at K = 3, (c), (d) the multidimensional mixture's physical channel at K = 4 and 5 (chains sharing the better mode; K = 5 from its best chain). A type's term is negative when it sits below the mean and declines more slowly than the mean, or above and faster: it is closing in. (e) The K-means covariance with slopes from within-person changes (next observed age minus this one, per year of gap, gaps of one to three years, ten-year window by midpoint age) instead of the type mean paths, which removes composition and selection from the slopes. Ten-year rolling means.

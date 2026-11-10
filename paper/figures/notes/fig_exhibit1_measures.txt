@@ -1,0 +1,4 @@
+fig_exhibit1_measures
+made by: descriptives/23_paper_exhibit1.py --measures
+
+Frailty: the share of 31 equal-weight deficits (six SF-12 physical items graded 0-1, eight impairment areas, the ever-diagnosed conditions), higher = frailer; log frailty is log(frailty + 1/31), one whole deficit added, so the 7% of person-waves with no deficit sit at the floor. 387,599 person-waves, 69,958 people, ages 20-90. Profiles are 10-year centred rolling means; cells with fewer than 100 person-waves are dropped. Each covariance row starts on the diagonal at its five-year base-age bin (dotted: the variance profile) and runs nine years. Rows two and three share a vertical scale within each column.

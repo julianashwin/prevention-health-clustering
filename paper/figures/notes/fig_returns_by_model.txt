@@ -1,0 +1,4 @@
+fig_returns_by_model
+made by: descriptives/42_paper_returns_bayes.py --all
+
+The return to prevention by class, P_j(r), on theta under six typologies, all K = 3: the partial K-means types; the transitory-only and AR(1) + transitory mixtures, the latter also with birth-decade shifts (paths at the 1950s; the preventable decline is shift invariant); and the physical channel of the multidimensional fits (theta, the mental GRM and mortality), without and with the shifts, on the multidim contract's rows. Line width is proportional to the class share; dashed, the uniform return. Same cost curve throughout (the cubic in pounds on theta); one vertical scale for all panels.

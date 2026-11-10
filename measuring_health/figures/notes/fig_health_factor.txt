@@ -1,0 +1,4 @@
+fig_health_factor
+made by: descriptives/21_health_measure.py
+
+Top: each score's pooled distribution, standardised; the dashed line is the all-best answer pattern. Bottom: variance by single year of age. The linear factor score is the one-factor model on the eight codes treated as continuous. It piles the healthy mass against a wall as h does; theta and the log deficit put the same people further out.

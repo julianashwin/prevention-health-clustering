@@ -1,0 +1,4 @@
+fig_exhibit1_mental
+made by: descriptives/23_paper_exhibit1.py --mental
+
+The mental GRM: three SF-12 mental testlets and two GHQ-12 testlets, no depression diagnosis; higher = better. 376,019 person-waves, 66,841 people, ages 20-90. Profiles are 10-year centred rolling means; cells with fewer than 100 person-waves are dropped. Each covariance row starts on the diagonal at its five-year base-age bin (dotted: the variance profile) and runs nine years. Panels (b) and (c) share a vertical scale.

@@ -1,0 +1,4 @@
+fig_cost_validation
+made by: descriptives/15_cost_validation.py
+
+Flat-rate index, waves 7-15, ages 20-90: in-patient spells and excess bed days, out-patient attendances and GP visits at national average unit costs, maternity excluded. In-patient nights (hospd) are a true count and are never censored; GP (hl2gp) and out-patient (hl2hop) contacts are banded, with the top band scored at 15 contacts. The level is not meant to be right; the shape is what the external checks test, and the binding limitation is the flat unit cost per contact, not the bands.

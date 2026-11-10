@@ -1,0 +1,4 @@
+fig_observables
+made by: descriptives/27_paper_observables.py
+
+Clustered people (38,963: the health contract, at least three observed ages 20-89). Every series is the age-specific mean of theta, cells with fewer than 30 people suppressed. Partitions in (b): highest qualification (4) x sex (2) x white / other ethnic group (2) x income tercile (3). Income is the person's mean within-wave percentile rank of equivalised household net income; education the highest qualification ever recorded. Panels (b) and (d) involve income and stop at age 70. Every series is a centred 5-year rolling mean of the cell means. Panel (a) adds the AR(1) + transitory class paths (quadratic, posterior mean) solid, the K-means type means dashed.

@@ -104,6 +104,23 @@ def main() -> int:
         ax.set_title(f"{lab}: {len(L):,} people, K = 3", loc="left")
         ax.legend(loc="upper left" if (v == "predcost" or not HEALTHIER_HIGH.get(v, True)) else "lower left")
         ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
+        if v == "theta" and not (FRAIL or RULERS or MENTAL):
+            # the short outline's figure: the type means alone (fig_clusters_means.png)
+            figm, axm = plt.subplots(figsize=(4.8, 3.6))
+            for c in range(K):
+                t = traj[(traj["cluster"] == c) & (traj["count"] >= MIN_SUPPORT)]
+                axm.plot(t["age"], t["mean"], color=CLUSTER[c], lw=1.9, label=f"type {c + 1} ({pi[c]:.0%})")
+                axm.fill_between(t["age"], t["mean"] - t["sd"], t["mean"] + t["sd"], color=CLUSTER[c], alpha=0.12, lw=0)
+            axm.set_title(f"{lab}: {len(L):,} people, K = 3", loc="left")
+            axm.legend(loc="lower left" if HEALTHIER_HIGH.get(v, True) else "upper left")
+            axm.grid(True, axis="y"); axm.set_xlim(MIN_AGE, MAX_AGE); axm.set_xlabel("age")
+            figm.text(0.01, -0.01,
+                      f"The health contract: {len(L):,} people with at least three observed ages 20-89, one row per person-age; "
+                      "partial K-means with 50 seeded starts, types ordered worst to best. Lines: type means at each age where at least "
+                      f"{MIN_SUPPORT} members are observed, shaded to +/- 1 within-type sd. The legend gives each type's share of the people.",
+                      fontsize=7.4, color=INK2, va="top")
+            figm.savefig(FIG / "fig_clusters_means.png", bbox_inches="tight")
+            plt.close(figm)
         # ---- types, middle: within-cluster residual autocorrelation
         m = traj.set_index(["cluster", "age"])["mean"]
         s = s.assign(resid=lambda x: x[v] - m.reindex(pd.MultiIndex.from_frame(x[["cluster", "age"]])).to_numpy())

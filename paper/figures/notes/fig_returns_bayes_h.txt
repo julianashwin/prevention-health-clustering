@@ -1,0 +1,4 @@
+fig_returns_bayes_h
+made by: descriptives/42_paper_returns_bayes.py --h
+
+Returns on the K = 3 mixture classes on h, with the cost curve estimated in pounds on h (a degree-3 polynomial on the cost index, waves 7-15). C(r) is the expected treatment cost from r to 90 on the observed cross-section, split into the cost at the mean path, what the type differences add and what realised deviations add (the part prevention cannot reach); prevention scales each class's future decline by (1 - mu) and P(r) is the treatment cost that avoids, to first order, per unit of mu; S(r) is the exact saving at mu = 1 (the cost curve is a polynomial of degree at most 3, so the expansion in mu stops at the cube). Pounds to 90; no survival weighting, no discounting. Class shares and quadratic paths at the posterior mean; E[-c'(h) | class] from the person-waves observed at each age, weighted by the posterior class probabilities.

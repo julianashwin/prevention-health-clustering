@@ -1,0 +1,4 @@
+fig_cost_mortality_age
+made by: descriptives/37_paper_cost_mortality_age.py
+
+UKHLS, theta, the paper's health measure, ages 20-90. Cost: the cost index (in-patient, out-patient and GP), uncapped, waves 7-15, 211,697 person-waves; bins with at least 150 person-waves, 95% intervals. Mortality: death before the next wave (one year), waves 1-14, 363,033 person-waves at risk, 1,825 deaths; bins with at least 10 deaths, Wilson 95% intervals; lines are the within-band logit, linear in the measure and quadratic in age, drawn at the band's mean age. Measures standardised on the pooled sample, so a bin means the same health at every age.

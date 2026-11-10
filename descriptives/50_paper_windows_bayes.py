@@ -52,6 +52,7 @@ WIN = ARTIFACTS_DIR / "health-windows"
 V = "theta"
 KW = int(sys.argv[sys.argv.index("--k") + 1]) if "--k" in sys.argv else K
 SFX = "" if KW == K else f"_k{KW}"
+SHORT = "--short" in sys.argv   # the short outline's 2 x 2: the class paths and the worst class's share by age only
 TAG = f"{V}-ssm-" if KW == K else f"{V}-ssm-k{KW}-"
 LIFE = ARTIFACTS_DIR / "health-ssm" / f"health-{V}-ssm" if KW == K else ARTIFACTS_DIR / "health-k45" / f"health-{V}-ssm-k{KW}"
 PAL = CLUSTER if KW == K else {4: ["#08306b", "#2171b5", "#4292c6", "#9ecae1"],
@@ -88,8 +89,9 @@ def main() -> int:
     fits = {w: (full if w == (MIN_AGE, MAX_AGE) else window_fit(*w)) for w in dict.fromkeys(SLIDING + BACKWARD)}
     for w, f in fits.items():
         print(f"{w[0]}-{w[1]}: {f['n']:,} people, rhat {f['rhat']:.3f}, shares {np.round(f['share'], 3)}, rho {np.round(f['rho'], 2)}, wall {f['wall']}")
-    fig, axes = plt.subplots(2, 3, figsize=(12.5, 7.9), gridspec_kw={"wspace": 0.25, "hspace": 0.45}, squeeze=False)
-    fig.suptitle(f"$\\theta$, K = {KW} AR(1) + transitory classes refitted on age windows", x=0.125, ha="left", fontsize=11, fontweight="bold", y=0.96)
+    fig, axes = plt.subplots(2, 2 if SHORT else 3, figsize=(8.6 if SHORT else 12.5, 7.9), gridspec_kw={"wspace": 0.25, "hspace": 0.45}, squeeze=False)
+    if not SHORT:   # the short version drops the overall title to save space; the panel titles stay
+        fig.suptitle(f"$\\theta$, K = {KW} AR(1) + transitory classes refitted on age windows", x=0.125, ha="left", fontsize=11, fontweight="bold", y=0.96)
     cmap = plt.get_cmap("viridis")
     rows = []
     for col, (wins, name) in enumerate([(SLIDING, "sliding twenty-year windows"), (BACKWARD, "windows expanding backwards from 90")]):
@@ -115,13 +117,14 @@ def main() -> int:
         ax.set_title(f"({'ab'[col]}) {'sliding twenty-year windows' if col == 0 else 'windows expanding backwards from 90'}", loc="left", fontsize=9.5)
         ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_xlabel("age")
     r = pd.DataFrame(rows)
-    ax = axes[0, 2]
-    for kind, mk, c in [("sliding", "o", CLUSTER[1]), ("backward", "s", CLUSTER[0])]:
-        q = r[r["kind"] == kind]
-        x = q["lo"] + (q["hi"] - q["lo"]) / 2 if kind == "sliding" else q["lo"]
-        ax.plot(x, q["coassign_corr"], marker=mk, color=c, lw=1.4, label=f"{kind} windows" + (" (x = window midpoint)" if kind == "sliding" else " (x = start age)"))
-    ax.set_ylim(0, 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-    ax.set_title("(c) correlation with lifecycle classes", loc="left", fontsize=9.5); ax.legend(loc="lower left", fontsize=7.5); ax.set_xlabel("age")
+    if not SHORT:
+        ax = axes[0, 2]
+        for kind, mk, c in [("sliding", "o", CLUSTER[1]), ("backward", "s", CLUSTER[0])]:
+            q = r[r["kind"] == kind]
+            x = q["lo"] + (q["hi"] - q["lo"]) / 2 if kind == "sliding" else q["lo"]
+            ax.plot(x, q["coassign_corr"], marker=mk, color=c, lw=1.4, label=f"{kind} windows" + (" (x = window midpoint)" if kind == "sliding" else " (x = start age)"))
+        ax.set_ylim(0, 1); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
+        ax.set_title("(c) correlation with lifecycle classes", loc="left", fontsize=9.5); ax.legend(loc="lower left", fontsize=7.5); ax.set_xlabel("age")
     full_c = full["comp"]["class1"].rolling(5, center=True, min_periods=1).mean()
     for col, wins in enumerate([SLIDING, BACKWARD]):
         ax = axes[1, col]
@@ -130,16 +133,17 @@ def main() -> int:
         for i_w, (lo, hi) in enumerate(wl):
             q = fits[(lo, hi)]["comp"]["class1"].rolling(5, center=True, min_periods=1).mean()
             ax.plot(q.index, q, color=cmap(0.85 * i_w / max(len(wl) - 1, 1)), lw=1.4, zorder=2, label=f"{lo}-{hi}")
-        ax.set_title(f"({'de'[col]}) worst class's share by age, {'sliding' if col == 0 else 'backward'}", loc="left", fontsize=9.5)
+        ax.set_title(f"({('cd' if SHORT else 'de')[col]}) worst class's share by age, {'sliding' if col == 0 else 'backward'}", loc="left", fontsize=9.5)
         ax.set_ylim(0, 0.6); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE); ax.set_xlabel("age"); ax.legend(fontsize=6.8, ncols=2, loc="upper left")
-    ax = axes[1, 2]
-    for kind, mk, c in [("sliding", "o", CLUSTER[1]), ("backward", "s", CLUSTER[0])]:
-        q = r[r["kind"] == kind]
-        x = q["lo"] + (q["hi"] - q["lo"]) / 2 if kind == "sliding" else q["lo"]
-        ax.plot(x, q["worst_share"], marker=mk, color=c, lw=1.4, label=f"{kind} windows" + (" (x = midpoint)" if kind == "sliding" else " (x = start age)"))
-    ax.axhline(full["share"][0], color=INK3, lw=1.4, ls="--", label="lifecycle typology")
-    ax.set_ylim(0, 0.6); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
-    ax.set_title("(f) worst class's share per window", loc="left", fontsize=9.5); ax.legend(loc="upper left", fontsize=7.5); ax.set_xlabel("age")
+    if not SHORT:
+        ax = axes[1, 2]
+        for kind, mk, c in [("sliding", "o", CLUSTER[1]), ("backward", "s", CLUSTER[0])]:
+            q = r[r["kind"] == kind]
+            x = q["lo"] + (q["hi"] - q["lo"]) / 2 if kind == "sliding" else q["lo"]
+            ax.plot(x, q["worst_share"], marker=mk, color=c, lw=1.4, label=f"{kind} windows" + (" (x = midpoint)" if kind == "sliding" else " (x = start age)"))
+        ax.axhline(full["share"][0], color=INK3, lw=1.4, ls="--", label="lifecycle typology")
+        ax.set_ylim(0, 0.6); ax.grid(True, axis="y"); ax.set_xlim(MIN_AGE, MAX_AGE)
+        ax.set_title("(f) worst class's share per window", loc="left", fontsize=9.5); ax.legend(loc="upper left", fontsize=7.5); ax.set_xlabel("age")
     share_ylim([axes[0, 0], axes[0, 1]])
     split = [f"{lo}-{hi} over chains {','.join(map(str, f['chains']))}" for (lo, hi), f in fits.items() if f.get("chains") is not None]
     footer = (f"Each window refits the K = {KW} AR(1) + transitory mixture on theta on the people observed at least three times inside it (its own contract and fit). Coloured lines: the window's class paths at the posterior "
@@ -148,13 +152,19 @@ def main() -> int:
               "(the adjusted Rand index of the modal classes is in the csv). Panels (d), (e): the worst class's posterior share of the person-waves observed at each age (five-year rolling mean), one line per window, "
               "against the lifecycle fit in grey; (f) the worst class's share of each window's people. Classes ordered worst to best by the class path's mean over the window."
               + (f" Windows whose chains split into modes are read over the chains that share the better mode: {'; '.join(split)}." if split else ""))
+    if SHORT:
+        footer = (f"Each window refits the K = {KW} AR(1) + transitory mixture on theta on the people observed at least three times inside it (its own contract and fit). "
+                  "Top: the window's class paths at the posterior mean over its own age range (tick at the start; line width proportional to the class share); grey: the lifecycle 20-90 fit. "
+                  "Bottom: the worst class's posterior share of the person-waves observed at each age (five-year rolling mean), one line per window, against the lifecycle fit in grey. "
+                  "Classes ordered worst to best by the class path's mean over the window."
+                  + (f" Windows whose chains split into modes are read over the chains that share the better mode: {'; '.join(split)}." if split else ""))
     fig.text(0.01, -0.01, "\n".join(textwrap.wrap(footer, 185)), fontsize=7.4, color=INK2, va="top")
-    fig.savefig(FIG / f"fig_windows_bayes{SFX}.png", bbox_inches="tight")
+    fig.savefig(FIG / f"fig_windows_bayes{SFX}{'_short' if SHORT else ''}.png", bbox_inches="tight")
     r.to_csv(DESC / f"paper_windows_bayes{SFX}.csv", index=False)
     comp_rows = [{"lo": w[0], "hi": w[1], "age": int(a), "worst_share": float(v)} for w, f in fits.items() for a, v in f["comp"]["class1"].items()]
     pd.DataFrame(comp_rows).to_csv(DESC / f"paper_windows_bayes_composition{SFX}.csv", index=False)
     print(r.round(3).to_string(index=False))
-    print(f"wrote fig_windows_bayes{SFX}.png to {FIG}")
+    print(f"wrote fig_windows_bayes{SFX}{'_short' if SHORT else ''}.png to {FIG}")
     return 0
 
 

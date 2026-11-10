@@ -1,0 +1,4 @@
+fig_exhibit1_balanced
+made by: descriptives/23_paper_exhibit1.py
+
+Rows of the age-covariance matrix leaving the diagonal at five-year base-age bins and running nine years; dotted red is the smoothed variance profile. Top: each cell over the people observed at both of its ages, as in Exhibit 1. Bottom: each row over the people observed at every one of its ten ages, which leaves 719 to 4,757 people per row and nothing from 80. Cells with fewer than 100 people dropped; cells pooled into bins by count. Panels share a vertical scale within each column.
